@@ -8,10 +8,11 @@ description: >-
 
 # Runner
 
-Every example in this guide ends the same way: `asyncio.run(main())`. That
-call creates a fresh event loop, runs your coroutine to completion, and tears
-the loop down. One shot, one loop. Most of the time that is exactly what you
-want.
+Every example in this guide ends the same way:
+[`asyncio.run(main())`](../everyday-asyncio/getting-started.md#coroutines-and-asynciorun).
+That call creates a fresh event loop, runs your coroutine to completion, and
+tears the loop down. One shot, one loop. Most of the time that is exactly
+what you want.
 
 But sometimes you need to run *several* top-level coroutines on the *same*
 loop -- without building them all into a single `main()`. Maybe you are
@@ -187,7 +188,9 @@ def test_fetch_double(runner: asyncio.Runner) -> None:
 ## `Runner.close()`
 
 When the `with` block exits, `Runner.close()` is called automatically. It
-does the same cleanup that `asyncio.run()` does at the end of its single call:
+does the same cleanup that `asyncio.run()` does at the end of its single
+call (see [Shutdown Sequence](../how-asyncio-works/shutdown-sequence.md)
+for the full details):
 
 1. Cancels all remaining tasks.
 2. Shuts down all async generators

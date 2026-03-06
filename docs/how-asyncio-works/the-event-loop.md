@@ -9,7 +9,8 @@ description: >-
 # The Event Loop
 
 You already know how to write async programs. You can spawn tasks in a
-`TaskGroup`, cancel them with timeouts, offload blocking work to threads. All
+[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md), cancel them with
+timeouts, offload blocking work to threads. All
 of that sits on top of a single piece of machinery: the *event loop*. This
 section opens the hood and shows you what that machinery looks like.
 

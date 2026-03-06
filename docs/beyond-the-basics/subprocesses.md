@@ -164,7 +164,7 @@ and writes can deadlock, `communicate()` cannot.
 Sometimes the child process runs for a long time and you want to process its
 output as it arrives rather than waiting for it to finish.
 `Process.stdout` and `Process.stderr` are
-[`StreamReader`](https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamReader)
+[`StreamReader`](../everyday-asyncio/streams.md)
 objects when you open them with `PIPE`, so you can read line by line:
 
 ```python title="subprocess_streaming.py"
@@ -328,7 +328,9 @@ The pattern handles three cases:
 
 1. **Normal completion** -- `communicate()` finishes, you inspect the return
    code.
-2. **Cancellation** -- the parent task is cancelled while waiting. You kill the
+2. **Cancellation** -- the parent task is
+   [cancelled](../everyday-asyncio/cancellation-and-timeouts.md) while
+   waiting. You kill the
    child process, wait for it to actually exit, and re-raise.
 3. **Timeout** -- the `asyncio.timeout()` fires, and `TimeoutError` follows
    the same cleanup path as cancellation.

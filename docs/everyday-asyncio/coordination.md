@@ -453,6 +453,7 @@ mutable state, use a **Lock** to serialise access. When one task needs to
 signal others that a condition has been met, use an **Event**. When you want
 to limit how many tasks are active at once, use a **Semaphore**. These four
 cover the vast majority of coordination needs; for `Condition`, `Barrier`,
-and the bounded/priority queue variants, see Chapter 2.
+and the bounded/priority queue variants, see
+[Chapter 2](../beyond-the-basics/advanced-coordination.md).
 
 ---

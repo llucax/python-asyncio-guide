@@ -8,7 +8,9 @@ description: >-
 
 # Transports and Protocols
 
-In Chapter 1 you learned the Streams API -- `asyncio.open_connection()` and
+In Chapter 1 you learned the
+[Streams API](../everyday-asyncio/streams.md) --
+`asyncio.open_connection()` and
 `asyncio.start_server()` give you a `StreamReader` and `StreamWriter` that you
 `await` like any other coroutine. That API is comfortable, familiar, and the
 right choice for most networking code. But it is not the bottom of the stack.

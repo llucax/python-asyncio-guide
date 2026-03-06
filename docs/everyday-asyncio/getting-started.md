@@ -83,7 +83,7 @@ called **once**, at the top level of your program.
     raise a `RuntimeError` because a loop is already running. If you need
     to run async code from sync code that is itself called from async
     code, that is a different problem (covered in Chapter 2 with
-    `asyncio.Runner`).
+    [`asyncio.Runner`](../beyond-the-basics/runner.md)).
 
 ## What Goes Wrong Without `await`
 
@@ -434,7 +434,8 @@ code at this stage:
 2. **No blocking calls in async code.** `time.sleep()`,
    `requests.get()`, `open().read()` on large files -- anything that makes the
    thread wait -- will freeze the entire loop. If you must call blocking code,
-   use `asyncio.to_thread()` (covered in Chapter 2).
+   use [`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
+   (covered in Chapter 2).
 
 3. **Don't make sync-only functions `async`.** If a function never `await`-s
    anything, it should be a regular `def`. Adding `async` for no reason adds

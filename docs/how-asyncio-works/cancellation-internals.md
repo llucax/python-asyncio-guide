@@ -9,10 +9,12 @@ description: >-
 # Cancellation Internals
 
 Chapter 1 taught you the user-facing rules: `CancelledError` is how asyncio
-asks your code to stop, you must never swallow it, and `asyncio.timeout()`
+asks your code to stop, you must never swallow it, and
+[`asyncio.timeout()`](../everyday-asyncio/cancellation-and-timeouts.md)
 converts it into `TimeoutError` at the `async with` boundary. Those rules are
 enough to write correct programs. This section explains the machinery that
-makes those rules *work* -- the internal protocol that `timeout()`, `TaskGroup`,
+makes those rules *work* -- the internal protocol that `timeout()`,
+[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md),
 and the event loop use to coordinate cancellation behind the scenes.
 
 You are not expected to use these APIs in normal application code. But when

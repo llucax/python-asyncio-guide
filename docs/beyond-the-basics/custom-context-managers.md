@@ -9,9 +9,14 @@ description: >-
 # Custom Context Managers
 
 Chapter 1 covered *using* `async with` with context managers that asyncio
-hands you -- `Lock`, `TaskGroup`, `timeout()`. You know the contract:
-`__aenter__` runs on entry, `__aexit__` runs on exit, cleanup is guaranteed
-even under cancellation. This section covers the other side: *creating* your
+hands you --
+[`Lock`](../everyday-asyncio/coordination.md#asynciolock),
+[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md),
+[`timeout()`](../everyday-asyncio/cancellation-and-timeouts.md). You know
+the contract: `__aenter__` runs on entry, `__aexit__` runs on exit, cleanup
+is guaranteed even under
+[cancellation](../everyday-asyncio/cancellation-and-timeouts.md). This
+section covers the other side: *creating* your
 own async context managers so you can wrap setup/teardown logic into a clean
 `async with` block that callers can use the same way.
 

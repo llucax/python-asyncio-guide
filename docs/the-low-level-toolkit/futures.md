@@ -19,7 +19,9 @@ async world.
 !!! note
 
     If you are writing application code, you almost certainly don't need
-    bare futures. Tasks, task groups, and streams cover the vast majority
+    bare futures. Tasks,
+    [task groups](../everyday-asyncio/concurrent-tasks.md), and
+    [streams](../everyday-asyncio/streams.md) cover the vast majority
     of use cases. This material is for library authors who are building
     abstractions on top of asyncio's low-level machinery.
 
@@ -190,7 +192,7 @@ that is running on a completely different thread.
 !!! tip
 
     If you control the submission, prefer
-    [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+    [`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
     or
     [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
     -- they handle the wrapping for you. `wrap_future()` is for when

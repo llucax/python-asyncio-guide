@@ -164,7 +164,7 @@ the next time the target task suspends at a checkpoint. If the task enters a
 long stretch of synchronous code, or only `await`s things that resolve
 immediately (the "conditionally suspends" rows in their fast-path state),
 cancellation stays pending indefinitely. This is why
-[`asyncio.timeout()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout)
+[`asyncio.timeout()`](../everyday-asyncio/cancellation-and-timeouts.md)
 can appear to not work: the deadline fires, `cancel()` is called, but the task
 never reaches a checkpoint where the `CancelledError` can be delivered. The fix
 is to ensure long-running code periodically hits a real checkpoint --
@@ -179,7 +179,7 @@ turn. This makes the program *appear* single-threaded and can cause timeouts
 and watchdogs to fire late or not at all. The cure is the same: sprinkle
 `await asyncio.sleep(0)` at regular intervals in CPU-bound or tight loops.
 Better yet, offload heavy computation to a thread with
-[`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+[`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
 so the event loop stays responsive.
 
 ### Shared state is safe between checkpoints

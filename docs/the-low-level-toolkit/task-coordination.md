@@ -8,7 +8,8 @@ description: >-
 
 # Task Coordination
 
-`TaskGroup` is the right default for concurrent work -- it owns every child,
+[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md) is the right default
+for concurrent work -- it owns every child,
 cancels siblings on failure, and guarantees that nothing outlives the scope.
 But its contract is strict: *all* tasks must complete (or fail) before the
 group exits. Sometimes that is not what you need. You might want to act on
@@ -368,7 +369,7 @@ Query timed out after 1 second
 ### `wait_for()` vs `asyncio.timeout()`
 
 Chapter 1 covered
-[`asyncio.timeout()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout),
+[`asyncio.timeout()`](../everyday-asyncio/cancellation-and-timeouts.md),
 the context manager that enforces a deadline on a block of code. Both
 `wait_for()` and `timeout()` cancel work that takes too long, but they have
 different shapes and different trade-offs.

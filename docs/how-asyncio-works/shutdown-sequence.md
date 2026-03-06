@@ -128,7 +128,8 @@ scope.
 
 ### Why `TaskGroup` Prevents This
 
-A `TaskGroup` is the fix. Every task created with `tg.create_task()` is awaited
+A [`TaskGroup`](../everyday-asyncio/concurrent-tasks.md) is the fix. Every
+task created with `tg.create_task()` is awaited
 before the `async with` block exits. There is no way for a task to leak out
 of the group:
 
@@ -207,7 +208,7 @@ later point during shutdown.
 ## Executor Shutdown
 
 If your program used
-[`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+[`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
 or
 [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
 to offload blocking work, the default `ThreadPoolExecutor` may still have
