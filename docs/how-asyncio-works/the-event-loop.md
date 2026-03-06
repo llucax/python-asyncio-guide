@@ -24,17 +24,14 @@ The event loop is a single-threaded scheduler. It runs one callback at a time,
 in a loop that repeats until there is nothing left to do. Each turn of that
 loop -- one *iteration* -- follows the same three-phase pattern:
 
-```text
-┌─────────────────────────────────────────────┐
-│             One Loop Iteration              │
-│                                             │
-│  1. Run all ready callbacks (FIFO)          │
-│  2. Poll for I/O (with a timeout)           │
-│  3. Process timers whose deadline has passed │
-│     (move them to the ready queue)          │
-│                                             │
-│  → repeat                                   │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph iteration["One Loop Iteration"]
+        A["1. Run all ready callbacks (FIFO)"]
+        A --> B["2. Poll for I/O (with a timeout)"]
+        B --> C["3. Process timers whose deadline has passed<br/>(move them to the ready queue)"]
+    end
+    C -- "repeat" --> A
 ```
 
 Here is rough pseudocode for what the loop does on every turn:

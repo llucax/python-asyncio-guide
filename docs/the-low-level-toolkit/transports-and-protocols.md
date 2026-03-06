@@ -32,18 +32,12 @@ SSL wrapper). A protocol knows what those bytes *mean* -- it implements your
 application logic. The transport never parses a message, and the protocol never
 touches a socket.
 
-```text
-┌──────────────────────────────────────────┐
-│            Your Application              │
-├──────────────────────────────────────────┤
-│   Protocol (callbacks: data_received,    │
-│             connection_made, ...)        │
-├──────────────────────────────────────────┤
-│   Transport (buffering, flow control,    │
-│              socket management)          │
-├──────────────────────────────────────────┤
-│            OS / Network                  │
-└──────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["Your Application"]
+    A --- B["Protocol<br/>(callbacks: data_received, connection_made, ...)"]
+    B --- C["Transport<br/>(buffering, flow control, socket management)"]
+    C --- D["OS / Network"]
 ```
 
 When a connection is established, asyncio creates a transport and a protocol,
@@ -267,19 +261,14 @@ On the **write side**, the protocol receives notifications:
 You can configure the water marks with
 `transport.set_write_buffer_limits(high, low)`.
 
-```text
-Write buffer size
-  │
-  │  ┌── pause_writing() called
-  │  │
-  │ ─┤──── high-water mark ────────────
-  │  │
-  │  │
-  │ ─┤──── low-water mark ─────────────
-  │  │
-  │  └── resume_writing() called
-  │
-  └───────────────────────────────────→ time
+```mermaid
+stateDiagram-v2
+    state "Writing allowed" as writing
+    state "Writing paused" as paused
+
+    [*] --> writing
+    writing --> paused : Buffer exceeds high‑water mark\npause_writing() called
+    paused --> writing : Buffer drains below low‑water mark\nresume_writing() called
 ```
 
 This is the same backpressure mechanism that drives `StreamWriter.drain()`.
