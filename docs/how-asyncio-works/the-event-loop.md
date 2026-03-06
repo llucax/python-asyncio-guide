@@ -36,7 +36,7 @@ flowchart TB
 
 Here is rough pseudocode for what the loop does on every turn:
 
-```python
+```python hl_lines="4 5 6 9 10 11 12 15 16 17 18"
 # Pseudocode -- not real asyncio source, but faithful to the logic.
 while self._ready or self._scheduled or self._selector.get_map():
     # Phase 1: drain the ready queue

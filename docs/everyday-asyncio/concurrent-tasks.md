@@ -98,7 +98,7 @@ async def greet(name: str, delay: float) -> str:
     return message
 
 async def main() -> None:
-    async with asyncio.TaskGroup() as tg:
+    async with asyncio.TaskGroup() as tg:  # (1)!
         tg.create_task(greet("Alice", 1.0))
         tg.create_task(greet("Bob", 0.5))
         print("Tasks are running...")
@@ -109,6 +109,10 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+1. The `async with` block is the **ownership boundary**. Tasks spawned
+   inside cannot outlive it -- the block will not exit until every child
+   has finished, failed, or been cancelled.
 
 ```text title="$ python taskgroup_basic.py"
 Tasks are running...
@@ -172,7 +176,7 @@ or ignore it if you only care about the side effects.
 What happens when one child task fails? The `TaskGroup` cancels all surviving
 siblings and raises the exception. This is *sibling cancellation*.
 
-```python title="sibling_cancel.py"
+```python title="sibling_cancel.py" hl_lines="9"
 import asyncio
 
 async def fast_failure() -> None:

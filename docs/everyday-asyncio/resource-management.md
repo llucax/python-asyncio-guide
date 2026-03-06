@@ -91,7 +91,7 @@ The previous section introduced `try`/`finally` for cleanup when a coroutine
 is cancelled. Let's go deeper with a resource-oriented example. Imagine an
 async connection that must be explicitly closed:
 
-```python title="cleanup_under_cancel.py"
+```python title="cleanup_under_cancel.py" hl_lines="13 14 15"
 import asyncio
 
 class FakeConnection:
@@ -279,7 +279,7 @@ is the fix. It wraps an async generator (or any object with an `aclose()`
 method) in an async context manager that guarantees `aclose()` is called when
 the block exits:
 
-```python title="async_gen_safe.py"
+```python title="async_gen_safe.py" hl_lines="14"
 import asyncio
 from contextlib import aclosing
 from collections.abc import AsyncIterator

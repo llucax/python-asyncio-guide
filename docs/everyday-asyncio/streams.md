@@ -31,17 +31,24 @@ async def main() -> None:
 
     request: bytes = b"GET / HTTP/1.0\r\nHost: example.com\r\n\r\n"
     writer.write(request)
-    await writer.drain()
+    await writer.drain()  # (1)!
 
     response: bytes = await reader.read(4096)
     print(response[:200].decode())
 
     writer.close()
-    await writer.wait_closed()
+    await writer.wait_closed()  # (2)!
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+1. `.write()` only buffers data -- `.drain()` is the coroutine that
+   actually waits for the buffer to flush. This is where backpressure
+   happens.
+2. Always call both `.close()` and `.wait_closed()`. The first starts
+   the shutdown, the second waits for it to complete (including TLS
+   teardown and final buffer flush).
 
 ```text title="$ python http_client.py"
 HTTP/1.0 200 OK

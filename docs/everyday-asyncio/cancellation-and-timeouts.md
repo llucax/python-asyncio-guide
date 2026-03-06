@@ -49,7 +49,7 @@ know it happened, and your program's lifetime guarantees fall apart.
 Let's see what "swallowing" looks like. Here is a function that tries to be
 helpful by returning a fallback value when it gets cancelled:
 
-```python title="swallow_cancel_broken.py"
+```python title="swallow_cancel_broken.py" hl_lines="7"
 import asyncio
 
 async def fetch_with_fallback(url: str) -> str:
@@ -81,7 +81,7 @@ timeouts that don't actually time out.
 
 The fix: catch the error, do your cleanup, and **re-raise**:
 
-```python title="swallow_cancel_fixed.py"
+```python title="swallow_cancel_fixed.py" hl_lines="8"
 import asyncio
 
 async def fetch_with_cleanup(url: str) -> str:

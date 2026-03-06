@@ -43,12 +43,19 @@ async def greet(name: str) -> str:
     return f"Hello, {name}"
 
 async def main() -> None:
-    message: str = await greet("world")
+    message: str = await greet("world")  # (1)!
     print(message)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main())  # (2)!
 ```
+
+1. `await` drives the coroutine to completion and gives you the return
+   value. Without it, `greet("world")` returns a coroutine object
+   instead of a string.
+2. `asyncio.run()` is the bridge between sync and async. It creates an
+   event loop, runs `main()` to completion, and tears the loop down.
+   Call it **once**, at the top level of your program.
 
 ```text title="$ python hello_async.py"
 Hello, world
@@ -112,12 +119,16 @@ async def get_answer() -> int:
     return 42
 
 async def main() -> None:
-    answer = get_answer()  # Bug: missing await
+    answer = get_answer()  # Bug: missing await  # (1)!
     print(f"The answer is {answer}")
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+1. Without `await`, this line stores a coroutine object -- not the
+   integer `42`. The coroutine is never driven and gets
+   garbage-collected with a `RuntimeWarning`.
 
 ```text title="$ python forgot_await.py"
 The answer is <coroutine object get_answer at 0x...>

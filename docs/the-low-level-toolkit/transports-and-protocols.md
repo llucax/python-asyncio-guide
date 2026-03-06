@@ -113,7 +113,7 @@ For TCP work, you subclass `asyncio.Protocol` and override three callbacks:
 Here is the simplest useful protocol -- an echo server that sends back
 whatever it receives:
 
-```python title="echo_protocol.py"
+```python title="echo_protocol.py" hl_lines="5 10 14"
 import asyncio
 
 
