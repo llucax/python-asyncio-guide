@@ -81,8 +81,7 @@ those tasks are still pending. `asyncio.run()` cancels them at step 3, and
 they typically get cleaned up. But you will see a warning like this in the
 logs:
 
-```python
-# leaked_task.py
+```python title="leaked_task.py"
 import asyncio
 
 async def background_worker() -> None:
@@ -99,8 +98,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python leaked_task.py
+```text title="$ python leaked_task.py"
 working...
 working...
 main() is done
@@ -157,8 +155,7 @@ At step 5 of the shutdown sequence, `asyncio.run()` calls
 This triggers their `finally` blocks and `aclose()` methods, giving them a
 last chance to release resources.
 
-```python
-# abandoned_agen.py
+```python title="abandoned_agen.py"
 import asyncio
 from collections.abc import AsyncIterator
 
@@ -182,8 +179,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python abandoned_agen.py
+```text title="$ python abandoned_agen.py"
 1
 2
 ticker: finalized after yielding 2 values

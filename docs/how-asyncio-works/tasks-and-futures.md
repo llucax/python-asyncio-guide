@@ -60,8 +60,7 @@ result (or raises its exception).
 Here is a minimal example that shows the lifecycle. You would not write this in
 a real program, but it makes the mechanics clear:
 
-```python
-# future_lifecycle.py
+```python title="future_lifecycle.py"
 import asyncio
 
 
@@ -86,8 +85,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python future_lifecycle.py
+```text title="$ python future_lifecycle.py"
 done? False
 done? True
 result: hello from the future
@@ -133,8 +131,7 @@ calls `asyncio.create_task()` and then tracks the resulting task so it can
 enforce structured concurrency. This section is about the raw function
 underneath.
 
-```python
-# create_task_demo.py
+```python title="create_task_demo.py"
 import asyncio
 
 
@@ -157,8 +154,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python create_task_demo.py
+```text title="$ python create_task_demo.py"
 task name: square-7
 task done? False
 task done? True
@@ -211,8 +207,7 @@ inspection methods tell you which state you're in:
 
 The following example walks through all three outcomes:
 
-```python
-# task_lifecycle.py
+```python title="task_lifecycle.py"
 import asyncio
 
 
@@ -258,8 +253,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python task_lifecycle.py
+```text title="$ python task_lifecycle.py"
 t1 done=True, cancelled=False, result='ok'
 t2 done=True, cancelled=False, exception=ValueError('something broke')
 t3 done=True, cancelled=True

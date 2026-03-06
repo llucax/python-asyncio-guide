@@ -29,8 +29,7 @@ The right way to create a bare future is
 [`loop.create_future()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future).
 It returns an empty `asyncio.Future` bound to the running loop:
 
-```python
-# create_future_demo.py
+```python title="create_future_demo.py"
 import asyncio
 
 
@@ -54,8 +53,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python create_future_demo.py
+```text title="$ python create_future_demo.py"
 pending: True
 done:    True
 result:  42
@@ -87,8 +85,7 @@ the same:
 Here is a concrete example. Imagine a legacy sensor library that reads a value
 asynchronously and calls you back with the result:
 
-```python
-# callback_bridge.py
+```python title="callback_bridge.py"
 import asyncio
 from typing import Callable
 
@@ -127,8 +124,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python callback_bridge.py
+```text title="$ python callback_bridge.py"
 Sensor reading: 23.7°C
 ```
 
@@ -151,8 +147,7 @@ as `asyncio.Future` -- you can't `await` them directly. But
 [`asyncio.wrap_future()`](https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future)
 converts one into the other:
 
-```python
-# wrap_future_demo.py
+```python title="wrap_future_demo.py"
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -182,8 +177,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wrap_future_demo.py
+```text title="$ python wrap_future_demo.py"
 Result: 333332833333500000
 ```
 
@@ -212,8 +206,7 @@ The error side mirrors the happy path. Use
 to resolve a future with an error, and `await` will re-raise it at the call
 site:
 
-```python
-# future_error.py
+```python title="future_error.py"
 import asyncio
 from typing import Callable
 
@@ -253,8 +246,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python future_error.py
+```text title="$ python future_error.py"
 Read failed: sensor disconnected
 ```
 

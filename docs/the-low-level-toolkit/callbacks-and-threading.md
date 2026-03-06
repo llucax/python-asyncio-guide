@@ -31,8 +31,7 @@ you actually use it.
 The callback receives the future as its only argument. You can inspect it to
 get the result, the exception, or check if it was cancelled:
 
-```python
-# done_callback.py
+```python title="done_callback.py"
 import asyncio
 
 
@@ -60,8 +59,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python done_callback.py
+```text title="$ python done_callback.py"
 task succeeded: all good
 ```
 
@@ -104,8 +102,7 @@ Chapter 2's [Blocking Code](../beyond-the-basics/blocking-code.md) section
 introduced this briefly. Here is a fuller example -- a background thread that
 sends progress updates to the event loop:
 
-```python
-# threadsafe_progress.py
+```python title="threadsafe_progress.py"
 import asyncio
 import threading
 import time
@@ -146,8 +143,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python threadsafe_progress.py
+```text title="$ python threadsafe_progress.py"
 progress: 20%
 progress: 40%
 progress: 60%
@@ -175,8 +171,7 @@ This is the tool you reach for when a synchronous thread needs to call async
 code and wait for the result. The classic scenario: you have an async service
 layer and a synchronous handler that needs to call into it.
 
-```python
-# run_coro_threadsafe.py
+```python title="run_coro_threadsafe.py"
 import asyncio
 import concurrent.futures
 import threading
@@ -224,8 +219,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python run_coro_threadsafe.py
+```text title="$ python run_coro_threadsafe.py"
 [worker-0] submitting coroutine to event loop
 [worker-1] submitting coroutine to event loop
 [worker-2] submitting coroutine to event loop
@@ -268,8 +262,7 @@ mentioned that signal handling belongs here. The recommended pattern is to set
 an [`asyncio.Event`](https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event)
 when the signal arrives and have your main code wait on that event:
 
-```python
-# graceful_shutdown.py
+```python title="graceful_shutdown.py"
 import asyncio
 import signal
 
@@ -301,8 +294,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python graceful_shutdown.py
+```text title="$ python graceful_shutdown.py"
 server: running (send SIGINT or SIGTERM to stop)
 ^C
 server: shutting down gracefully...

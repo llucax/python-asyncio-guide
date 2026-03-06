@@ -23,8 +23,7 @@ reader is for receiving data, the writer is for sending it.
 Here is a minimal client that connects to an HTTP server, sends a request, and
 reads the response:
 
-```python
-# http_client.py
+```python title="http_client.py"
 import asyncio
 
 async def main() -> None:
@@ -44,8 +43,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python http_client.py
+```text title="$ python http_client.py"
 HTTP/1.0 200 OK
 Content-Type: text/html; charset=UTF-8
 ...
@@ -207,8 +205,7 @@ automatically.
 
 Here is a simple echo server:
 
-```python
-# echo_server.py
+```python title="echo_server.py"
 import asyncio
 
 async def handle_client(
@@ -245,8 +242,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python echo_server.py
+```text title="$ python echo_server.py"
 Serving on [('127.0.0.1', 8888)]
 ```
 
@@ -276,8 +272,7 @@ lines back, and the client sends a few messages and reads the echoes. A
 `TaskGroup` starts the server, runs the client, and shuts everything down
 cleanly.
 
-```python
-# echo_client_server.py
+```python title="echo_client_server.py"
 import asyncio
 
 async def handle_client(
@@ -335,8 +330,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python echo_client_server.py
+```text title="$ python echo_client_server.py"
 Server: listening on port 41233
 Client: sent 'Hello', got 'Hello'
 Client: sent 'asyncio', got 'asyncio'
@@ -365,8 +359,7 @@ Wrap stream reads and writes in
 [`asyncio.timeout()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout)
 to enforce deadlines:
 
-```python
-# stream_timeout.py
+```python title="stream_timeout.py"
 import asyncio
 
 async def cautious_read(

@@ -84,8 +84,7 @@ places a callback on the ready queue. It will execute during phase 1 of the
 next loop iteration (or the current one, if the queue hasn't been fully drained
 yet -- but conceptually, think "next iteration").
 
-```python
-# call_soon_demo.py
+```python title="call_soon_demo.py"
 import asyncio
 
 def on_ready(message: str) -> None:
@@ -108,8 +107,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python call_soon_demo.py
+```text title="$ python call_soon_demo.py"
 [0.0003] scheduling callbacks
 [0.0003] callback fired: first
 [0.0003] callback fired: second
@@ -145,8 +143,7 @@ return a
 [`TimerHandle`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.TimerHandle)
 that you can cancel.
 
-```python
-# timers_demo.py
+```python title="timers_demo.py"
 import asyncio
 
 def tick(label: str) -> None:
@@ -169,8 +166,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timers_demo.py
+```text title="$ python timers_demo.py"
 [0.1005] call_later 0.1s
 [0.2005] call_at start+0.2s
 [0.3006] call_later 0.3s
@@ -252,8 +248,7 @@ without yielding. The loop only regains control when the coroutine yields a
 You already know that forgetting to yield starves other tasks. Now you can see
 *why* in terms of the loop phases. Consider this scenario:
 
-```python
-# starvation_demo.py
+```python title="starvation_demo.py"
 import asyncio
 import time
 
@@ -284,8 +279,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python starvation_demo.py
+```text title="$ python starvation_demo.py"
 hog: starting heavy computation
 hog: done (8,432,109 iterations)
 polite: tick 0
@@ -340,8 +334,7 @@ interleaved one step at a time. When a task hits an `await` that suspends, its
 ready queue. This gives other tasks a chance to take a step before this task
 runs again.
 
-```python
-# fairness_demo.py
+```python title="fairness_demo.py"
 import asyncio
 
 async def worker(name: str) -> None:
@@ -359,8 +352,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python fairness_demo.py
+```text title="$ python fairness_demo.py"
 A: step 0
 B: step 0
 C: step 0

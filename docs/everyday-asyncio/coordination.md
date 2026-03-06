@@ -64,8 +64,7 @@ blocks until every item has been marked done.
 
 Here is a minimal producer/consumer to see the queue in action:
 
-```python
-# queue_basic.py
+```python title="queue_basic.py"
 import asyncio
 
 async def producer(queue: asyncio.Queue[int]) -> None:
@@ -91,8 +90,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python queue_basic.py
+```text title="$ python queue_basic.py"
 Produced: 0
 Produced: 1
 Consumed: 0
@@ -166,8 +164,7 @@ don't know when the others are done. The clean solution is a `run_producers`
 function wrapping all producers in an inner `TaskGroup`. When that group
 exits, the function sends the sentinels:
 
-```python
-# producer_consumer.py
+```python title="producer_consumer.py"
 import asyncio
 import random
 
@@ -233,8 +230,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python producer_consumer.py
+```text title="$ python producer_consumer.py"
   [C0] processed (P0, 0)
   [C1] processed (P1, 0)
   [C2] processed (P0, 1)
@@ -269,8 +265,7 @@ When you *must* share mutable state between tasks, a
 serialises access. Only one task can hold the lock at a time; others suspend
 until it is released. The idiomatic usage is `async with`:
 
-```python
-# lock_example.py
+```python title="lock_example.py"
 import asyncio
 
 async def transfer(
@@ -304,8 +299,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python lock_example.py
+```text title="$ python lock_example.py"
 Transferred 30 from alice to bob
 Transferred 30 from alice to bob
 Transferred 10 from bob to alice
@@ -342,8 +336,7 @@ and you can check its state with
 The classic use case is startup coordination -- tasks that wait until a
 service is ready:
 
-```python
-# event_example.py
+```python title="event_example.py"
 import asyncio
 
 async def database_init(ready: asyncio.Event) -> None:
@@ -371,8 +364,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python event_example.py
+```text title="$ python event_example.py"
 DB: initialising...
 DB: ready
 req-1: handling request
@@ -405,8 +397,7 @@ The most common use case is limiting concurrency against an external
 resource -- an API, a database connection pool, or a filesystem that chokes
 under too many parallel reads:
 
-```python
-# semaphore_example.py
+```python title="semaphore_example.py"
 import asyncio
 
 async def fetch_url(sem: asyncio.Semaphore, url: str) -> str:
@@ -428,8 +419,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python semaphore_example.py
+```text title="$ python semaphore_example.py"
   Fetching https://api.example.com/page/0...
   Fetching https://api.example.com/page/1...
   Fetching https://api.example.com/page/2...

@@ -36,8 +36,7 @@ An *async function* (also called a *coroutine function*) is any function
 defined with `async def` instead of plain `def`. Let's start with a
 complete, working program:
 
-```python
-# hello_async.py
+```python title="hello_async.py"
 import asyncio
 
 async def greet(name: str) -> str:
@@ -51,8 +50,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python hello_async.py
+```text title="$ python hello_async.py"
 Hello, world
 ```
 
@@ -87,8 +85,7 @@ Calling an async function does **not** execute its body. It returns a
 driven by the event loop (or by `await`). If you forget that step, the
 body never runs.
 
-```python
-# wrong_call.py
+```python title="wrong_call.py"
 import asyncio
 
 async def greet(name: str) -> str:
@@ -98,8 +95,7 @@ if __name__ == "__main__":
     greet("world")  # Oops -- this never drives the coroutine
 ```
 
-```text
-$ python wrong_call.py
+```text title="$ python wrong_call.py"
 wrong_call.py:7: RuntimeWarning: coroutine 'greet' was never awaited
   greet("world")
 ```
@@ -109,8 +105,7 @@ was created and immediately garbage-collected without ever running.
 
 The same bug is more subtle when it happens *inside* an async function:
 
-```python
-# forgot_await.py
+```python title="forgot_await.py"
 import asyncio
 
 async def get_answer() -> int:
@@ -124,8 +119,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python forgot_await.py
+```text title="$ python forgot_await.py"
 The answer is <coroutine object get_answer at 0x...>
 forgot_await.py:8: RuntimeWarning: coroutine 'get_answer' was never awaited
   answer = get_answer()
@@ -168,8 +162,7 @@ will get a `SyntaxError`.
 
 Here is a small example that chains two async calls and uses the return values:
 
-```python
-# await_demo.py
+```python title="await_demo.py"
 import asyncio
 
 async def add(a: int, b: int) -> int:
@@ -187,8 +180,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python await_demo.py
+```text title="$ python await_demo.py"
 3 + 4 = 7, doubled = 14
 ```
 
@@ -385,8 +377,7 @@ code to avoid starving other tasks.
 suspends the current coroutine for (at least) the given number of seconds. It
 serves two purposes: it is a timer, and it is a guaranteed checkpoint.
 
-```python
-# sleep_demo.py
+```python title="sleep_demo.py"
 import asyncio
 
 async def countdown(label: str, n: int) -> None:
@@ -402,8 +393,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python sleep_demo.py
+```text title="$ python sleep_demo.py"
 A: 3
 A: 2
 A: 1

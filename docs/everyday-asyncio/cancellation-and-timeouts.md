@@ -49,8 +49,7 @@ know it happened, and your program's lifetime guarantees fall apart.
 Let's see what "swallowing" looks like. Here is a function that tries to be
 helpful by returning a fallback value when it gets cancelled:
 
-```python
-# swallow_cancel_broken.py
+```python title="swallow_cancel_broken.py"
 import asyncio
 
 async def fetch_with_fallback(url: str) -> str:
@@ -70,8 +69,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python swallow_cancel_broken.py
+```text title="$ python swallow_cancel_broken.py"
 fetch: cancelled, returning fallback
 Got: default
 ```
@@ -83,8 +81,7 @@ timeouts that don't actually time out.
 
 The fix: catch the error, do your cleanup, and **re-raise**:
 
-```python
-# swallow_cancel_fixed.py
+```python title="swallow_cancel_fixed.py"
 import asyncio
 
 async def fetch_with_cleanup(url: str) -> str:
@@ -107,8 +104,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python swallow_cancel_fixed.py
+```text title="$ python swallow_cancel_fixed.py"
 fetch: cancelled, cleaning up
 Timed out as expected
 ```
@@ -129,8 +125,7 @@ Most of the time you don't need to catch `CancelledError` at all. If your
 cleanup should run regardless of *how* the coroutine exits -- success,
 exception, or cancellation -- use a `finally` block:
 
-```python
-# finally_cleanup.py
+```python title="finally_cleanup.py"
 import asyncio
 
 async def worker(name: str) -> None:
@@ -152,8 +147,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python finally_cleanup.py
+```text title="$ python finally_cleanup.py"
 alpha: starting
 alpha: cleaning up
 Timed out
@@ -173,8 +167,7 @@ the current task and converts the resulting `CancelledError` into a
 [`TimeoutError`](https://docs.python.org/3/library/exceptions.html#TimeoutError)
 at the `async with` boundary.
 
-```python
-# timeout_basic.py
+```python title="timeout_basic.py"
 import asyncio
 
 async def slow_operation() -> str:
@@ -193,8 +186,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_basic.py
+```text title="$ python timeout_basic.py"
 Operation timed out after 1 second
 ```
 
@@ -234,8 +226,7 @@ event loop's internal clock, rather than a relative delay.
     [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
     Here you use it only to read the event-loop clock for `timeout_at()`.
 
-```python
-# timeout_at_demo.py
+```python title="timeout_at_demo.py"
 import asyncio
 
 async def main() -> None:
@@ -254,8 +245,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_at_demo.py
+```text title="$ python timeout_at_demo.py"
 Deadline set at loop time 2.0
 Timed out after 2.0s
 ```
@@ -273,8 +263,7 @@ method that tells you whether the timeout actually fired. This is useful when
 you want to attempt something optimistically and take a different path if it
 was too slow:
 
-```python
-# timeout_expired.py
+```python title="timeout_expired.py"
 import asyncio
 
 async def try_fast_path() -> str | None:
@@ -299,8 +288,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_expired.py
+```text title="$ python timeout_expired.py"
 Fast path timed out, using slow fallback
 ```
 
@@ -323,8 +311,7 @@ Timeouts and `TaskGroup`s work together in two natural patterns.
 the deadline. When the timeout fires, it cancels the current task, which
 triggers the `TaskGroup` to cancel all its children:
 
-```python
-# timeout_around_group.py
+```python title="timeout_around_group.py"
 import asyncio
 
 async def fetch(url: str) -> str:
@@ -345,8 +332,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_around_group.py
+```text title="$ python timeout_around_group.py"
 All fetches cancelled -- group took too long
 ```
 
@@ -356,8 +342,7 @@ sees the cancellation and cancels all three children. Clean and predictable.
 **Pattern 2: Individual timeouts inside TaskGroup children.** Each child
 manages its own deadline independently:
 
-```python
-# timeout_inside_group.py
+```python title="timeout_inside_group.py"
 import asyncio
 
 async def fetch_with_timeout(url: str, deadline: float) -> str:
@@ -380,8 +365,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_inside_group.py
+```text title="$ python timeout_inside_group.py"
 Data from https://example.com/fast
 TIMEOUT for https://example.com/slow
 ```
@@ -424,8 +408,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python bare_except_broken.py
+```text title="$ python bare_except_broken.py"
 Caught something, ignoring it
 ```
 

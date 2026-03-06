@@ -34,8 +34,7 @@ The canonical example is
 Acquiring it requires an `await` (another task might be holding it), and
 releasing it must happen exactly once:
 
-```python
-# lock_demo.py
+```python title="lock_demo.py"
 import asyncio
 
 async def increment(lock: asyncio.Lock, counter: dict[str, int]) -> None:
@@ -61,8 +60,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python lock_demo.py
+```text title="$ python lock_demo.py"
 Incremented to 1
 Incremented to 2
 Incremented to 3
@@ -93,8 +91,7 @@ The previous section introduced `try`/`finally` for cleanup when a coroutine
 is cancelled. Let's go deeper with a resource-oriented example. Imagine an
 async connection that must be explicitly closed:
 
-```python
-# cleanup_under_cancel.py
+```python title="cleanup_under_cancel.py"
 import asyncio
 
 class FakeConnection:
@@ -133,8 +130,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python cleanup_under_cancel.py
+```text title="$ python cleanup_under_cancel.py"
 [db] Connection opened
 [db] Connection closed
 Timed out, but connection was still closed
@@ -198,8 +194,7 @@ An *async generator* is an async function that uses `yield` instead of (or in
 addition to) `return`. Just as regular generators produce values lazily, async
 generators produce values lazily with `await` between yields:
 
-```python
-# async_gen_basic.py
+```python title="async_gen_basic.py"
 import asyncio
 from collections.abc import AsyncIterator
 
@@ -217,8 +212,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python async_gen_basic.py
+```text title="$ python async_gen_basic.py"
 T-minus 3
 T-minus 2
 T-minus 1
@@ -228,8 +222,7 @@ Liftoff!
 This looks clean, but async generators have a subtle and dangerous cleanup
 problem. Consider a generator that holds a resource:
 
-```python
-# async_gen_leak.py
+```python title="async_gen_leak.py"
 import asyncio
 from collections.abc import AsyncIterator
 
@@ -255,8 +248,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python async_gen_leak.py
+```text title="$ python async_gen_leak.py"
 Opening resource
 line 0
 line 1
@@ -287,8 +279,7 @@ is the fix. It wraps an async generator (or any object with an `aclose()`
 method) in an async context manager that guarantees `aclose()` is called when
 the block exits:
 
-```python
-# async_gen_safe.py
+```python title="async_gen_safe.py"
 import asyncio
 from contextlib import aclosing
 from collections.abc import AsyncIterator
@@ -316,8 +307,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python async_gen_safe.py
+```text title="$ python async_gen_safe.py"
 Opening resource
 line 0
 line 1
@@ -383,8 +373,7 @@ Here is a small example that combines everything from this section: an async
 generator that produces items from a simulated resource, proper cleanup with
 `aclosing()`, and concurrent consumers managed by a `TaskGroup`.
 
-```python
-# resource_pipeline.py
+```python title="resource_pipeline.py"
 import asyncio
 from contextlib import aclosing
 from collections.abc import AsyncIterator
@@ -426,8 +415,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python resource_pipeline.py
+```text title="$ python resource_pipeline.py"
 [A] Stream opened
 [B] Stream opened
   [fast] got A/event-0

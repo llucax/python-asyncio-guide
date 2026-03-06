@@ -26,8 +26,7 @@ and get back a
 [`Process`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process)
 object:
 
-```python
-# subprocess_exec.py
+```python title="subprocess_exec.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -44,8 +43,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_exec.py
+```text title="$ python subprocess_exec.py"
 Output: hello from subprocess
 Return code: 0
 ```
@@ -75,8 +73,7 @@ call returns both streams as `(stdout_bytes, stderr_bytes)`.
 runs a command through the system shell (`/bin/sh` on Unix, `cmd.exe` on
 Windows). You pass the entire command as a single string:
 
-```python
-# subprocess_shell.py
+```python title="subprocess_shell.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -92,8 +89,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_shell.py
+```text title="$ python subprocess_shell.py"
 hello
 world
 ```
@@ -123,8 +119,7 @@ provided), closes stdin so the child knows input is complete, reads all of
 stdout and stderr into memory, and waits for the process to exit. It returns
 a `(stdout_bytes, stderr_bytes)` tuple:
 
-```python
-# subprocess_communicate.py
+```python title="subprocess_communicate.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -145,8 +140,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_communicate.py
+```text title="$ python subprocess_communicate.py"
 Got 1200 bytes
 Return code: 0
 ```
@@ -173,8 +167,7 @@ output as it arrives rather than waiting for it to finish.
 [`StreamReader`](https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamReader)
 objects when you open them with `PIPE`, so you can read line by line:
 
-```python
-# subprocess_streaming.py
+```python title="subprocess_streaming.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -204,8 +197,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_streaming.py
+```text title="$ python subprocess_streaming.py"
 [live] step 0
 [live] step 1
 [live] step 2
@@ -235,8 +227,7 @@ subprocess operations in
 [`asyncio.timeout()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout)
 to enforce a deadline:
 
-```python
-# subprocess_timeout.py
+```python title="subprocess_timeout.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -258,8 +249,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_timeout.py
+```text title="$ python subprocess_timeout.py"
 Timed out — killing process (pid 12345)
 Process killed, return code: -9
 ```
@@ -291,8 +281,7 @@ output.
 
 The safest pattern is `try`/`except` with kill-and-wait on the error path:
 
-```python
-# subprocess_cleanup.py
+```python title="subprocess_cleanup.py"
 import asyncio
 from asyncio.subprocess import Process
 
@@ -330,8 +319,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python subprocess_cleanup.py
+```text title="$ python subprocess_cleanup.py"
 stdout: hello
 code:   0
 ```

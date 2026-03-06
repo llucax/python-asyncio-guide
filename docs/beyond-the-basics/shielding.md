@@ -26,8 +26,7 @@ not cancel the *inner* work. Under the hood it creates a new `Future` that
 acts as a proxy. When the outer task is cancelled, the proxy future receives
 the `CancelledError`, but the underlying task keeps running:
 
-```python
-# shield_basic.py
+```python title="shield_basic.py"
 import asyncio
 
 
@@ -64,8 +63,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python shield_basic.py
+```text title="$ python shield_basic.py"
 write: starting ('payload')
 handler: cancelled, but the write continues in the background
 write: finished ('payload')
@@ -118,8 +116,7 @@ Let's make this concrete. The example below shields a slow write inside a
 timeout. The timeout fires, the handler exits -- but the write is still
 running in the background with no owner:
 
-```python
-# shield_orphan.py
+```python title="shield_orphan.py"
 import asyncio
 
 
@@ -148,8 +145,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python shield_orphan.py
+```text title="$ python shield_orphan.py"
 write: starting ('important')
 handler: timed out
 handler: returning
@@ -180,8 +176,7 @@ Keep a reference to the inner task and make sure something awaits it before
 the program exits. This is the simplest approach when you have a clear
 shutdown path:
 
-```python
-# shield_safe_reference.py
+```python title="shield_safe_reference.py"
 import asyncio
 
 
@@ -226,8 +221,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python shield_safe_reference.py
+```text title="$ python shield_safe_reference.py"
 flush: writing 'batch-1'
 handler: cancelled, flush continues
 main: waiting for 1 pending flush(es)
@@ -251,8 +245,7 @@ For server-style code where many requests might shield work concurrently, use
 a `TaskGroup` that outlives individual request handlers. Shielded tasks get
 added to this group, which is awaited during shutdown:
 
-```python
-# shield_safe_taskgroup.py
+```python title="shield_safe_taskgroup.py"
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -304,8 +297,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python shield_safe_taskgroup.py
+```text title="$ python shield_safe_taskgroup.py"
 request: handling conn-42
 goodbye: sending close frame to conn-42
 goodbye: sent to conn-42
@@ -322,8 +314,7 @@ sent. Every shielded task has a parent.
 To verify that shielding works, cancel the outer task and then check that the
 inner work completed. The pattern is straightforward:
 
-```python
-# test_shield.py
+```python title="test_shield.py"
 import asyncio
 
 
@@ -357,8 +348,7 @@ if __name__ == "__main__":
     asyncio.run(test_shield_protects_commit())
 ```
 
-```text
-$ python test_shield.py
+```text title="$ python test_shield.py"
 PASSED: shielded commit completed despite outer cancellation
 ```
 

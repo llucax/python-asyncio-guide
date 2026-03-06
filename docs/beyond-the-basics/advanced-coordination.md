@@ -44,8 +44,7 @@ The API:
 Here is a bounded buffer where producers wait when the buffer is full and
 consumers wait when it is empty:
 
-```python
-# condition_buffer.py
+```python title="condition_buffer.py"
 import asyncio
 
 class BoundedBuffer:
@@ -89,8 +88,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python condition_buffer.py
+```text title="$ python condition_buffer.py"
 [P] put 0
 [P] put 1
 [C1] got 0
@@ -127,8 +125,7 @@ caller unblocks everyone.
 Barriers are ideal for *phased computations* -- situations where all workers
 must complete phase 1 before any of them start phase 2.
 
-```python
-# barrier_phases.py
+```python title="barrier_phases.py"
 import asyncio
 
 async def worker(name: str, barrier: asyncio.Barrier) -> None:
@@ -154,8 +151,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python barrier_phases.py
+```text title="$ python barrier_phases.py"
 [W1] finished phase 1
 [W0] finished phase 1
 [W2] finished phase 1
@@ -190,8 +186,7 @@ works the same way with one extra safety check: if you `release()` more times
 than you `acquire()`, it raises `ValueError` instead of silently incrementing
 the counter past its initial value.
 
-```python
-# bounded_semaphore.py
+```python title="bounded_semaphore.py"
 import asyncio
 
 async def main() -> None:
@@ -214,8 +209,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python bounded_semaphore.py
+```text title="$ python bounded_semaphore.py"
 Both slots acquired (value started at 2)
 Released both -- back to 2
 Caught: BoundedSemaphore released too many times
@@ -244,8 +238,7 @@ tuples of `(priority, sequence_number, payload)` -- the sequence number
 breaks ties so that items with equal priority come out in insertion order, and
 the payload itself never needs to be compared:
 
-```python
-# priority_queue.py
+```python title="priority_queue.py"
 import asyncio
 from dataclasses import dataclass, field
 
@@ -274,8 +267,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python priority_queue.py
+```text title="$ python priority_queue.py"
   priority=1  job=critical
   priority=2  job=normal
   priority=3  job=low-1
@@ -302,8 +294,7 @@ This is useful when freshness matters more than fairness -- for example,
 processing the most recent request first or implementing a work-stealing
 scheduler:
 
-```python
-# lifo_queue.py
+```python title="lifo_queue.py"
 import asyncio
 
 async def main() -> None:
@@ -323,8 +314,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python lifo_queue.py
+```text title="$ python lifo_queue.py"
   pushed: first
   pushed: second
   pushed: third

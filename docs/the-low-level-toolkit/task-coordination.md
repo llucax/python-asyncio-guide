@@ -52,8 +52,7 @@ This is the default. `wait()` returns when every task in the set has finished.
 It is similar to what `TaskGroup` does, but without sibling cancellation or
 exception propagation -- you get back two sets and must inspect them yourself.
 
-```python
-# wait_all_completed.py
+```python title="wait_all_completed.py"
 import asyncio
 
 
@@ -80,8 +79,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wait_all_completed.py
+```text title="$ python wait_all_completed.py"
 done: 3, pending: 0
   alpha -> alpha done
   beta -> beta done
@@ -93,8 +91,7 @@ done: 3, pending: 0
 This is the most useful mode. It lets you react to whichever task finishes
 first -- perfect for racing multiple strategies or draining a dynamic pool.
 
-```python
-# wait_first_completed.py
+```python title="wait_first_completed.py"
 import asyncio
 import random
 
@@ -130,8 +127,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wait_first_completed.py
+```text title="$ python wait_first_completed.py"
 Winner: data from mirror-b (0.14s)
 Cancelled 2 remaining tasks
 ```
@@ -142,8 +138,7 @@ Cancelled 2 remaining tasks
 raises, it behaves like `ALL_COMPLETED`. The failed task ends up in the `done`
 set -- call `.exception()` on it to see what happened.
 
-```python
-# wait_first_exception.py
+```python title="wait_first_exception.py"
 import asyncio
 
 
@@ -184,8 +179,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wait_first_exception.py
+```text title="$ python wait_first_exception.py"
 flaky failed: lost connection
 2 tasks still running
 ```
@@ -242,8 +236,7 @@ is for when you want to process results in the order they arrive, not the
 order you submitted them. It takes an iterable of awaitables and returns an
 *asynchronous iterator* of futures that yield results in completion order.
 
-```python
-# as_completed_demo.py
+```python title="as_completed_demo.py"
 import asyncio
 import random
 
@@ -273,8 +266,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python as_completed_demo.py
+```text title="$ python as_completed_demo.py"
 Got: https://example.com/c: 0.12s
 Got: https://example.com/a: 0.34s
 Got: https://example.com/d: 0.51s
@@ -298,8 +290,7 @@ A few things to note:
 
 `as_completed()` is ideal when you want to report progress as work completes:
 
-```python
-# as_completed_progress.py
+```python title="as_completed_progress.py"
 import asyncio
 import random
 
@@ -331,8 +322,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python as_completed_progress.py
+```text title="$ python as_completed_progress.py"
 [1/6] Downloaded 142 bytes (total: 142)
 [2/6] Downloaded 271 bytes (total: 413)
 [3/6] Downloaded 389 bytes (total: 802)
@@ -350,8 +340,7 @@ wraps a single awaitable with a timeout. If the timeout expires, it *cancels*
 the awaitable and raises
 [`TimeoutError`](https://docs.python.org/3/library/exceptions.html#TimeoutError).
 
-```python
-# wait_for_demo.py
+```python title="wait_for_demo.py"
 import asyncio
 
 
@@ -372,8 +361,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wait_for_demo.py
+```text title="$ python wait_for_demo.py"
 Query timed out after 1 second
 ```
 
@@ -408,8 +396,7 @@ re-raising), `wait_for()` may return that value instead of raising
 `TimeoutError`. Your code thinks the operation succeeded when it actually
 timed out.
 
-```python
-# wait_for_gotcha.py
+```python title="wait_for_gotcha.py"
 import asyncio
 
 
@@ -435,8 +422,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python wait_for_gotcha.py
+```text title="$ python wait_for_gotcha.py"
 Got: fallback result
 ```
 

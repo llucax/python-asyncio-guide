@@ -24,8 +24,7 @@ running coroutine and it returns the loop that is currently executing. Call it
 from outside -- before `asyncio.run()` starts, or from a plain thread with no
 loop -- and it raises `RuntimeError`.
 
-```python
-# get_loop.py
+```python title="get_loop.py"
 import asyncio
 
 
@@ -39,8 +38,7 @@ if __name__ == "__main__":
     asyncio.run(show_loop())
 ```
 
-```text
-$ python get_loop.py
+```text title="$ python get_loop.py"
 loop type: _UnixSelectorEventLoop
 loop running: True
 ```
@@ -83,8 +81,7 @@ A practical use case: a library that holds a reference to the loop (for
 example, to schedule cleanup from a `__del__` method or a finalizer) should
 check both before touching it:
 
-```python
-# defensive_cleanup.py
+```python title="defensive_cleanup.py"
 import asyncio
 
 
@@ -122,8 +119,7 @@ Both accept an optional `loop` argument, but you should almost never pass it
 
 Here is a small monitoring example that lists every live task:
 
-```python
-# task_introspection.py
+```python title="task_introspection.py"
 import asyncio
 
 
@@ -154,8 +150,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python task_introspection.py
+```text title="$ python task_introspection.py"
 current task: monitor
 total live tasks: 4
          Task-1  done=False

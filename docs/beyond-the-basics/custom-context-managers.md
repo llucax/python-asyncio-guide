@@ -27,8 +27,7 @@ setup; everything after is your teardown.
 Here is a practical example -- a reusable wrapper around a database-style
 connection that must be explicitly opened and closed:
 
-```python
-# managed_connection.py
+```python title="managed_connection.py"
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -73,8 +72,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python managed_connection.py
+```text title="$ python managed_connection.py"
 [postgres://localhost/mydb] Connected
 Result of: SELECT 1
 [postgres://localhost/mydb] Closed
@@ -99,8 +97,7 @@ The `try`/`finally` around the `yield` is not optional decoration -- it is
 exception in the caller's block kills the generator and your teardown code
 never executes:
 
-```python
-# no_try_finally.py
+```python title="no_try_finally.py"
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -124,8 +121,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python no_try_finally.py
+```text title="$ python no_try_finally.py"
 Setup
 Using resource
 Caught the error
@@ -161,8 +157,7 @@ and
 You can implement these directly on a class when you need to carry state
 between enter and exit, or when the context manager itself *is* the resource:
 
-```python
-# class_based_cm.py
+```python title="class_based_cm.py"
 import asyncio
 import time
 
@@ -196,8 +191,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python class_based_cm.py
+```text title="$ python class_based_cm.py"
 [sleep test] 0.250s
 Elapsed was 0.250s
 ```
@@ -223,8 +217,7 @@ the count is only known at runtime.
 manages a dynamic collection of async context managers -- entering each one and
 guaranteeing they all exit in LIFO order:
 
-```python
-# exit_stack.py
+```python title="exit_stack.py"
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -257,8 +250,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python exit_stack.py
+```text title="$ python exit_stack.py"
   Shard 1: connecting
   Shard 2: connecting
   Shard 3: connecting
@@ -311,8 +303,7 @@ setup underneath.
 Here is a "managed pool" that opens a connection pool on enter and drains
 pending work before closing connections on exit:
 
-```python
-# managed_pool.py
+```python title="managed_pool.py"
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -377,8 +368,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python managed_pool.py
+```text title="$ python managed_pool.py"
 Pool opened: 3 connections to postgres://localhost/prod
 App ready
   OK: SELECT 1

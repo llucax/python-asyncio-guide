@@ -26,8 +26,7 @@ open connection just *waits*.
 Here is a concrete example. Two tasks run concurrently: one does a blocking
 sleep, the other tries to make progress alongside it:
 
-```python
-# blocking_freeze.py
+```python title="blocking_freeze.py"
 import asyncio
 import time
 
@@ -55,8 +54,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python blocking_freeze.py
+```text title="$ python blocking_freeze.py"
 blocking_task: starting synchronous sleep...
 blocking_task: done sleeping
 polite_task: tick 0
@@ -99,8 +97,7 @@ handles running it in a thread and shuttling the result back.
 
 Here is the fixed version of the freezing example:
 
-```python
-# blocking_fixed.py
+```python title="blocking_fixed.py"
 import asyncio
 import time
 
@@ -129,8 +126,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python blocking_fixed.py
+```text title="$ python blocking_fixed.py"
 blocking_work: starting synchronous sleep...
 polite_task: tick 0
 polite_task: tick 1
@@ -182,8 +178,7 @@ tasks, futures, queues, locks -- are *not* thread-safe. You cannot call
 data back to the event loop while it is still running, use
 [`loop.call_soon_threadsafe()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe):
 
-```python
-# threadsafe_callback.py
+```python title="threadsafe_callback.py"
 import asyncio
 import time
 
@@ -205,8 +200,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python threadsafe_callback.py
+```text title="$ python threadsafe_callback.py"
 Results: ['item-0', 'item-1', 'item-2']
 ```
 
@@ -247,8 +241,7 @@ runs work in a pool of child processes, each with its own GIL. You call it
 through
 [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor):
 
-```python
-# cpu_bound.py
+```python title="cpu_bound.py"
 import asyncio
 import math
 import time
@@ -288,8 +281,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python cpu_bound.py
+```text title="$ python cpu_bound.py"
       104,729 -> prime
       104,743 -> prime
   999,999,937 -> prime

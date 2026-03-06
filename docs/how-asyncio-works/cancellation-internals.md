@@ -27,8 +27,7 @@ is how cancellation is *requested*. When you call it, the event loop arranges
 for a `CancelledError` to be thrown into the task at the next checkpoint -- the
 next `await` where the coroutine suspends.
 
-```python
-# cancel_basic.py
+```python title="cancel_basic.py"
 import asyncio
 
 
@@ -54,8 +53,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python cancel_basic.py
+```text title="$ python cancel_basic.py"
 slow_work: starting
 task.cancelled() = True
 ```
@@ -94,8 +92,7 @@ has received. Each call to `task.cancel()` increments this counter by one.
 You can read the current value with
 [`task.cancelling()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancelling):
 
-```python
-# cancelling_counter.py
+```python title="cancelling_counter.py"
 import asyncio
 
 
@@ -125,8 +122,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python cancelling_counter.py
+```text title="$ python cancelling_counter.py"
 cancelling() = 3
 ```
 
@@ -138,8 +134,7 @@ cancellation, not how many exceptions will appear.
 decrements the counter by one. If the counter reaches zero, the task is no
 longer considered "being cancelled" -- it can resume normal execution.
 
-```python
-# uncancel_demo.py
+```python title="uncancel_demo.py"
 import asyncio
 
 
@@ -171,8 +166,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python uncancel_demo.py
+```text title="$ python uncancel_demo.py"
 before uncancel: cancelling() = 1
 after  uncancel: cancelling() = 0
 result = recovered
@@ -226,8 +220,7 @@ timeout's `__aexit__` calls `uncancel()`, the counter drops to 1 -- not zero.
 The timeout sees that someone *else* still wants this task cancelled, so it
 lets the `CancelledError` propagate instead of converting it to `TimeoutError`.
 
-```python
-# timeout_vs_external.py
+```python title="timeout_vs_external.py"
 import asyncio
 
 
@@ -257,8 +250,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python timeout_vs_external.py
+```text title="$ python timeout_vs_external.py"
 inner: got CancelledError (external cancellation)
 main: task was cancelled
 ```
@@ -333,8 +325,7 @@ to zero, and the task continues running whatever comes after the `async with`
 block. The task's final `.cancelled()` state will be `False` -- it was never
 "actually cancelled," even though cancellation was requested and delivered.
 
-```python
-# requested_vs_actual.py
+```python title="requested_vs_actual.py"
 import asyncio
 
 
@@ -358,8 +349,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python requested_vs_actual.py
+```text title="$ python requested_vs_actual.py"
 after cancel():  cancelling() = 1
 after awaiting:  cancelled()  = True
                  cancelling() = 0

@@ -119,8 +119,7 @@ For TCP work, you subclass `asyncio.Protocol` and override three callbacks:
 Here is the simplest useful protocol -- an echo server that sends back
 whatever it receives:
 
-```python
-# echo_protocol.py
+```python title="echo_protocol.py"
 import asyncio
 
 
@@ -161,8 +160,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python echo_protocol.py
+```text title="$ python echo_protocol.py"
 Serving on [('127.0.0.1', 8888)]
 ```
 
@@ -192,8 +190,7 @@ per incoming connection. `loop.create_connection()` opens a client connection
 and calls the factory once for the outgoing connection. Both return the
 transport and protocol:
 
-```python
-# echo_client_protocol.py
+```python title="echo_client_protocol.py"
 import asyncio
 
 
@@ -230,8 +227,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python echo_client_protocol.py
+```text title="$ python echo_client_protocol.py"
 Received: 'Hello, protocol!\n'
 ```
 
@@ -305,8 +301,7 @@ behind an `await` -- but the machinery is the same.
 
 Here is both sides running in a single script, using only the protocol API:
 
-```python
-# echo_protocol_demo.py
+```python title="echo_protocol_demo.py"
 import asyncio
 
 
@@ -380,8 +375,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python echo_protocol_demo.py
+```text title="$ python echo_protocol_demo.py"
 Server: listening on port 43210
 Server: connection from ('127.0.0.1', 54321)
 Client received: 'Hello\nProtocol\nWorld'

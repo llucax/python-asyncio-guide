@@ -21,8 +21,7 @@ Before `TaskGroup` existed, the way to launch concurrent work was
 [`asyncio.create_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task).
 It still exists, and you will see it in older code:
 
-```python
-# fire_and_forget.py
+```python title="fire_and_forget.py"
 import asyncio
 
 async def fetch_data(url: str) -> str:
@@ -41,8 +40,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python fire_and_forget.py
+```text title="$ python fire_and_forget.py"
 main() is done!
 Task exception was never retrieved
   ...
@@ -90,8 +88,7 @@ Here is the basic pattern. Create a `TaskGroup` with `async with`, spawn
 tasks with `tg.create_task()`, and when the block ends all tasks are
 guaranteed complete:
 
-```python
-# taskgroup_basic.py
+```python title="taskgroup_basic.py"
 import asyncio
 
 async def greet(name: str, delay: float) -> str:
@@ -113,8 +110,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python taskgroup_basic.py
+```text title="$ python taskgroup_basic.py"
 Tasks are running...
 Hello, Bob!
 Hello, Alice!
@@ -176,8 +172,7 @@ or ignore it if you only care about the side effects.
 What happens when one child task fails? The `TaskGroup` cancels all surviving
 siblings and raises the exception. This is *sibling cancellation*.
 
-```python
-# sibling_cancel.py
+```python title="sibling_cancel.py"
 import asyncio
 
 async def fast_failure() -> None:
@@ -205,8 +200,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python sibling_cancel.py
+```text title="$ python sibling_cancel.py"
 slow_worker: starting long operation...
 slow_worker: I was cancelled!
 Caught errors: (RuntimeError('Something went wrong'),)
@@ -235,8 +229,7 @@ The
 (introduced in [PEP 654](https://peps.python.org/pep-0654/)) lets you handle
 specific exception types inside the group:
 
-```python
-# exception_group.py
+```python title="exception_group.py"
 import asyncio
 
 async def fail_value() -> None:
@@ -268,8 +261,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python exception_group.py
+```text title="$ python exception_group.py"
 Handled ValueError: bad value
 Handled TypeError|RuntimeError: wrong type
 Handled TypeError|RuntimeError: runtime problem
@@ -298,8 +290,7 @@ In many cases you want return values from your concurrent tasks, not just side
 effects. The pattern is straightforward: store the `Task` handles from
 `tg.create_task()`, then call `.result()` after the `async with` block:
 
-```python
-# collect_results.py
+```python title="collect_results.py"
 import asyncio
 
 async def fetch_page(url: str) -> str:
@@ -328,8 +319,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python collect_results.py
+```text title="$ python collect_results.py"
 Fetching https://example.com/page1...
 Fetching https://example.com/page2...
 Fetching https://example.com/page3...
@@ -355,8 +345,7 @@ an `ExceptionGroup` before you ever reach the `.result()` calls.
 useful when a piece of work is itself composed of concurrent sub-steps but
 should be treated as a single unit from the parent's perspective.
 
-```python
-# nested_groups.py
+```python title="nested_groups.py"
 import asyncio
 
 async def download(name: str) -> str:
@@ -380,8 +369,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python nested_groups.py
+```text title="$ python nested_groups.py"
 Batch 1: ['a-data', 'b-data', 'c-data']
 Batch 2: ['x-data', 'y-data', 'z-data']
 All batches complete.
@@ -399,8 +387,7 @@ spread them across several concurrent workers using a `TaskGroup`. The
 simplest approach: slice the work up front and hand each worker its own
 batch.
 
-```python
-# fan_out_workers.py
+```python title="fan_out_workers.py"
 import asyncio
 
 async def worker(worker_id: int, jobs: list[str]) -> list[str]:
@@ -438,8 +425,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python fan_out_workers.py
+```text title="$ python fan_out_workers.py"
 worker-0: processing 'alpha'
 worker-1: processing 'beta'
 worker-2: processing 'gamma'

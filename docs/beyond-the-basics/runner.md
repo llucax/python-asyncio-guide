@@ -26,8 +26,7 @@ Python 3.11 added
 need it. Inside the `with` block you call `runner.run()` as many times as you
 like -- each call executes one coroutine to completion on the same loop:
 
-```python
-# runner_basic.py
+```python title="runner_basic.py"
 import asyncio
 
 
@@ -47,8 +46,7 @@ if __name__ == "__main__":
         print(runner.run(farewell("Alice")))
 ```
 
-```text
-$ python runner_basic.py
+```text title="$ python runner_basic.py"
 Hello, Alice
 Goodbye, Alice
 ```
@@ -87,8 +85,7 @@ your first coroutine, a `Runner` keeps that pool alive for subsequent calls.
 With separate `asyncio.run()` calls the pool would be created and destroyed
 each time.
 
-```python
-# runner_shared_state.py
+```python title="runner_shared_state.py"
 import asyncio
 
 
@@ -127,8 +124,7 @@ if __name__ == "__main__":
         runner.run(work())
 ```
 
-```text
-$ python runner_shared_state.py
+```text title="$ python runner_shared_state.py"
 pool: connected (total: 1)
 pool: connected (total: 2)
 result of 'SELECT 1' (connections: 2)
@@ -148,8 +144,7 @@ restarting the loop each time.
 Here is a pattern for pytest where a single `Runner` backs an entire test
 module. Each test calls `runner.run()` to execute its async code:
 
-```python
-# test_with_runner.py
+```python title="test_with_runner.py"
 import asyncio
 from typing import Iterator
 

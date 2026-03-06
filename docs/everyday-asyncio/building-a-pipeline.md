@@ -59,8 +59,7 @@ Key APIs:
 - [`asyncio.Queue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue)
 - [`asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup)
 
-```python
-# pipeline_v1.py
+```python title="pipeline_v1.py"
 import asyncio
 
 
@@ -111,8 +110,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python pipeline_v1.py
+```text title="$ python pipeline_v1.py"
   generator: sent 1
   generator: sent 2
   generator: sent 3
@@ -159,8 +157,7 @@ the concept in detail.)
 Let's add a simulated delay to the processor so the speed difference
 is visible:
 
-```python
-# pipeline_v2.py
+```python title="pipeline_v2.py"
 import asyncio
 
 
@@ -214,8 +211,7 @@ if __name__ == "__main__":
 
 The interleaving in the output shows the backpressure at work:
 
-```text
-$ python pipeline_v2.py
+```text title="$ python pipeline_v2.py"
   generator: sent 1
   generator: sent 2
   generator: sent 3
@@ -277,8 +273,7 @@ this works.)
 
 Let's make the processor blow up on a specific input:
 
-```python
-# pipeline_v3.py
+```python title="pipeline_v3.py"
 import asyncio
 
 
@@ -335,8 +330,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-```text
-$ python pipeline_v3.py
+```text title="$ python pipeline_v3.py"
   generator: sent 1
   generator: sent 2
   generator: sent 3
@@ -371,8 +365,7 @@ version adds:
 - **Graceful shutdown** that drains in-flight work
 - **Multiple processors** running in parallel to demonstrate fan-out
 
-```python
-# pipeline_v4.py
+```python title="pipeline_v4.py"
 from __future__ import annotations
 
 import asyncio
@@ -512,8 +505,7 @@ if __name__ == "__main__":
 
 Timestamps and interleaving will vary, but output looks like this:
 
-```text
-$ python pipeline_v4.py
+```text title="$ python pipeline_v4.py"
 12:00:00  pipeline        starting pipeline: 12 items, 3 workers
 12:00:00  generator       sent 1
 12:00:00  generator       sent 2
