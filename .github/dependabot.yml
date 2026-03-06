@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "part:tooling"
+      - "type:tech-debt"
+    # We group patch updates as they should always work.
+    # We also group minor updates, as it works too for most libraries,
+    # typically except libraries that don't have a stable release yet (v0.x.x
+    # branch), so we make some exceptions for them.
+    # Major updates and dependencies excluded by the above groups are still
+    # managed, but they'll create one PR per dependency, as breakage is
+    # expected, so it might need manual intervention.
+    # Finally, we group some dependencies that are related to each other, and
+    # usually need to be updated together.
+    groups:
+      patch:
+        update-types:
+          - "patch"
+        exclude-patterns:
+          # pydoclint has shipped breaking changes in patch updates often
+          - "pydoclint"
+      minor:
+        update-types:
+          - "minor"
+        exclude-patterns:
+          - "async-solipsism"
+          - "markdown-callouts"
+          - "pydoclint"
+      mkdocstrings:
+        patterns:
+          - "mkdocstrings*"
+          - "mkdocstrings[python]"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+    labels:
+      - "part:tooling"
+      - "type:tech-debt"
+    groups:
+      compatible:
+        update-types:
+          - "minor"
+          - "patch"
+      artifacts:
+        patterns:
+          - "actions/*-artifact"
