@@ -1,3 +1,11 @@
+---
+title: The Event Loop
+description: >-
+  Open the hood on asyncio's single-threaded scheduler. Learn about loop
+  iterations, ready queues, I/O polling, timers, call_soon(), call_later(),
+  call_at(), and what await asyncio.sleep(0) actually does.
+---
+
 # The Event Loop
 
 You already know how to write async programs. You can spawn tasks in a

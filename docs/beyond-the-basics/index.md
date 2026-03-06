@@ -1,3 +1,12 @@
+---
+title: Beyond the Basics
+description: >-
+  Advanced application-level asyncio patterns — integrating blocking code,
+  shielding critical work from cancellation, custom context managers,
+  advanced coordination primitives, subprocesses, and the Runner API.
+icon: lucide/book-open
+---
+
 # Beyond the Basics
 
 This chapter covers patterns you will reach for once you are comfortable with

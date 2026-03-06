@@ -1,3 +1,12 @@
+---
+title: Shielding
+description: >-
+  Use asyncio.shield() to protect critical work from cancellation. Learn
+  when shielding is genuinely needed, how to avoid orphaned tasks, and
+  safe patterns for database commits, flush operations, and graceful
+  shutdown.
+---
+
 # Shielding
 
 Sometimes you genuinely need work to survive cancellation. A database

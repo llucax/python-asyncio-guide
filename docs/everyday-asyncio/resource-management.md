@@ -1,3 +1,11 @@
+---
+title: Resource Management
+description: >-
+  Learn to manage async resources safely with async with, try/finally,
+  contextlib.aclosing(), and async generators. Prevent leaked connections,
+  stuck locks, and file descriptor exhaustion under cancellation.
+---
+
 # Resource Management
 
 Async code opens connections, acquires locks, and allocates resources that need

@@ -1,3 +1,11 @@
+---
+title: Loop Access and Inspection
+description: >-
+  Get the running event loop with asyncio.get_running_loop(), inspect loop
+  state, enumerate live tasks, and understand when you need the loop object
+  directly for scheduling callbacks or creating futures.
+---
+
 # Loop Access and Inspection
 
 Most async code never touches the event loop directly. You `await` coroutines,

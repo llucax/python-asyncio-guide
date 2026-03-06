@@ -1,3 +1,11 @@
+---
+title: Debugging Guide
+description: >-
+  Comprehensive asyncio debugging reference — debug mode internals, slow
+  callback detection, blocked loop diagnosis, task leak hunting, deadlock
+  analysis, and timeout failure investigation.
+---
+
 # Debugging Guide
 
 The [Debugging](../everyday-asyncio/debugging.md) section in Chapter 1

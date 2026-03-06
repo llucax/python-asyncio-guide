@@ -1,3 +1,11 @@
+---
+title: Building a Pipeline
+description: >-
+  Tie together TaskGroup, queues, backpressure, cancellation, and resource
+  management into a realistic actor-based pipeline. Build a production-quality
+  async data processing design from scratch.
+---
+
 # Building a Pipeline
 
 This section ties together everything from this chapter --

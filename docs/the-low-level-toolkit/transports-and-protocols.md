@@ -1,3 +1,11 @@
+---
+title: Transports and Protocols
+description: >-
+  Understand the callback-based transports-and-protocols layer beneath
+  asyncio's Streams API. Learn how transports handle raw I/O and protocols
+  handle events, and write a simple protocol from scratch.
+---
+
 # Transports and Protocols
 
 In Chapter 1 you learned the Streams API -- `asyncio.open_connection()` and

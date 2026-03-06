@@ -1,3 +1,11 @@
+---
+title: Task Coordination
+description: >-
+  Low-level task coordination with asyncio.wait(), asyncio.as_completed(),
+  and asyncio.wait_for(). Process results in completion order, act on the
+  first finished task, and enforce per-awaitable timeouts.
+---
+
 # Task Coordination
 
 `TaskGroup` is the right default for concurrent work -- it owns every child,

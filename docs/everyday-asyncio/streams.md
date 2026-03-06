@@ -1,3 +1,11 @@
+---
+title: Streams
+description: >-
+  Build TCP clients and servers with asyncio's Streams API. Use
+  asyncio.open_connection() and asyncio.start_server() with StreamReader
+  and StreamWriter for clean async networking.
+---
+
 # Streams
 
 Everything up to this point has used `asyncio.sleep()` as a stand-in for real

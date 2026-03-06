@@ -1,3 +1,11 @@
+---
+title: Concurrent Tasks
+description: >-
+  Master structured concurrency with asyncio.TaskGroup. Learn to run tasks
+  concurrently, handle ExceptionGroups with except*, and understand why
+  TaskGroup replaces fire-and-forget create_task().
+---
+
 # Concurrent Tasks
 
 This is where asyncio gets interesting. Everything in the previous section was

@@ -1,3 +1,11 @@
+---
+title: Runner
+description: >-
+  Use asyncio.Runner to run multiple top-level coroutines on the same
+  event loop. Ideal for test harnesses, REPL experimentation, and
+  orchestrating setup/work/teardown steps that each need await.
+---
+
 # Runner
 
 Every example in this guide ends the same way: `asyncio.run(main())`. That

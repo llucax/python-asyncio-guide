@@ -1,3 +1,11 @@
+---
+title: Cancellation and Timeouts
+description: >-
+  Understand CancelledError, asyncio.timeout(), and asyncio.timeout_at().
+  Learn how cooperative cancellation works, how to write cancellation-safe
+  code, and how timeouts interact with TaskGroup.
+---
+
 # Cancellation and Timeouts
 
 Cancellation is what makes task lifetimes *real*. Without it, timeouts are

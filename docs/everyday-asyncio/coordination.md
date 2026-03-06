@@ -1,3 +1,11 @@
+---
+title: Coordination
+description: >-
+  Coordinate concurrent tasks with asyncio.Queue, Lock, Event, and
+  Semaphore. Learn inter-task communication patterns, backpressure with
+  bounded queues, and rate limiting.
+---
+
 # Coordination
 
 Up to this point, your concurrent tasks have been independent -- they each do

@@ -1,3 +1,11 @@
+---
+title: Cancellation Internals
+description: >-
+  Explore the internal cancellation protocol — task.cancel(),
+  task.cancelling(), task.uncancel(), and how asyncio.timeout() and
+  TaskGroup coordinate cancellation behind the scenes.
+---
+
 # Cancellation Internals
 
 Chapter 1 taught you the user-facing rules: `CancelledError` is how asyncio

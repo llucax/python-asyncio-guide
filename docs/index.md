@@ -1,3 +1,11 @@
+---
+title: "Asyncio: A Concept-First Learning Guide"
+description: >-
+  A structured, concept-first guide to Python's asyncio library. Learn
+  async/await from the ground up with modern, structured concurrency
+  patterns targeting Python 3.11+.
+---
+
 # Asyncio: A Concept-First Learning Guide
 
 This is a general-purpose learning guide for Python's built-in `asyncio`.

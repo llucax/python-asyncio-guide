@@ -1,3 +1,11 @@
+---
+title: Getting Started
+description: >-
+  Learn the core vocabulary of asyncio — coroutines, await, asyncio.run(),
+  asyncio.sleep(), the async sandwich, and checkpoints. Write and run your
+  first async program.
+---
+
 # Getting Started
 
 This section introduces the core vocabulary of asyncio: coroutines, `await`,

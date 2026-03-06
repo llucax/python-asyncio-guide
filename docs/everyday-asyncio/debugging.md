@@ -1,3 +1,11 @@
+---
+title: Debugging
+description: >-
+  Catch common async bugs quickly — forgotten awaits, blocking calls, and
+  swallowed CancelledErrors. Enable asyncio debug mode and learn essential
+  diagnostic techniques for your first async programs.
+---
+
 # Debugging
 
 Async bugs can be genuinely confusing. A forgotten `await` produces a

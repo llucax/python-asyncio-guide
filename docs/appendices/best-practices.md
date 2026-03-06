@@ -1,3 +1,12 @@
+---
+title: Best Practices, Pitfalls, and Gotchas
+description: >-
+  Twenty actionable rules for writing reliable asyncio code — structured
+  concurrency, cancellation safety, resource management, and avoiding
+  the most common async pitfalls. Each rule links back to its full
+  discussion.
+---
+
 # Best Practices, Pitfalls, and Gotchas
 
 This page distills every recommendation from the guide into one place. The

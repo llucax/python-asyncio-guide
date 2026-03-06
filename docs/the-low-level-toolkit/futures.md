@@ -1,3 +1,11 @@
+---
+title: Futures
+description: >-
+  Create and resolve bare asyncio futures with loop.create_future(), bridge
+  concurrent.futures with asyncio.wrap_future(), and glue callback-based
+  code into the async world for library and framework development.
+---
+
 # Futures
 
 Chapter 3 covered [what futures are](../how-asyncio-works/tasks-and-futures.md):

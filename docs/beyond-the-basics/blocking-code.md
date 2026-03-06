@@ -1,3 +1,11 @@
+---
+title: Blocking Code
+description: >-
+  Safely integrate synchronous and blocking code into async programs using
+  asyncio.to_thread() and loop.run_in_executor(). Understand why blocking
+  calls freeze the event loop and how to fix them.
+---
+
 # Blocking Code
 
 Not everything in the Python ecosystem is async. You will need to call

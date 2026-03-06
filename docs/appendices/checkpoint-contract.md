@@ -1,3 +1,11 @@
+---
+title: Checkpoint Contract
+description: >-
+  Complete reference for which asyncio operations always suspend,
+  conditionally suspend, or never suspend. Essential for reasoning about
+  task interleaving, cancellation delivery, and starvation.
+---
+
 # Checkpoint Contract
 
 Every `await` expression is a *potential* checkpoint -- a point where the

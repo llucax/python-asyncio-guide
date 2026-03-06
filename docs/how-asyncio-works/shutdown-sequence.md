@@ -1,3 +1,12 @@
+---
+title: Shutdown Sequence
+description: >-
+  What asyncio.run() does when your main coroutine returns — pending task
+  cancellation, async generator shutdown, executor shutdown, and loop
+  closure. Understand the warnings and tracebacks that appear during
+  shutdown.
+---
+
 # Shutdown Sequence
 
 Your `main()` coroutine returns, and you might think the program is done. It is

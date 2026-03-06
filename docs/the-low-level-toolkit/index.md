@@ -1,3 +1,12 @@
+---
+title: The Low-Level Toolkit
+description: >-
+  Low-level asyncio APIs for library and framework authors. Covers loop
+  access, manual task coordination, bare futures, callbacks, threading
+  integration, and the transports-and-protocols layer.
+icon: lucide/book-open
+---
+
 # The Low-Level Toolkit
 
 This chapter is for library and framework authors who need to build on top of

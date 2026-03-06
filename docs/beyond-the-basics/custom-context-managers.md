@@ -1,3 +1,11 @@
+---
+title: Custom Context Managers
+description: >-
+  Create your own async context managers with @asynccontextmanager and
+  AsyncExitStack. Learn patterns for composing async resource lifetimes
+  and wrapping setup/teardown logic into reusable async with blocks.
+---
+
 # Custom Context Managers
 
 Chapter 1 covered *using* `async with` with context managers that asyncio

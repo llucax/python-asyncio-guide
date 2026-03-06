@@ -1,3 +1,12 @@
+---
+title: Advanced Coordination
+description: >-
+  Specialized asyncio coordination primitives — Condition, Barrier,
+  BoundedSemaphore, PriorityQueue, and LifoQueue. Solve specific
+  inter-task synchronization problems beyond Queue, Lock, Event,
+  and Semaphore.
+---
+
 # Advanced Coordination
 
 Chapter 1 covered the four coordination primitives you will use most often --

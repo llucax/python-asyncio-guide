@@ -1,3 +1,12 @@
+---
+title: How Asyncio Works
+description: >-
+  Understand the machinery underneath asyncio — the event loop, tasks and
+  futures, cancellation internals, and the shutdown sequence. Essential
+  knowledge for diagnosing surprising behavior in async programs.
+icon: lucide/book-open
+---
+
 # How Asyncio Works
 
 Chapters 1 and 2 taught you how to *use* asyncio. This chapter teaches you how

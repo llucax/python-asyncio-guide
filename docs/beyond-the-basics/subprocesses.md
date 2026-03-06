@@ -1,3 +1,11 @@
+---
+title: Subprocesses
+description: >-
+  Run external commands asynchronously with asyncio.create_subprocess_exec()
+  and asyncio.create_subprocess_shell(). Stream stdin, stdout, and stderr
+  without blocking the event loop.
+---
+
 # Subprocesses
 
 Running external commands is a common need in async programs. You might be

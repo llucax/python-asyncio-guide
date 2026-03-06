@@ -1,3 +1,12 @@
+---
+title: Tasks and Futures
+description: >-
+  Understand asyncio.Future and asyncio.Task — the concrete objects that
+  make concurrency work. Learn how create_task() schedules coroutines,
+  the task lifecycle, and how tasks drive coroutines forward one await
+  at a time.
+---
+
 # Tasks and Futures
 
 The event loop is the scheduler, but it doesn't do much by itself. It needs

@@ -1,3 +1,11 @@
+---
+title: Callbacks and Threading
+description: >-
+  Bridge threads and the asyncio event loop with done callbacks,
+  call_soon_threadsafe(), run_coroutine_threadsafe(), and signal handling.
+  Schedule async work from synchronous threads safely.
+---
+
 # Callbacks and Threading
 
 Chapter 2 covered

@@ -1,3 +1,12 @@
+---
+title: Everyday Asyncio
+description: >-
+  Everything you need to write correct, robust async programs — coroutines,
+  concurrent tasks, cancellation, timeouts, resource management, networking,
+  and inter-task coordination using safe, high-level APIs.
+icon: lucide/book-open
+---
+
 # Everyday Asyncio
 
 This chapter covers everything you need to write correct, robust async
