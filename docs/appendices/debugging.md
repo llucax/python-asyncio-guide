@@ -58,10 +58,11 @@ if __name__ == "__main__":
     asyncio.run(main(), debug=True)
 ```
 
-> [!TIP]
-> In staging, set the threshold to something slightly below your latency
-> budget. If your SLA is 200 ms end-to-end, warning at 50 ms gives you early
-> notice before a single slow callback eats your entire budget.
+!!! tip
+
+    In staging, set the threshold to something slightly below your latency
+    budget. If your SLA is 200 ms end-to-end, warning at 50 ms gives you
+    early notice before a single slow callback eats your entire budget.
 
 ## Diagnosing a Blocked Loop
 
@@ -111,9 +112,11 @@ with ProcessPoolExecutor() as pool:
     result = await loop.run_in_executor(pool, expensive_computation, payload)
 ```
 
-> [!NOTE]
-> Debug mode warns *after* the blocking call completes. It cannot interrupt the
-> call or prevent the freeze. The only real fix is to not block the loop.
+!!! note
+
+    Debug mode warns *after* the blocking call completes. It cannot
+    interrupt the call or prevent the freeze. The only real fix is to not
+    block the loop.
 
 ## Diagnosing Task Leaks
 
@@ -212,10 +215,11 @@ except asyncio.CancelledError:
     raise  # Never omit this
 ```
 
-> [!CAUTION]
-> Third-party libraries can swallow `CancelledError` too. If the bug is not in
-> your code, check the library's exception handling. This is a common source of
-> hard-to-find timeout failures.
+!!! danger
+
+    Third-party libraries can swallow `CancelledError` too. If the bug is
+    not in your code, check the library's exception handling. This is a
+    common source of hard-to-find timeout failures.
 
 ## Diagnosing ExceptionGroup Confusion
 
@@ -269,10 +273,11 @@ matching handler, and re-raises anything unhandled as a new `ExceptionGroup`.
 See [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) for the
 full explanation.
 
-> [!IMPORTANT]
-> You cannot mix `except` and `except*` in the same `try` block. If you need
-> `except*` for the `TaskGroup` errors, all handlers in that block must use the
-> starred form.
+!!! info
+
+    You cannot mix `except` and `except*` in the same `try` block. If you
+    need `except*` for the `TaskGroup` errors, all handlers in that block
+    must use the starred form.
 
 ## Diagnosing Deadlocks
 

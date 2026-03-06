@@ -126,14 +126,16 @@ Now the producer blocks after 50 items and can only continue as the consumer
 drains the queue. Memory stays bounded, and the system adapts to the
 consumer's pace.
 
-> [!IMPORTANT]
-> Always set `maxsize`. Start with a small number (10--100) and adjust based
-> on observation.
+!!! warning
 
-> [!TIP]
-> **Trio users:** Trio's `trio.open_memory_channel()` requires a max buffer
-> size at creation time -- no "unbounded" default. asyncio's `Queue` defaults
-> to unbounded, which is why you must be disciplined about `maxsize`.
+    Always set `maxsize`. Start with a small number (10--100) and adjust based
+    on observation.
+
+!!! tip "Trio users"
+
+    Trio's `trio.open_memory_channel()` requires a max buffer
+    size at creation time -- no "unbounded" default. asyncio's `Queue` defaults
+    to unbounded, which is why you must be disciplined about `maxsize`.
 
 ## Queue Shutdown Patterns
 
@@ -144,9 +146,10 @@ any unique object works. The critical detail: **send one sentinel per
 consumer.** If you have three consumers but only send one sentinel, two of
 them will hang forever.
 
-> [!TIP]
-> If `None` is a valid data value, define a dedicated sentinel:
-> `_STOP = object()`. Then compare with `is _STOP` instead of `is None`.
+!!! tip
+
+    If `None` is a valid data value, define a dedicated sentinel:
+    `_STOP = object()`. Then compare with `is _STOP` instead of `is None`.
 
 An alternative is `task_done()`/`join()`: the producer calls `join()` after
 enqueuing all items, which blocks until every item has been marked done. This
@@ -252,11 +255,12 @@ Total processed: 8
 The inner `TaskGroup` ensures all producers finish before sentinels are sent.
 Consumers run inside the outer group, draining the queue the whole time.
 
-> [!WARNING]
-> If a producer raises, the inner `TaskGroup` cancels its siblings and the
-> exception propagates to the outer group, which cancels the consumers. This
-> is correct -- if producers fail, consumers should not wait for data that
-> will never arrive.
+!!! warning
+
+    If a producer raises, the inner `TaskGroup` cancels its siblings and the
+    exception propagates to the outer group, which cancels the consumers. This
+    is correct -- if producers fail, consumers should not wait for data that
+    will never arrive.
 
 ## `asyncio.Lock`
 
@@ -311,15 +315,17 @@ Final balances: {'alice': 50, 'bob': 60}
 Without the lock, the `await` between reading and writing would create a race
 condition -- two tasks could both see `alice: 100` and each deduct 30.
 
-> [!CAUTION]
-> asyncio locks are **not reentrant**. If a task that already holds the lock
-> tries to acquire it again, it will deadlock. If you need reentrant locking,
-> see Chapter 2's advanced coordination section.
+!!! danger
 
-> [!TIP]
-> Prefer queues over locks whenever possible. A queue makes data flow explicit
-> and avoids bugs where you forget to acquire the lock or hold two locks in
-> the wrong order.
+    asyncio locks are **not reentrant**. If a task that already holds the lock
+    tries to acquire it again, it will deadlock. If you need reentrant locking,
+    see Chapter 2's advanced coordination section.
+
+!!! tip
+
+    Prefer queues over locks whenever possible. A queue makes data flow explicit
+    and avoids bugs where you forget to acquire the lock or hold two locks in
+    the wrong order.
 
 ## `asyncio.Event`
 
@@ -381,11 +387,12 @@ All three handlers blocked on `db_ready.wait()` until `ready.set()` was
 called, then woke up simultaneously. Calling `wait()` *after* the event is
 already set returns immediately -- no race condition.
 
-> [!NOTE]
-> An `Event` is best suited for *one-shot* or *phase-transition* signaling: a
-> resource is ready, a shutdown has been requested, initialisation is complete.
-> If you need repeated notifications, a `Queue` or a `Condition` (Chapter 2)
-> is a better fit.
+!!! note
+
+    An `Event` is best suited for *one-shot* or *phase-transition* signaling: a
+    resource is ready, a shutdown has been requested, initialisation is complete.
+    If you need repeated notifications, a `Queue` or a `Condition` (Chapter 2)
+    is a better fit.
 
 ## `asyncio.Semaphore`
 
@@ -436,15 +443,17 @@ All six tasks were created at once, but the semaphore ensured only three were
 active at any given time. This gives you the full concurrency of a `TaskGroup`
 with a hard cap on how many tasks are doing real work simultaneously.
 
-> [!TIP]
-> **Trio users:** Trio has `trio.CapacityLimiter`, which works similarly but
-> has stricter ownership semantics. asyncio's `Semaphore` is simpler -- it is
-> just a counter.
+!!! tip "Trio users"
 
-> [!WARNING]
-> A `Semaphore` limits concurrency, not rate. A semaphore with a value of 3
-> means "at most 3 tasks at once," not "3 tasks per second." If you need rate
-> limiting, you need a token bucket or leaky bucket algorithm.
+    Trio has `trio.CapacityLimiter`, which works similarly but
+    has stricter ownership semantics. asyncio's `Semaphore` is simpler -- it is
+    just a counter.
+
+!!! warning
+
+    A `Semaphore` limits concurrency, not rate. A semaphore with a value of 3
+    means "at most 3 tasks at once," not "3 tasks per second." If you need rate
+    limiting, you need a token bucket or leaky bucket algorithm.
 
 ## Choosing the Right Tool
 

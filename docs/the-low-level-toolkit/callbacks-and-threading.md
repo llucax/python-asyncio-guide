@@ -81,14 +81,15 @@ A few things to know:
 - **If the future is already done when you add the callback, it still fires**
   -- on the next loop iteration, via `call_soon()`.
 
-> [!NOTE]
-> Done callbacks are the low-level mechanism that makes `await task` work.
-> The task pseudocode in
-> [Chapter 3](../how-asyncio-works/tasks-and-futures.md) showed how a task
-> registers `__step` as a done callback on the future it is awaiting. You
-> rarely need done callbacks yourself -- `await` is almost always cleaner --
-> but they are indispensable in library code that must react to completion
-> without suspending.
+!!! note
+
+    Done callbacks are the low-level mechanism that makes `await task`
+    work. The task pseudocode in
+    [Chapter 3](../how-asyncio-works/tasks-and-futures.md) showed how a
+    task registers `__step` as a done callback on the future it is
+    awaiting. You rarely need done callbacks yourself -- `await` is almost
+    always cleaner -- but they are indispensable in library code that must
+    react to completion without suspending.
 
 ## `call_soon_threadsafe()`
 
@@ -155,11 +156,12 @@ progress: 100%
 background work complete
 ```
 
-> [!WARNING]
-> `call_soon_threadsafe()` only schedules *plain callbacks* -- regular
-> functions with positional arguments. You cannot pass a coroutine to it. If
-> you need to schedule a coroutine from another thread, use
-> `run_coroutine_threadsafe()` (next section).
+!!! warning
+
+    `call_soon_threadsafe()` only schedules *plain callbacks* -- regular
+    functions with positional arguments. You cannot pass a coroutine to it.
+    If you need to schedule a coroutine from another thread, use
+    `run_coroutine_threadsafe()` (next section).
 
 ## `run_coroutine_threadsafe()`
 
@@ -243,11 +245,13 @@ Key details:
   thread. You can also call `cf_future.cancel()` to cancel the underlying
   asyncio task.
 
-> [!IMPORTANT]
-> You need a *running* event loop to use `run_coroutine_threadsafe()`. It does
-> not start one for you. The typical pattern is to start the loop in a
-> dedicated thread (or with `asyncio.run()` in the main thread) and pass the
-> loop object to any sync threads that need it.
+!!! warning
+
+    You need a *running* event loop to use
+    `run_coroutine_threadsafe()`. It does not start one for you. The
+    typical pattern is to start the loop in a dedicated thread (or with
+    `asyncio.run()` in the main thread) and pass the loop object to any
+    sync threads that need it.
 
 ## Signal Handling
 
@@ -324,12 +328,14 @@ A few notes:
   forbids it). Common choices are `SIGINT`, `SIGTERM`, and occasionally
   `SIGHUP` for configuration reload.
 
-> [!TIP]
-> If your program is a simple script rather than a long-running server, you
-> probably do not need signal handlers. `asyncio.run()` already handles
-> `KeyboardInterrupt` (from `SIGINT`) by cancelling the main task and running
-> the shutdown sequence. Signal handlers are for *custom* shutdown behavior --
-> draining connections, writing state to disk, logging a clean exit.
+!!! tip
+
+    If your program is a simple script rather than a long-running server,
+    you probably do not need signal handlers. `asyncio.run()` already
+    handles `KeyboardInterrupt` (from `SIGINT`) by cancelling the main
+    task and running the shutdown sequence. Signal handlers are for
+    *custom* shutdown behavior -- draining connections, writing state to
+    disk, logging a clean exit.
 
 ## Summary
 

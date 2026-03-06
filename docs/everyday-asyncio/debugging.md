@@ -51,10 +51,11 @@ When debug mode is active, the event loop:
 - **Reports unclosed resources** -- transports, event loops, and other objects
   that were garbage-collected without being properly shut down.
 
-> [!TIP]
-> Always develop with `debug=True`. The overhead is negligible and the
-> diagnostics catch real bugs. Turn it off in production if the extra logging
-> is too noisy, but consider leaving it on in staging.
+!!! tip
+
+    Always develop with `debug=True`. The overhead is negligible and the
+    diagnostics catch real bugs. Turn it off in production if the extra logging
+    is too noisy, but consider leaving it on in staging.
 
 ## Common Mistakes Checklist
 
@@ -110,10 +111,11 @@ the loop thread, deadlocking everything.
 threads; the `asyncio` versions are for tasks. See
 [Coordination](coordination.md).
 
-> [!NOTE]
-> If your bug isn't in this list, check the
-> [Best Practices, Pitfalls, and Gotchas](../appendices/best-practices.md)
-> appendix for a more comprehensive catalogue.
+!!! note
+
+    If your bug isn't in this list, check the
+    [Best Practices, Pitfalls, and Gotchas](../appendices/best-practices.md)
+    appendix for a more comprehensive catalogue.
 
 ## Checkpoint Contract (Condensed)
 
@@ -134,10 +136,11 @@ these two lines?", check whether there is an `await` on something in the
 will) get a turn. If the only `await` is on something that completes
 immediately, the switch is not guaranteed.
 
-> [!IMPORTANT]
-> `await` does not *always* mean "another task runs here." It means "another
-> task *may* run here." The distinction matters when reasoning about shared
-> mutable state.
+!!! info
+
+    `await` does not *always* mean "another task runs here." It means "another
+    task *may* run here." The distinction matters when reasoning about shared
+    mutable state.
 
 ## Reading Tracebacks
 
@@ -160,9 +163,10 @@ creation-site traceback for every task. When something goes wrong, you see not
 just *where* the exception was raised, but *where the task was created*. This
 is invaluable when a task was spawned in one place and failed in another.
 
-> [!TIP]
-> When a traceback is overwhelming, start from the bottom. The last exception
-> in the chain is usually the root cause. Work upward to see how it propagated
-> through task groups and `except*` handlers.
+!!! tip
+
+    When a traceback is overwhelming, start from the bottom. The last exception
+    in the chain is usually the root cause. Work upward to see how it propagated
+    through task groups and `except*` handlers.
 
 ---

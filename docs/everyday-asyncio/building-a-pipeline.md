@@ -258,11 +258,12 @@ The `maxsize` you choose is a tuning knob. Smaller means tighter
 memory bounds but more context-switching between actors. Larger means
 more buffering but fewer suspensions.
 
-> [!TIP]
-> **Trio users:** Trio's `trio.open_memory_channel()` requires a max
-> buffer size at creation time -- there is no "unbounded" default.
-> asyncio's `Queue` defaults to unbounded (`maxsize=0`), which is why
-> you must be disciplined about always passing `maxsize`.
+!!! tip "Trio users"
+
+    Trio's `trio.open_memory_channel()` requires a max
+    buffer size at creation time -- there is no "unbounded" default.
+    asyncio's `Queue` defaults to unbounded (`maxsize=0`), which is why
+    you must be disciplined about always passing `maxsize`.
 
 ## Step 3: Error Handling
 
@@ -609,26 +610,27 @@ cleanup code required -- the structure handles it. (See
 
 ## Common Failure Modes
 
-> [!WARNING]
-> Watch out for these common failure modes -- each one can cause
-> subtle, hard-to-debug problems in production:
->
-> - **Task leaks.** Creating tasks with `asyncio.create_task()`
->   outside a `TaskGroup` and losing the reference. Prefer `TaskGroup`
->   for anything with a defined lifetime.
-> - **Swallowed cancellation.** Catching
->   [`CancelledError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError)
->   and continuing work instead of letting it propagate. See
->   [Cancellation and Timeouts](cancellation-and-timeouts.md) for the
->   details.
-> - **Unbounded queues.** Forgetting to set `maxsize` and wondering
->   why memory keeps growing under load.
-> - **Sentinel collisions.** Using `None` as a sentinel in queues
->   that carry optional data. Use a dedicated type.
-> - **Blocking the event loop.** Calling `time.sleep()`, running
->   CPU-heavy computation, or doing synchronous I/O inside an
->   `async def`. The event loop can't schedule other tasks while
->   you are blocking.
+!!! warning
+
+    Watch out for these common failure modes -- each one can cause
+    subtle, hard-to-debug problems in production:
+
+    - **Task leaks.** Creating tasks with `asyncio.create_task()`
+      outside a `TaskGroup` and losing the reference. Prefer `TaskGroup`
+      for anything with a defined lifetime.
+    - **Swallowed cancellation.** Catching
+      [`CancelledError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError)
+      and continuing work instead of letting it propagate. See
+      [Cancellation and Timeouts](cancellation-and-timeouts.md) for the
+      details.
+    - **Unbounded queues.** Forgetting to set `maxsize` and wondering
+      why memory keeps growing under load.
+    - **Sentinel collisions.** Using `None` as a sentinel in queues
+      that carry optional data. Use a dedicated type.
+    - **Blocking the event loop.** Calling `time.sleep()`, running
+      CPU-heavy computation, or doing synchronous I/O inside an
+      `async def`. The event loop can't schedule other tasks while
+      you are blocking.
 
 ## Beyond This Example
 

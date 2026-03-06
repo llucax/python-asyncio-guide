@@ -128,11 +128,12 @@ asyncio creates a `Task` object and then calls `call_soon` to schedule the
 first step of that task. Every task begins life as a callback on the ready
 queue.
 
-> [!NOTE]
-> `call_soon` returns a
-> [`Handle`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Handle)
-> object. You can call `handle.cancel()` to prevent the callback from running,
-> as long as it hasn't been executed yet.
+!!! note
+
+    `call_soon` returns a
+    [`Handle`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Handle)
+    object. You can call `handle.cancel()` to prevent the callback from
+    running, as long as it hasn't been executed yet.
 
 ## Timers: `call_later()` and `call_at()`
 
@@ -192,13 +193,14 @@ When you call `loop.call_later(0.5, cb)`, asyncio computes
 `loop.time() + 0.5` and inserts that into the timer heap. `call_later` is just
 a convenience wrapper around `call_at`.
 
-> [!IMPORTANT]
-> `asyncio.sleep()` is built on `call_later()` under the hood. When you write
-> `await asyncio.sleep(1.0)`, asyncio creates a `Future`, schedules a
-> `call_later` to resolve it after one second, and suspends your coroutine
-> until that future completes. Now you know why it is a checkpoint -- your
-> coroutine genuinely gives up control and waits for a timer callback to wake
-> it.
+!!! info
+
+    `asyncio.sleep()` is built on `call_later()` under the hood. When you
+    write `await asyncio.sleep(1.0)`, asyncio creates a `Future`, schedules
+    a `call_later` to resolve it after one second, and suspends your
+    coroutine until that future completes. Now you know why it is a
+    checkpoint -- your coroutine genuinely gives up control and waits for a
+    timer callback to wake it.
 
 ## Cooperative Scheduling
 
@@ -311,13 +313,15 @@ Here is exactly what happened inside the loop:
 The total wall time is ~2 seconds (1s for `hog` + 1s for `polite`'s sleeps in
 series) instead of the ~1s you would see if they overlapped.
 
-> [!TIP]
-> If a computation is genuinely heavy, sprinkling `await asyncio.sleep(0)`
-> every N iterations is a band-aid. The better solution is
-> `asyncio.to_thread()` or `loop.run_in_executor()` with a
-> `ProcessPoolExecutor`, as covered in
-> [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
-> `sleep(0)` for cases where the overhead of a thread switch is not justified.
+!!! tip
+
+    If a computation is genuinely heavy, sprinkling `await asyncio.sleep(0)`
+    every N iterations is a band-aid. The better solution is
+    `asyncio.to_thread()` or `loop.run_in_executor()` with a
+    `ProcessPoolExecutor`, as covered in
+    [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
+    `sleep(0)` for cases where the overhead of a thread switch is not
+    justified.
 
 ## Fairness
 
@@ -373,12 +377,13 @@ asyncio.sleep(0)` sends the current task to the back of the ready queue, and
 the next task gets its turn. This is the only form of "fairness" asyncio
 provides -- there is no preemption, no time budgets, no automatic yielding.
 
-> [!NOTE]
-> The output order above depends on the order in which tasks were created.
-> If you need a specific execution order between tasks, use explicit
-> coordination primitives (`Event`, `Queue`, etc.) from
-> [Coordination](../everyday-asyncio/coordination.md). Relying on
-> scheduling order is fragile.
+!!! note
+
+    The output order above depends on the order in which tasks were created.
+    If you need a specific execution order between tasks, use explicit
+    coordination primitives (`Event`, `Queue`, etc.) from
+    [Coordination](../everyday-asyncio/coordination.md). Relying on
+    scheduling order is fragile.
 
 ## Why This Matters
 

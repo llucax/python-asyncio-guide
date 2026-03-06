@@ -31,13 +31,14 @@ That is deliberate -- cancellation should pass through most error handlers
 undisturbed. If it were a subclass of `Exception`, every `except Exception:`
 in your code would accidentally swallow it.
 
-> [!NOTE]
-> `CancelledError` is not delivered at arbitrary points like a POSIX signal. It
-> only appears at `await` expressions -- the same checkpoints discussed in the
-> [Getting Started](getting-started.md) section. Between checkpoints, your
-> code runs uninterrupted. This is the *cooperative cancellation* model: the
-> framework requests cancellation, and your code cooperates by hitting an
-> `await`.
+!!! note
+
+    `CancelledError` is not delivered at arbitrary points like a POSIX signal. It
+    only appears at `await` expressions -- the same checkpoints discussed in the
+    [Getting Started](getting-started.md) section. Between checkpoints, your
+    code runs uninterrupted. This is the *cooperative cancellation* model: the
+    framework requests cancellation, and your code cooperates by hitting an
+    `await`.
 
 ## The Cardinal Rule: Never Swallow Cancellation
 
@@ -116,10 +117,11 @@ Cancellation propagates correctly now. The `asyncio.timeout()` context manager
 converts it to `TimeoutError` at the `async with` boundary, and the caller
 handles the timeout cleanly.
 
-> [!CAUTION]
-> If you see `except asyncio.CancelledError:` without a `raise` in any code
-> path, that is almost always a bug. Treat it the same way you would treat
-> `except BaseException: pass` -- something has gone wrong.
+!!! danger
+
+    If you see `except asyncio.CancelledError:` without a `raise` in any code
+    path, that is almost always a bug. Treat it the same way you would treat
+    `except BaseException: pass` -- something has gone wrong.
 
 ## Cleanup with `try`/`finally`
 
@@ -213,11 +215,12 @@ async with asyncio.timeout(delay):
     await slow_operation()
 ```
 
-> [!TIP]
-> **Trio users:** `asyncio.timeout()` is equivalent to
-> `trio.fail_after()`. The main difference is that Trio uses *cancel scopes*
-> as an explicit concept, while asyncio's timeout context managers handle the
-> scoping implicitly.
+!!! tip "Trio users"
+
+    `asyncio.timeout()` is equivalent to
+    `trio.fail_after()`. The main difference is that Trio uses *cancel scopes*
+    as an explicit concept, while asyncio's timeout context managers handle the
+    scoping implicitly.
 
 ## `asyncio.timeout_at()`
 
@@ -225,10 +228,11 @@ async with asyncio.timeout(delay):
 works like `asyncio.timeout()` but takes an *absolute* deadline based on the
 event loop's internal clock, rather than a relative delay.
 
-> [!NOTE]
-> `asyncio.get_running_loop()` is covered in
-> [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
-> Here you use it only to read the event-loop clock for `timeout_at()`.
+!!! note
+
+    `asyncio.get_running_loop()` is covered in
+    [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
+    Here you use it only to read the event-loop clock for `timeout_at()`.
 
 ```python
 # timeout_at_demo.py
@@ -304,11 +308,12 @@ When the timeout fires, the `async with` block exits via `TimeoutError`.
 The context manager handles it internally, so execution continues after the
 block. You then check `cm.expired()` to decide what to do next.
 
-> [!IMPORTANT]
-> The code *after* the `async with` block runs only if the timeout fired or
-> the block completed normally. If the task is cancelled for a reason *other*
-> than this timeout, the `CancelledError` propagates out without reaching the
-> code after the block.
+!!! info
+
+    The code *after* the `async with` block runs only if the timeout fired or
+    the block completed normally. If the task is cancelled for a reason *other*
+    than this timeout, the `CancelledError` propagates out without reaching the
+    code after the block.
 
 ## Timeouts and TaskGroups
 
@@ -386,11 +391,12 @@ Since it didn't *raise*, the `TaskGroup` didn't cancel the first task. Choose
 based on whether the timeout is a property of the whole group or of individual
 operations.
 
-> [!WARNING]
-> If a child task's timeout raises `TimeoutError` and that error is *not*
-> caught inside the child, it propagates into the `TaskGroup`, which treats it
-> as a child failure and cancels all siblings. Make sure individual timeouts
-> are handled within the child if you want the group to continue.
+!!! warning
+
+    If a child task's timeout raises `TimeoutError` and that error is *not*
+    caught inside the child, it propagates into the `TaskGroup`, which treats it
+    as a child failure and cancels all siblings. Make sure individual timeouts
+    are handled within the child if you want the group to continue.
 
 ## The `except BaseException:` Trap
 
@@ -443,9 +449,10 @@ naturally lets `CancelledError` and `KeyboardInterrupt` pass through. Reach
 for `except BaseException:` only when you have a specific reason, and always
 re-raise at the end.
 
-> [!TIP]
-> A quick way to audit your codebase: search for `except BaseException` and
-> bare `except:` statements. Every match should either re-raise the caught
-> exception or have a very good comment explaining why it doesn't.
+!!! tip
+
+    A quick way to audit your codebase: search for `except BaseException` and
+    bare `except:` statements. Every match should either re-raise the caught
+    exception or have a very good comment explaining why it doesn't.
 
 ---

@@ -87,9 +87,10 @@ The key methods you use day-to-day:
   connection. Common keys: `"peername"` (remote address), `"sockname"` (local
   address), `"socket"` (the raw socket object), `"ssl_object"` (TLS info).
 
-> [!NOTE]
-> `transport.write()` accepts `bytes`, not `str`. If you pass a string you
-> get a `TypeError`. Encode your data before writing.
+!!! note
+
+    `transport.write()` accepts `bytes`, not `str`. If you pass a string
+    you get a `TypeError`. Encode your data before writing.
 
 ## Protocols
 
@@ -239,11 +240,12 @@ back to the coroutine world. This is the standard bridge between callback-based
 protocols and async/await code -- create a future, pass it into the protocol,
 and `await` it from your coroutine.
 
-> [!IMPORTANT]
-> The protocol factory (the first argument to `create_server()` and
-> `create_connection()`) must return a *new* protocol instance each time it is
-> called. Each connection gets its own protocol. Do not return the same
-> instance for multiple connections.
+!!! warning
+
+    The protocol factory (the first argument to `create_server()` and
+    `create_connection()`) must return a *new* protocol instance each time
+    it is called. Each connection gets its own protocol. Do not return the
+    same instance for multiple connections.
 
 ## Flow Control
 
@@ -290,13 +292,14 @@ underlying transport has asked the protocol to pause, and suspending your
 coroutine until `resume_writing()` fires. The streams API hides the callbacks
 behind an `await` -- but the machinery is the same.
 
-> [!TIP]
-> If you are implementing a proxy or relay (reading from one transport and
-> writing to another), flow control is critical. When the downstream transport
-> signals `pause_writing()`, call `pause_reading()` on the upstream transport.
-> When `resume_writing()` fires, call `resume_reading()`. This chains
-> backpressure end-to-end and prevents your proxy from buffering the entire
-> data stream in memory.
+!!! tip
+
+    If you are implementing a proxy or relay (reading from one transport
+    and writing to another), flow control is critical. When the downstream
+    transport signals `pause_writing()`, call `pause_reading()` on the
+    upstream transport. When `resume_writing()` fires, call
+    `resume_reading()`. This chains backpressure end-to-end and prevents
+    your proxy from buffering the entire data stream in memory.
 
 ## A Complete Example: Echo Server with Client
 
@@ -417,11 +420,13 @@ For everything else -- HTTP clients, simple TCP services, scripting, CLI tools
 -- use Streams. They exist specifically so you don't have to write protocol
 classes for routine networking.
 
-> [!WARNING]
-> Do not mix the two layers carelessly. If you are using `StreamReader` and
-> `StreamWriter`, do not also call methods on the underlying transport
-> directly (like `transport.pause_reading()`) unless you understand how the
-> stream layer uses those methods internally. The stream layer manages flow
-> control on your behalf -- bypassing it can cause lost data or deadlocks.
+!!! warning
+
+    Do not mix the two layers carelessly. If you are using `StreamReader`
+    and `StreamWriter`, do not also call methods on the underlying
+    transport directly (like `transport.pause_reading()`) unless you
+    understand how the stream layer uses those methods internally. The
+    stream layer manages flow control on your behalf -- bypassing it can
+    cause lost data or deadlocks.
 
 ---

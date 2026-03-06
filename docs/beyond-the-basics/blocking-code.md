@@ -73,11 +73,12 @@ would expect from concurrent execution. In a real application, those 2 frozen
 seconds mean dropped connections, missed heartbeats, and unresponsive
 services.
 
-> [!CAUTION]
-> Asyncio debug mode (covered in [Debugging](../everyday-asyncio/debugging.md))
-> logs a warning when a callback blocks the loop for more than 100 ms, but it
-> cannot *prevent* the freeze. The only fix is to not block the loop in the
-> first place.
+!!! warning
+
+    Asyncio debug mode (covered in [Debugging](../everyday-asyncio/debugging.md))
+    logs a warning when a callback blocks the loop for more than 100 ms, but it
+    cannot *prevent* the freeze. The only fix is to not block the loop in the
+    first place.
 
 ## `asyncio.to_thread()`
 
@@ -147,16 +148,18 @@ Notice that `blocking_work` is a plain `def` function, not `async def`. That
 is the whole point: you already have synchronous code and you need to call it
 from an async context. `to_thread` bridges the gap.
 
-> [!TIP]
-> **Trio users:** `asyncio.to_thread()` is equivalent to
-> `trio.to_thread.run_sync()`. Same idea, same purpose.
+!!! tip "Trio users"
 
-> [!NOTE]
-> `to_thread` uses Python's default
-> [`ThreadPoolExecutor`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor).
-> The default pool size was changed to `min(32, os.cpu_count() + 4)` in Python
-> 3.8. For most I/O-bound workloads this is plenty. If you need a larger pool,
-> pass a custom executor to `loop.run_in_executor()` instead.
+    `asyncio.to_thread()` is equivalent to
+    `trio.to_thread.run_sync()`. Same idea, same purpose.
+
+!!! note
+
+    `to_thread` uses Python's default
+    [`ThreadPoolExecutor`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor).
+    The default pool size was changed to `min(32, os.cpu_count() + 4)` in Python
+    3.8. For most I/O-bound workloads this is plenty. If you need a larger pool,
+    pass a custom executor to `loop.run_in_executor()` instead.
 
 ## Thread Safety
 
@@ -207,13 +210,14 @@ $ python threadsafe_callback.py
 Results: ['item-0', 'item-1', 'item-2']
 ```
 
-> [!NOTE]
-> `asyncio.get_running_loop()` and `loop.call_soon_threadsafe()` are low-level
-> event loop APIs covered in detail in
-> [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
-> They appear here because they are the *only* way to safely communicate from
-> a background thread back to the event loop -- there is no high-level
-> alternative for this pattern.
+!!! note
+
+    `asyncio.get_running_loop()` and `loop.call_soon_threadsafe()` are low-level
+    event loop APIs covered in detail in
+    [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
+    They appear here because they are the *only* way to safely communicate from
+    a background thread back to the event loop -- there is no high-level
+    alternative for this pattern.
 
 `call_soon_threadsafe` schedules a callback on the event loop from any thread.
 It is the *only* safe way to touch event loop internals from outside the loop
@@ -221,11 +225,12 @@ thread. For more complex patterns -- like feeding items into an
 `asyncio.Queue` from a thread -- wrap the `queue.put_nowait()` call inside
 `call_soon_threadsafe`.
 
-> [!WARNING]
-> Do not pass asyncio primitives (locks, events, queues) directly to a thread
-> and call their methods there. It will appear to work in simple cases and
-> break under load. Always go through `call_soon_threadsafe` or use
-> `threading`-based synchronization primitives instead.
+!!! warning
+
+    Do not pass asyncio primitives (locks, events, queues) directly to a thread
+    and call their methods there. It will appear to work in simple cases and
+    break under load. Always go through `call_soon_threadsafe` or use
+    `threading`-based synchronization primitives instead.
 
 ## `ProcessPoolExecutor` for CPU-Bound Work
 
@@ -293,13 +298,14 @@ $ python cpu_bound.py
 Checked 5 numbers in 0.43s
 ```
 
-> [!NOTE]
-> Like the `call_soon_threadsafe` example above, this recipe uses the low-level
-> APIs `asyncio.get_running_loop()` and `loop.run_in_executor()`, which are
-> covered in [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
-> `run_in_executor` is the only built-in way to dispatch work to a
-> `ProcessPoolExecutor` from async code, so you will see it whenever CPU-bound
-> offloading comes up.
+!!! note
+
+    Like the `call_soon_threadsafe` example above, this recipe uses the low-level
+    APIs `asyncio.get_running_loop()` and `loop.run_in_executor()`, which are
+    covered in [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
+    `run_in_executor` is the only built-in way to dispatch work to a
+    `ProcessPoolExecutor` from async code, so you will see it whenever CPU-bound
+    offloading comes up.
 
 A few things to note:
 
@@ -315,11 +321,12 @@ A few things to note:
   work is done. In a long-running service, you would typically create the pool
   once at startup and reuse it.
 
-> [!IMPORTANT]
-> Only reach for `ProcessPoolExecutor` when the work is genuinely CPU-bound.
-> Process creation and inter-process communication have significant overhead
-> compared to threads. For I/O-bound blocking calls, `to_thread` is simpler
-> and faster.
+!!! info
+
+    Only reach for `ProcessPoolExecutor` when the work is genuinely CPU-bound.
+    Process creation and inter-process communication have significant overhead
+    compared to threads. For I/O-bound blocking calls, `to_thread` is simpler
+    and faster.
 
 ## When to Use What
 

@@ -16,11 +16,12 @@ them with `concurrent.futures`. These are the tools you reach for when you're
 building a library or framework that needs to glue callback-based code into the
 async world.
 
-> [!NOTE]
-> If you are writing application code, you almost certainly don't need bare
-> futures. Tasks, task groups, and streams cover the vast majority of use cases.
-> This material is for library authors who are building abstractions on top of
-> asyncio's low-level machinery.
+!!! note
+
+    If you are writing application code, you almost certainly don't need
+    bare futures. Tasks, task groups, and streams cover the vast majority
+    of use cases. This material is for library authors who are building
+    abstractions on top of asyncio's low-level machinery.
 
 ## `loop.create_future()`
 
@@ -67,10 +68,11 @@ binds the future to the correct loop automatically, which avoids subtle bugs
 when multiple loops are involved (testing, embedded event loops). Always use
 `create_future()`.
 
-> [!IMPORTANT]
-> A future can only be resolved once. Calling `set_result()` or
-> `set_exception()` on a future that is already done raises
-> [`asyncio.InvalidStateError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.InvalidStateError).
+!!! warning
+
+    A future can only be resolved once. Calling `set_result()` or
+    `set_exception()` on a future that is already done raises
+    [`asyncio.InvalidStateError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.InvalidStateError).
 
 ## Wrapping Callback-Based APIs
 
@@ -191,16 +193,17 @@ future gets resolved -- and it does this thread-safely via
 `loop.call_soon_threadsafe()`. You get a clean `await`-able handle into work
 that is running on a completely different thread.
 
-> [!TIP]
-> If you control the submission, prefer
-> [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
-> or
-> [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
-> -- they handle the wrapping for you. `wrap_future()` is for when someone
-> *else* handed you a `concurrent.futures.Future` and you need to integrate it
-> into your async code. A third-party job queue, a shared executor managed by
-> another subsystem, a legacy API that returns futures -- those are the cases
-> where `wrap_future()` shines.
+!!! tip
+
+    If you control the submission, prefer
+    [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+    or
+    [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
+    -- they handle the wrapping for you. `wrap_future()` is for when
+    someone *else* handed you a `concurrent.futures.Future` and you need to
+    integrate it into your async code. A third-party job queue, a shared
+    executor managed by another subsystem, a legacy API that returns
+    futures -- those are the cases where `wrap_future()` shines.
 
 ## Error Propagation
 
@@ -264,11 +267,12 @@ The same `if not fut.done()` guard applies here. If both a success callback
 and an error callback could fire (race conditions in some libraries), the
 guard ensures only the first one resolves the future.
 
-> [!CAUTION]
-> Never pass a `BaseException` subclass (like `KeyboardInterrupt` or
-> `SystemExit`) to `set_exception()`. It raises a `TypeError`. These are
-> not meant to flow through futures -- they are process-level signals that
-> bypass normal exception handling.
+!!! danger
+
+    Never pass a `BaseException` subclass (like `KeyboardInterrupt` or
+    `SystemExit`) to `set_exception()`. It raises a `TypeError`. These are
+    not meant to flow through futures -- they are process-level signals
+    that bypass normal exception handling.
 
 ## Summary
 

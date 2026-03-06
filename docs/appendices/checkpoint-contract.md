@@ -88,12 +88,13 @@ to land.
 | `await task` | The task is still running | The task is already done -- returns its result (or raises) immediately |
 | `await future` | The future is not yet resolved | The future already has a result or exception |
 
-> [!WARNING]
-> **`await task` on an already-finished task does not suspend.** This is a
-> common source of confusion. If you are counting on `await` as a checkpoint
-> for cancellation delivery, and the awaitable has already completed, the
-> cancellation check never happens. Insert an explicit `await asyncio.sleep(0)`
-> when you need a guaranteed checkpoint.
+!!! warning
+
+    **`await task` on an already-finished task does not suspend.** This is
+    a common source of confusion. If you are counting on `await` as a
+    checkpoint for cancellation delivery, and the awaitable has already
+    completed, the cancellation check never happens. Insert an explicit
+    `await asyncio.sleep(0)` when you need a guaranteed checkpoint.
 
 Note that `stream.drain()` is particularly subtle. A common pattern is to call
 `stream.write(data)` followed by `await stream.drain()`. Because `write()` is

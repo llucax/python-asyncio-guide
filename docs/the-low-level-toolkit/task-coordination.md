@@ -16,13 +16,14 @@ whichever task finishes first, process results in completion order, or enforce
 a timeout on a single awaitable at an API boundary. That is what
 `asyncio.wait()`, `asyncio.as_completed()`, and `asyncio.wait_for()` are for.
 
-> [!CAUTION]
-> Everything in this section bypasses structured concurrency. These APIs do not
-> own the tasks they operate on -- they do not cancel stragglers, propagate
-> exceptions, or guarantee cleanup. You are responsible for all of that. Prefer
-> `TaskGroup` for application code. Reach for these tools in library code,
-> protocol implementations, and the specific situations described at the end of
-> this section.
+!!! danger
+
+    Everything in this section bypasses structured concurrency. These APIs
+    do not own the tasks they operate on -- they do not cancel stragglers,
+    propagate exceptions, or guarantee cleanup. You are responsible for all
+    of that. Prefer `TaskGroup` for application code. Reach for these tools
+    in library code, protocol implementations, and the specific situations
+    described at the end of this section.
 
 ## `asyncio.wait()`
 
@@ -194,11 +195,13 @@ flaky failed: lost connection
 This is worth repeating in its own callout because it is the single most
 common mistake with `asyncio.wait()`:
 
-> [!WARNING]
-> **`asyncio.wait()` never cancels anything.** When it returns, the tasks in
-> the `pending` set are still running. If you do not cancel them yourself, they
-> will keep running in the background with no owner -- exactly the fire-and-
-> forget problem that `TaskGroup` was designed to prevent.
+!!! warning
+
+    **`asyncio.wait()` never cancels anything.** When it returns, the tasks
+    in the `pending` set are still running. If you do not cancel them
+    yourself, they will keep running in the background with no owner --
+    exactly the fire-and-forget problem that `TaskGroup` was designed to
+    prevent.
 
 The safe pattern is always the same: wait, cancel pending, wait again.
 
@@ -443,12 +446,13 @@ another reason to never suppress `CancelledError` -- the
 [Cancellation and Timeouts](../everyday-asyncio/cancellation-and-timeouts.md)
 section in Chapter 1 explains this rule in detail.
 
-> [!NOTE]
-> `asyncio.timeout()` does not have this problem. It cancels the *current
-> task*, so the `CancelledError` propagates through the entire call chain.
-> The context manager then converts it to `TimeoutError` at the `async with`
-> boundary. There is no intermediate task whose completion state can hide the
-> cancellation.
+!!! note
+
+    `asyncio.timeout()` does not have this problem. It cancels the *current
+    task*, so the `CancelledError` propagates through the entire call
+    chain. The context manager then converts it to `TimeoutError` at the
+    `async with` boundary. There is no intermediate task whose completion
+    state can hide the cancellation.
 
 ### Passing `timeout=None`
 
@@ -496,11 +500,12 @@ continuous select-loop over a changing set of tasks.
 **Everything else.** Bounded concurrent work where all tasks must succeed or
 the group fails? That is `TaskGroup`.
 
-> [!TIP]
-> If you find yourself reaching for `wait()` or `as_completed()` in
-> application code, ask yourself: "Am I doing this because `TaskGroup` cannot
-> express this pattern, or because I did not know `TaskGroup` could?" Nine
-> times out of ten, `TaskGroup` is the better choice. The tenth time, these
-> tools are indispensable.
+!!! tip
+
+    If you find yourself reaching for `wait()` or `as_completed()` in
+    application code, ask yourself: "Am I doing this because `TaskGroup`
+    cannot express this pattern, or because I did not know `TaskGroup`
+    could?" Nine times out of ten, `TaskGroup` is the better choice. The
+    tenth time, these tools are indispensable.
 
 ---

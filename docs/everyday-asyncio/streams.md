@@ -57,10 +57,11 @@ data synchronously (no `await`), but `.drain()` is a coroutine that waits for
 the buffer to flush. And at the end, you must call both `.close()` and
 `.wait_closed()` -- more on that shortly.
 
-> [!IMPORTANT]
-> Always close the writer when you are done. An unclosed writer leaks a socket
-> and its associated file descriptor. The reader does not need to be closed
-> separately -- closing the writer shuts down the underlying connection.
+!!! warning
+
+    Always close the writer when you are done. An unclosed writer leaks a socket
+    and its associated file descriptor. The reader does not need to be closed
+    separately -- closing the writer shuts down the underlying connection.
 
 ## `StreamReader`
 
@@ -100,11 +101,12 @@ while not reader.at_eof():
     process(chunk)
 ```
 
-> [!TIP]
-> `.read(n)` returning `b""` and `.at_eof()` returning `True` both indicate
-> EOF, but they serve different purposes. Use `read()` return value checks in
-> loops where you are consuming data; use `at_eof()` when you need a
-> non-blocking check outside of a read call.
+!!! tip
+
+    `.read(n)` returning `b""` and `.at_eof()` returning `True` both indicate
+    EOF, but they serve different purposes. Use `read()` return value checks in
+    loops where you are consuming data; use `at_eof()` when you need a
+    non-blocking check outside of a read call.
 
 ## `StreamWriter`
 
@@ -140,10 +142,11 @@ writer.write(b"world!\n")
 await writer.drain()  # Flush both writes to the network
 ```
 
-> [!WARNING]
-> `.write()` does not raise if the connection has been lost. The error only
-> surfaces when you call `drain()` (or `close()`). If you forget `drain()`,
-> you may silently write into a broken pipe for a long time before noticing.
+!!! warning
+
+    `.write()` does not raise if the connection has been lost. The error only
+    surfaces when you call `drain()` (or `close()`). If you forget `drain()`,
+    you may silently write into a broken pipe for a long time before noticing.
 
 ## Resource Management for Streams
 
@@ -165,11 +168,12 @@ finally:
     await writer.wait_closed()
 ```
 
-> [!CAUTION]
-> `StreamWriter` is **not** an async context manager in the standard library
-> (as of Python 3.13). You cannot write `async with writer:`. You must call
-> `.close()` and `.wait_closed()` manually in a `try`/`finally` block. Some
-> third-party libraries add this, but the stdlib does not provide it.
+!!! danger
+
+    `StreamWriter` is **not** an async context manager in the standard library
+    (as of Python 3.13). You cannot write `async with writer:`. You must call
+    `.close()` and `.wait_closed()` manually in a `try`/`finally` block. Some
+    third-party libraries add this, but the stdlib does not provide it.
 
 If you want to keep things tidy, you can write a small helper:
 
@@ -258,11 +262,12 @@ connection is handled independently -- if one client disconnects, the others
 keep going. The `try`/`finally` ensures the writer is closed even if the
 client disconnects unexpectedly or the read raises an exception.
 
-> [!NOTE]
-> `start_server()` spawns each callback as an independent task. This means
-> errors in one connection do not propagate to the server or to other
-> connections. If you want centralised error handling, catch exceptions inside
-> the callback and log them.
+!!! note
+
+    `start_server()` spawns each callback as an independent task. This means
+    errors in one connection do not propagate to the server or to other
+    connections. If you want centralised error handling, catch exceptions inside
+    the callback and log them.
 
 ## Complete Example: Echo Client and Server
 
@@ -347,10 +352,11 @@ finishes, the group exits, and the `async with server:` block exits, stopping
 the server cleanly. No manual cancellation needed -- structured concurrency
 takes care of shutdown.
 
-> [!TIP]
-> Using port `0` is a good practice for tests and examples. In production you
-> will bind to a specific port, but for development it avoids a whole class of
-> annoying startup errors.
+!!! tip
+
+    Using port `0` is a good practice for tests and examples. In production you
+    will bind to a specific port, but for development it avoids a whole class of
+    annoying startup errors.
 
 ## Timeouts on Stream Operations
 
@@ -408,9 +414,10 @@ server can drop the connection. You can apply the same pattern to writes --
 wrap the `drain()` call in `asyncio.timeout()` to guard against slow
 consumers.
 
-> [!WARNING]
-> A timeout on `.write()` alone does nothing useful -- `.write()` is
-> synchronous and returns immediately. Put the timeout around `.drain()`,
-> which is the coroutine that actually waits for the buffer to flush.
+!!! warning
+
+    A timeout on `.write()` alone does nothing useful -- `.write()` is
+    synchronous and returns immediately. Put the timeout around `.drain()`,
+    which is the coroutine that actually waits for the buffer to flush.
 
 ---

@@ -103,12 +103,13 @@ $ python condition_buffer.py
 [C1] got 4
 ```
 
-> [!NOTE]
-> For simple producer/consumer scenarios, a
-> [`Queue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue)
-> is usually the better choice -- it handles all the locking and notification
-> internally. `Condition` shines when you need custom predicates on shared
-> state that doesn't fit the queue model.
+!!! note
+
+    For simple producer/consumer scenarios, a
+    [`Queue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue)
+    is usually the better choice -- it handles all the locking and
+    notification internally. `Condition` shines when you need custom
+    predicates on shared state that doesn't fit the queue model.
 
 ## `asyncio.Barrier`
 
@@ -118,9 +119,10 @@ them can continue. You create a barrier with a *parties* count, and each task
 calls `await barrier.wait()`. The first *N - 1* callers suspend; the *N*-th
 caller unblocks everyone.
 
-> [!IMPORTANT]
-> `asyncio.Barrier` was added in **Python 3.11**. It is not available in
-> earlier versions.
+!!! info
+
+    `asyncio.Barrier` was added in **Python 3.11**. It is not available in
+    earlier versions.
 
 Barriers are ideal for *phased computations* -- situations where all workers
 must complete phase 1 before any of them start phase 2.
@@ -223,11 +225,12 @@ A regular `Semaphore` would have silently bumped the count to 3 in that last
 `release()` call, allowing one more task than intended to enter the critical
 section. With `BoundedSemaphore`, the bug surfaces immediately.
 
-> [!TIP]
-> Prefer `BoundedSemaphore` over `Semaphore` when the acquire/release calls
-> happen in different places or different functions -- i.e., anywhere you are
-> *not* using `async with`. The `async with` pattern makes extra releases
-> impossible, so a plain `Semaphore` is fine there.
+!!! tip
+
+    Prefer `BoundedSemaphore` over `Semaphore` when the acquire/release
+    calls happen in different places or different functions -- i.e., anywhere
+    you are *not* using `async with`. The `async with` pattern makes extra
+    releases impossible, so a plain `Semaphore` is fine there.
 
 ## `asyncio.PriorityQueue`
 
@@ -282,10 +285,11 @@ $ python priority_queue.py
 The `critical` job comes out first despite being inserted second. The two
 priority-3 jobs come out in insertion order thanks to the sequence number.
 
-> [!WARNING]
-> Without the sequence number, two items with the same priority would be
-> compared by their payload. If the payload type doesn't implement `__lt__`,
-> you get a `TypeError`. Always include a tie-breaker.
+!!! warning
+
+    Without the sequence number, two items with the same priority would be
+    compared by their payload. If the payload type doesn't implement
+    `__lt__`, you get a `TypeError`. Always include a tie-breaker.
 
 ## `asyncio.LifoQueue`
 
@@ -343,9 +347,11 @@ All three queue types share the same interface (`put`, `get`, `maxsize`,
 | [`LifoQueue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.LifoQueue) | LIFO (last in, first out) | Freshness matters more than fairness -- process the newest item first. |
 | [`PriorityQueue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.PriorityQueue) | Lowest value first | Items have explicit priorities. Use `(priority, seq, payload)` tuples. |
 
-> [!TIP]
-> Start with `Queue`. Switch to `PriorityQueue` or `LifoQueue` only when you
-> have a concrete reason -- priority-based scheduling, freshness requirements,
-> or stack-like semantics. All three support `maxsize` for backpressure.
+!!! tip
+
+    Start with `Queue`. Switch to `PriorityQueue` or `LifoQueue` only when
+    you have a concrete reason -- priority-based scheduling, freshness
+    requirements, or stack-like semantics. All three support `maxsize` for
+    backpressure.
 
 ---

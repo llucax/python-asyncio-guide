@@ -100,10 +100,11 @@ class ConnectionPool:
         print("cleaning up pool resources")
 ```
 
-> [!NOTE]
-> Checking `is_running()` and `is_closed()` avoids `RuntimeError` exceptions
-> that would otherwise fire silently during interpreter shutdown, when the loop
-> has already been torn down.
+!!! note
+
+    Checking `is_running()` and `is_closed()` avoids `RuntimeError`
+    exceptions that would otherwise fire silently during interpreter
+    shutdown, when the loop has already been torn down.
 
 ## Task Introspection
 
@@ -168,11 +169,12 @@ Four tasks: the three you created plus the implicit `Task-1` that wraps
 programs or building health-check endpoints that report what your async
 application is doing.
 
-> [!TIP]
-> `asyncio.all_tasks()` is what `asyncio.run()` calls during
-> [shutdown](../how-asyncio-works/shutdown-sequence.md) to find and cancel
-> leftover tasks. If you ever need to implement a similar graceful-shutdown
-> routine yourself, this is the function to reach for.
+!!! tip
+
+    `asyncio.all_tasks()` is what `asyncio.run()` calls during
+    [shutdown](../how-asyncio-works/shutdown-sequence.md) to find and cancel
+    leftover tasks. If you ever need to implement a similar
+    graceful-shutdown routine yourself, this is the function to reach for.
 
 ## What You Don't Need
 

@@ -72,12 +72,13 @@ an `async def main()`, put your logic there, and call
 `asyncio.run(main())` at the bottom. `asyncio.run()` is meant to be
 called **once**, at the top level of your program.
 
-> [!NOTE]
-> Do not call `asyncio.run()` from inside an async function. It will
-> raise a `RuntimeError` because a loop is already running. If you need
-> to run async code from sync code that is itself called from async
-> code, that is a different problem (covered in Chapter 2 with
-> `asyncio.Runner`).
+!!! note
+
+    Do not call `asyncio.run()` from inside an async function. It will
+    raise a `RuntimeError` because a loop is already running. If you need
+    to run async code from sync code that is itself called from async
+    code, that is a different problem (covered in Chapter 2 with
+    `asyncio.Runner`).
 
 ## What Goes Wrong Without `await`
 
@@ -137,18 +138,20 @@ is simple -- add `await`:
     answer = await get_answer()  # Fixed
 ```
 
-> [!TIP]
-> Enable asyncio's *debug mode* during development by passing
-> `debug=True` to `asyncio.run()`. It makes warnings about unawaited
-> coroutines louder and catches other common errors. See
-> [`asyncio` debug mode](https://docs.python.org/3/library/asyncio-dev.html#debug-mode)
-> for details.
+!!! tip
 
-> [!TIP]
-> **Trio users:** Trio raises an error immediately when a coroutine is
-> not awaited inside a nursery. In asyncio the diagnostic is a
-> `RuntimeWarning` from the garbage collector, which can be delayed or
-> even silenced. Turning on debug mode helps close this gap.
+    Enable asyncio's *debug mode* during development by passing
+    `debug=True` to `asyncio.run()`. It makes warnings about unawaited
+    coroutines louder and catches other common errors. See
+    [`asyncio` debug mode](https://docs.python.org/3/library/asyncio-dev.html#debug-mode)
+    for details.
+
+!!! tip "Trio users"
+
+    Trio raises an error immediately when a coroutine is
+    not awaited inside a nursery. In asyncio the diagnostic is a
+    `RuntimeWarning` from the garbage collector, which can be delayed or
+    even silenced. Turning on debug mode helps close this gap.
 
 ## `await`
 
@@ -223,11 +226,12 @@ So when you see a tall stack of `async def` calling `async def`, that is not
 ceremony -- it is the language telling you, at every level, "this function may
 pause."
 
-> [!NOTE]
-> You do *not* need to make everything async. Pure computation -- parsing a
-> string, doing math, transforming a data structure -- should stay in regular
-> `def` functions. Only add `async` when the function needs to `await`
- > something.
+!!! note
+
+    You do *not* need to make everything async. Pure computation -- parsing a
+    string, doing math, transforming a data structure -- should stay in regular
+    `def` functions. Only add `async` when the function needs to `await`
+    something.
 
 ## How the Event Loop Works
 
@@ -319,10 +323,11 @@ new entry on the loop's ready queue. A bare `await some_coro()` just
 inlines the work into the current task; it does **not** create a new
 ready-queue entry.
 
-> [!TIP]
-> If concurrency is not appearing where you expect, check whether you
-> are `await`-ing a coroutine directly instead of wrapping it in a
-> task. That is the single most common mistake.
+!!! tip
+
+    If concurrency is not appearing where you expect, check whether you
+    are `await`-ing a coroutine directly instead of wrapping it in a
+    task. That is the single most common mistake.
 
 ### Putting It Together
 
@@ -366,12 +371,13 @@ This tells the loop "I have nothing to wait for, but please go check if
 anyone else needs a turn." You will see this pattern used in CPU-heavy async
 code to avoid starving other tasks.
 
-> [!TIP]
-> **Trio users:** Trio has an explicit `trio.testing.checkpoints()` and
-> guarantees that *every* checkpoint is documented. In asyncio the contract is
-> less strict -- most I/O operations are checkpoints, but it is not always
-> guaranteed. The `asyncio.sleep(0)` idiom is the closest equivalent to
-> Trio's `await trio.sleep(0)`.
+!!! tip "Trio users"
+
+    Trio has an explicit `trio.testing.checkpoints()` and
+    guarantees that *every* checkpoint is documented. In asyncio the contract is
+    less strict -- most I/O operations are checkpoints, but it is not always
+    guaranteed. The `asyncio.sleep(0)` idiom is the closest equivalent to
+    Trio's `await trio.sleep(0)`.
 
 ## `asyncio.sleep()`
 
@@ -409,10 +415,11 @@ gives the loop a chance to run other tasks (if there were any -- right now you
 only have one). You will put this to real use in the next section when you run
 multiple countdowns concurrently.
 
-> [!WARNING]
-> Do not use `time.sleep()` in async code. It blocks the entire thread --
-> including the event loop -- so no other coroutine can run during the sleep.
-> Always use `asyncio.sleep()` instead.
+!!! warning
+
+    Do not use `time.sleep()` in async code. It blocks the entire thread --
+    including the event loop -- so no other coroutine can run during the sleep.
+    Always use `asyncio.sleep()` instead.
 
 ## Code Review Checklist
 

@@ -59,11 +59,12 @@ went uncaught -- just a warning in the logs. This pattern has three problems:
 3. **Unclear lifetime.** When does the task finish? What happens when `main()`
    returns? The answer is "it depends."
 
-> [!CAUTION]
-> **Forget that `asyncio.create_task()` exists.** For the rest of this guide,
-> you will never use it directly. Every task will be created inside a
-> `TaskGroup`, which solves all three problems above. If you see bare
-> `create_task()` in a code review, treat it as a red flag.
+!!! danger
+
+    **Forget that `asyncio.create_task()` exists.** For the rest of this guide,
+    you will never use it directly. Every task will be created inside a
+    `TaskGroup`, which solves all three problems above. If you see bare
+    `create_task()` in a code review, treat it as a red flag.
 
 ## Structured Concurrency
 
@@ -77,10 +78,11 @@ When you open a `TaskGroup`, you create a scope. Tasks spawned inside it are
 child has finished -- whether successfully, by raising, or by being cancelled.
 No orphans, no forgotten work, no swallowed errors.
 
-> [!TIP]
-> **Trio users:** `TaskGroup` is asyncio's nursery. `tg.create_task(coro)` is
-> equivalent to `nursery.start_soon(async_fn, *args)`, except it takes a
-> coroutine object rather than a callable plus arguments.
+!!! tip "Trio users"
+
+    `TaskGroup` is asyncio's nursery. `tg.create_task(coro)` is
+    equivalent to `nursery.start_soon(async_fn, *args)`, except it takes a
+    coroutine object rather than a callable plus arguments.
 
 ## `asyncio.TaskGroup`
 
@@ -163,10 +165,11 @@ concurrency.
 object. Store it if you need the return value (you will get to that shortly),
 or ignore it if you only care about the side effects.
 
-> [!IMPORTANT]
-> You can only call `tg.create_task()` inside the `async with` block. Once the
-> block is exiting (either normally or due to an exception), the group stops
-> accepting new tasks.
+!!! info
+
+    You can only call `tg.create_task()` inside the `async with` block. Once the
+    block is exiting (either normally or due to an exception), the group stops
+    accepting new tasks.
 
 ## Sibling Cancellation
 
@@ -277,15 +280,17 @@ the exceptions. Every exception gets routed to exactly one matching clause. If
 any exceptions are *not* matched, they propagate upward as a new
 `ExceptionGroup`.
 
-> [!WARNING]
-> You cannot mix `except` and `except*` in the same `try` block. If you use
-> `except*`, all handlers in that block must use the starred form. This is a
-> syntax rule enforced by the compiler.
+!!! warning
 
-> [!NOTE]
-> If only a single child fails, the `TaskGroup` still wraps the exception in
-> an `ExceptionGroup`. You always get a group, even if it contains just one
-> item. This keeps the handling uniform.
+    You cannot mix `except` and `except*` in the same `try` block. If you use
+    `except*`, all handlers in that block must use the starred form. This is a
+    syntax rule enforced by the compiler.
+
+!!! note
+
+    If only a single child fails, the `TaskGroup` still wraps the exception in
+    an `ExceptionGroup`. You always get a group, even if it contains just one
+    item. This keeps the handling uniform.
 
 ## Collecting Results
 
@@ -338,10 +343,11 @@ the `async with` block, every task is guaranteed complete, so `.result()`
 returns immediately. If any task had failed, the `TaskGroup` would have raised
 an `ExceptionGroup` before you ever reach the `.result()` calls.
 
-> [!TIP]
-> You can also give tasks names for easier debugging:
-> `tg.create_task(fetch_page(url), name=f"fetch-{url}")`. The name shows up
-> in logs and tracebacks.
+!!! tip
+
+    You can also give tasks names for easier debugging:
+    `tg.create_task(fetch_page(url), name=f"fetch-{url}")`. The name shows up
+    in logs and tracebacks.
 
 ## Nested TaskGroups
 
@@ -447,11 +453,12 @@ Each worker runs its batch concurrently with the others inside the
 `TaskGroup`. If any worker raises, sibling cancellation kicks in -- the
 group cancels the rest and propagates the error, exactly as you saw earlier.
 
-> [!TIP]
-> Pre-splitting works well when you know all jobs up front. For a dynamic
-> pipeline where producers feed jobs to consumers at runtime -- with
-> backpressure, shutdown signalling, and bounded queues -- see
-> [Coordination](coordination.md#asyncioqueue).
+!!! tip
+
+    Pre-splitting works well when you know all jobs up front. For a dynamic
+    pipeline where producers feed jobs to consumers at runtime -- with
+    backpressure, shutdown signalling, and bounded queues -- see
+    [Coordination](coordination.md#asyncioqueue).
 
 ## Mental Model: Two Questions
 

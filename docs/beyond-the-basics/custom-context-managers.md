@@ -85,11 +85,12 @@ runs. When that block exits -- whether normally, via exception, or via
 cancellation -- execution resumes after the `yield`, inside the `finally`
 block, and `conn.close()` runs.
 
-> [!NOTE]
-> The return type annotation is `AsyncIterator[DBConnection]` because the
-> function is technically an async generator. The decorator wraps it so
-> callers see a regular async context manager, but the annotation reflects the
-> function's actual signature.
+!!! note
+
+    The return type annotation is `AsyncIterator[DBConnection]` because the
+    function is technically an async generator. The decorator wraps it so
+    callers see a regular async context manager, but the annotation reflects
+    the function's actual signature.
 
 ## Error Handling in `@asynccontextmanager`
 
@@ -144,11 +145,12 @@ async def fixed_manager() -> AsyncIterator[str]:
         print("Teardown -- always runs")
 ```
 
-> [!IMPORTANT]
-> **Always** wrap the `yield` in `try`/`finally` if your context manager
-> acquires a resource that needs cleanup. There are no exceptions to this rule.
-> If cleanup is not needed (e.g. the context manager only sets a flag), you can
-> skip it -- but when in doubt, add the `try`/`finally`.
+!!! info
+
+    **Always** wrap the `yield` in `try`/`finally` if your context manager
+    acquires a resource that needs cleanup. There are no exceptions to this
+    rule. If cleanup is not needed (e.g. the context manager only sets a
+    flag), you can skip it -- but when in doubt, add the `try`/`finally`.
 
 ## The Class-Based Protocol
 
@@ -205,11 +207,12 @@ The `__aenter__` method returns whatever the `as` target should be -- usually
 clean exit). If `__aexit__` returns `True`, the exception is suppressed; if it
 returns `None` or `False` (the default), the exception propagates.
 
-> [!TIP]
-> For most resource wrappers, `@asynccontextmanager` is shorter and easier to
-> read. Reach for the class-based protocol when you need the context manager to
-> be a reusable object with its own methods and attributes -- like the `Timer`
-> above, where callers access `.elapsed` after the block.
+!!! tip
+
+    For most resource wrappers, `@asynccontextmanager` is shorter and easier
+    to read. Reach for the class-based protocol when you need the context
+    manager to be a reusable object with its own methods and attributes --
+    like the `Timer` above, where callers access `.elapsed` after the block.
 
 ## `AsyncExitStack`
 
@@ -290,12 +293,13 @@ async with AsyncExitStack() as stack:
     # server.shutdown() will be called when the block exits
 ```
 
-> [!WARNING]
-> If a context manager's `__aexit__` raises, the `AsyncExitStack` still
-> proceeds to close the remaining managers. Exceptions are collected and
-> re-raised as part of the standard exception handling. This is the right
-> behaviour -- you don't want one failed cleanup to prevent the others from
-> running.
+!!! warning
+
+    If a context manager's `__aexit__` raises, the `AsyncExitStack` still
+    proceeds to close the remaining managers. Exceptions are collected and
+    re-raised as part of the standard exception handling. This is the right
+    behaviour -- you don't want one failed cleanup to prevent the others
+    from running.
 
 ## Composing Lifetimes
 

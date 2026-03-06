@@ -60,10 +60,11 @@ A few things to note:
 - **`communicate()`** waits for the process to finish and returns `(stdout,
   stderr)` as bytes. More on this below.
 
-> [!NOTE]
-> `asyncio.subprocess.PIPE` and `asyncio.subprocess.DEVNULL` are the same
-> constants as `subprocess.PIPE` and `subprocess.DEVNULL`. You can use either
-> import. This guide uses `asyncio.subprocess.*` for clarity.
+!!! note
+
+    `asyncio.subprocess.PIPE` and `asyncio.subprocess.DEVNULL` are the same
+    constants as `subprocess.PIPE` and `subprocess.DEVNULL`. You can use
+    either import. This guide uses `asyncio.subprocess.*` for clarity.
 
 To capture stderr, add `stderr=asyncio.subprocess.PIPE`. The `communicate()`
 call returns both streams as `(stdout_bytes, stderr_bytes)`.
@@ -101,12 +102,14 @@ The shell gives you access to features like `&&` chaining, pipes (`|`), glob
 expansion, and environment variable substitution. That convenience comes at a
 cost:
 
-> [!CAUTION]
-> **Never pass untrusted input to `create_subprocess_shell()`.** Shell
-> injection is a serious security vulnerability -- an attacker-controlled
-> string can execute arbitrary commands. If the command or any of its arguments
-> come from user input, use `create_subprocess_exec()` instead. It passes
-> arguments directly to the process without shell interpretation.
+!!! danger
+
+    **Never pass untrusted input to `create_subprocess_shell()`.** Shell
+    injection is a serious security vulnerability -- an attacker-controlled
+    string can execute arbitrary commands. If the command or any of its
+    arguments come from user input, use `create_subprocess_exec()` instead.
+    It passes arguments directly to the process without shell
+    interpretation.
 
 Prefer `create_subprocess_exec()` as your default. Reach for
 `create_subprocess_shell()` only when you genuinely need shell features like
@@ -154,12 +157,13 @@ while you are still sending input. This is the same reason
 `subprocess.Popen.communicate()` exists in the synchronous world: manual reads
 and writes can deadlock, `communicate()` cannot.
 
-> [!TIP]
-> If you opened a pipe for stdout or stderr but used `wait()` instead of
-> `communicate()`, you risk a deadlock. The child blocks writing to a full pipe
-> buffer, and your code blocks waiting for the child to exit. Always use
-> `communicate()` when you need to collect output, or read streams manually as
-> shown in the next section.
+!!! tip
+
+    If you opened a pipe for stdout or stderr but used `wait()` instead of
+    `communicate()`, you risk a deadlock. The child blocks writing to a full
+    pipe buffer, and your code blocks waiting for the child to exit. Always
+    use `communicate()` when you need to collect output, or read streams
+    manually as shown in the next section.
 
 ## Streaming Output
 
@@ -216,10 +220,12 @@ time. Note the `flush=True` on the child side -- without it, Python buffers
 stdout when it is not connected to a terminal, and lines arrive in large
 chunks instead of one at a time.
 
-> [!IMPORTANT]
-> When you read streams manually, you **must** still call `await proc.wait()`
-> after you finish reading. This ensures the process's resources are cleaned up.
-> Skipping `wait()` can leave zombie processes on Unix systems.
+!!! warning
+
+    When you read streams manually, you **must** still call
+    `await proc.wait()` after you finish reading. This ensures the process's
+    resources are cleaned up. Skipping `wait()` can leave zombie processes
+    on Unix systems.
 
 ## Timeouts
 
@@ -267,10 +273,12 @@ not the subprocess itself. You need to explicitly kill it with
 (sends `SIGTERM` on Unix, giving the process a chance to clean up). After
 killing, you still need `await proc.wait()` to reap the process.
 
-> [!NOTE]
-> `proc.kill()` and `proc.terminate()` are *not* coroutines -- they send the
-> signal immediately and return. The `await proc.wait()` afterward is what
-> actually waits for the process to exit and collects its return code.
+!!! note
+
+    `proc.kill()` and `proc.terminate()` are *not* coroutines -- they send
+    the signal immediately and return. The `await proc.wait()` afterward is
+    what actually waits for the process to exit and collects its return
+    code.
 
 ## Resource Management
 
@@ -341,10 +349,11 @@ This `run_with_timeout` helper is a solid building block. Adapt it to your
 needs -- add logging, check return codes, decode output -- but keep the
 `try`/`except`/`kill`/`wait` skeleton intact.
 
-> [!WARNING]
-> Do not rely on the garbage collector to clean up processes. On CPython, a
-> `Process` object going out of scope may eventually close its pipes, but the
-> child process itself keeps running until explicitly waited on or killed.
-> Explicit cleanup makes the behaviour deterministic.
+!!! warning
+
+    Do not rely on the garbage collector to clean up processes. On CPython,
+    a `Process` object going out of scope may eventually close its pipes,
+    but the child process itself keeps running until explicitly waited on or
+    killed. Explicit cleanup makes the behaviour deterministic.
 
 ---

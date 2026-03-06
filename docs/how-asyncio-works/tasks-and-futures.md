@@ -48,12 +48,14 @@ You can also `await` a future. When you do, the current coroutine suspends
 until the future is done, then the `await` expression returns the future's
 result (or raises its exception).
 
-> [!NOTE]
-> Application code rarely creates futures directly. They are the low-level
-> plumbing that asyncio's internals -- transports, protocols, and the loop
-> itself -- use to communicate results between components. You will see them
-> when you work with the low-level APIs in Chapter 4 (callbacks, transports,
-> `loop.create_future()`). For now, understanding what they *are* is enough.
+!!! note
+
+    Application code rarely creates futures directly. They are the low-level
+    plumbing that asyncio's internals -- transports, protocols, and the loop
+    itself -- use to communicate results between components. You will see
+    them when you work with the low-level APIs in Chapter 4 (callbacks,
+    transports, `loop.create_future()`). For now, understanding what they
+    *are* is enough.
 
 Here is a minimal example that shows the lifecycle. You would not write this in
 a real program, but it makes the mechanics clear:
@@ -176,14 +178,15 @@ Task names appear in tracebacks and debug output, so naming your tasks -- even
 with something short like `f"fetch-{url}"` -- pays off immediately when
 something goes wrong.
 
-> [!IMPORTANT]
-> **Prefer `TaskGroup.create_task()` over bare `asyncio.create_task()`.** A
-> `TaskGroup` gives every task an owner, ensures exceptions propagate, and
-> prevents orphaned tasks. Bare `create_task()` is a building block -- it is
-> what `TaskGroup` calls internally -- but in application code the unowned
-> version is almost always a mistake. See the
-> [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) section in
-> Chapter 1 for the full argument.
+!!! info
+
+    **Prefer `TaskGroup.create_task()` over bare `asyncio.create_task()`.**
+    A `TaskGroup` gives every task an owner, ensures exceptions propagate,
+    and prevents orphaned tasks. Bare `create_task()` is a building block
+    -- it is what `TaskGroup` calls internally -- but in application code
+    the unowned version is almost always a mistake. See the
+    [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) section in
+    Chapter 1 for the full argument.
 
 ## Task Lifecycle
 
@@ -267,11 +270,13 @@ whatever ended the task (the stored exception, or `CancelledError`). Calling
 `.result()` on a done task does the same thing without suspending -- but if
 you call it on a task that isn't done yet, you get `InvalidStateError`.
 
-> [!TIP]
-> After a `TaskGroup` block exits normally, every task in the group is
-> guaranteed done. That is why the
-> [Collecting Results](../everyday-asyncio/concurrent-tasks.md) pattern
-> calls `.result()` *after* the `async with` block -- it is always safe there.
+!!! tip
+
+    After a `TaskGroup` block exits normally, every task in the group is
+    guaranteed done. That is why the
+    [Collecting Results](../everyday-asyncio/concurrent-tasks.md) pattern
+    calls `.result()` *after* the `async with` block -- it is always safe
+    there.
 
 ## Task References
 
@@ -320,11 +325,12 @@ async def main() -> None:
     await task
 ```
 
-> [!CAUTION]
-> This is one more reason to prefer `TaskGroup`. When you call
-> `tg.create_task()`, the group stores a strong reference to the task
-> internally. You never have to worry about lost references inside a
-> `TaskGroup` scope.
+!!! warning
+
+    This is one more reason to prefer `TaskGroup`. When you call
+    `tg.create_task()`, the group stores a strong reference to the task
+    internally. You never have to worry about lost references inside a
+    `TaskGroup` scope.
 
 ## How Tasks Drive Coroutines
 
@@ -390,13 +396,15 @@ This send-yield-callback loop is the heartbeat of asyncio concurrency. Every
 can go service other tasks. When the thing being awaited finishes, the loop
 comes back and picks up where it left off.
 
-> [!NOTE]
-> The real implementation in CPython is in
-> [`_asyncio.Task`](https://github.com/python/cpython/blob/main/Modules/_asynciomodule.c)
-> (C code for performance) with a Python fallback in
-> [`asyncio.tasks`](https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py).
-> The C version has the same structure but adds optimizations for common cases,
-> cancellation handling, and context variable propagation. The pseudocode above
-> is the mental model you need; read the source when you want the full picture.
+!!! note
+
+    The real implementation in CPython is in
+    [`_asyncio.Task`](https://github.com/python/cpython/blob/main/Modules/_asynciomodule.c)
+    (C code for performance) with a Python fallback in
+    [`asyncio.tasks`](https://github.com/python/cpython/blob/main/Lib/asyncio/tasks.py).
+    The C version has the same structure but adds optimizations for common
+    cases, cancellation handling, and context variable propagation. The
+    pseudocode above is the mental model you need; read the source when you
+    want the full picture.
 
 ---

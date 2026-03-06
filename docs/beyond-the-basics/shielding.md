@@ -75,11 +75,12 @@ main: done
 The handler was cancelled after 0.2 seconds, but `critical_write` ran to
 completion. That is the whole point of `shield()`.
 
-> [!NOTE]
-> Notice that the `except CancelledError` block still re-raises. Shielding
-> protects the *inner* awaitable -- it does not change the fact that the
-> *outer* task has been cancelled. You are not swallowing cancellation here;
-> you are splitting one piece of work off so it can finish independently.
+!!! note
+
+    Notice that the `except CancelledError` block still re-raises. Shielding
+    protects the *inner* awaitable -- it does not change the fact that the
+    *outer* task has been cancelled. You are not swallowing cancellation here;
+    you are splitting one piece of work off so it can finish independently.
 
 ## When to Use It
 
@@ -162,10 +163,11 @@ result, no way to cancel it if the program needed to shut down. If
 `slow_write` had raised an exception, you would get a "Task exception was
 never retrieved" warning and nothing else.
 
-> [!WARNING]
-> Every call to `shield()` is a promise: "I know this work will outlive its
-> caller, and I have arranged for someone else to own it." If you cannot point
-> to that owner, do not use `shield()`.
+!!! warning
+
+    Every call to `shield()` is a promise: "I know this work will outlive its
+    caller, and I have arranged for someone else to own it." If you cannot point
+    to that owner, do not use `shield()`.
 
 ## Safe Patterns
 
@@ -236,11 +238,12 @@ main: all flushed, exiting cleanly
 The key difference from the orphan example: `main()` holds a reference to the
 flush task and awaits it before exiting. The shielded work has an owner.
 
-> [!TIP]
-> Notice you pass the *task* to `shield()`, not the coroutine directly. When
-> you write `asyncio.shield(some_coroutine())`, shield creates the task for
-> you internally, and you have no reference to it. By creating the task
-> yourself first, you keep a handle you can store, await, or cancel later.
+!!! tip
+
+    Notice you pass the *task* to `shield()`, not the coroutine directly. When
+    you write `asyncio.shield(some_coroutine())`, shield creates the task for
+    you internally, and you have no reference to it. By creating the task
+    yourself first, you keep a handle you can store, await, or cancel later.
 
 ### Pattern 2: A Dedicated Cleanup TaskGroup
 

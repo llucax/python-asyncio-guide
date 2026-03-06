@@ -80,11 +80,12 @@ You have already been using `async with` throughout this chapter:
 async context managers. The pattern is always the same -- enter with
 `async with`, and the cleanup is guaranteed.
 
-> [!IMPORTANT]
-> If an API gives you an async context manager, **always** use it with
-> `async with`. Calling `__aenter__()` and `__aexit__()` by hand is fragile
-> and error-prone. The whole point of the protocol is that the `async with`
-> statement guarantees `__aexit__` runs even when things go wrong.
+!!! warning
+
+    If an API gives you an async context manager, **always** use it with
+    `async with`. Calling `__aenter__()` and `__aexit__()` by hand is fragile
+    and error-prone. The whole point of the protocol is that the `async with`
+    statement guarantees `__aexit__` runs even when things go wrong.
 
 ## Cleanup Under Cancellation
 
@@ -143,20 +144,22 @@ The timeout fires after one second, cancelling the `await conn.query()` call.
 The `CancelledError` unwinds the `try` block, the `finally` block runs, and
 the connection is closed properly. This is exactly the behaviour you want.
 
-> [!WARNING]
-> Cleanup code in `finally` blocks runs while the task is being cancelled.
-> Keep it fast and simple -- closing a socket, releasing a lock, writing a
-> short log message. Do **not** start a 30-second retry loop or a complex
-> multi-step protocol in a `finally` block. If your cleanup itself needs to
-> `await` something slow, the outer timeout or cancellation scope may not
-> account for that extra time, and the program's shutdown behaviour becomes
-> unpredictable.
+!!! warning
 
-> [!TIP]
-> **Trio users:** The same rule applies in Trio. Trio enforces it more
-> strictly with *cancel shielding* semantics -- by default, cancelled tasks
-> cannot start new I/O in their cleanup path. asyncio is more lenient, but
-> the principle is the same: cleanup should be quick.
+    Cleanup code in `finally` blocks runs while the task is being cancelled.
+    Keep it fast and simple -- closing a socket, releasing a lock, writing a
+    short log message. Do **not** start a 30-second retry loop or a complex
+    multi-step protocol in a `finally` block. If your cleanup itself needs to
+    `await` something slow, the outer timeout or cancellation scope may not
+    account for that extra time, and the program's shutdown behaviour becomes
+    unpredictable.
+
+!!! tip "Trio users"
+
+    The same rule applies in Trio. Trio enforces it more
+    strictly with *cancel shielding* semantics -- by default, cancelled tasks
+    cannot start new I/O in their cleanup path. asyncio is more lenient, but
+    the principle is the same: cleanup should be quick.
 
 ## Ownership Boundaries
 
@@ -270,11 +273,12 @@ garbage collector is delayed, the `finally` block may run much later -- or in
 a context where it can no longer do async cleanup properly. In a long-running
 server, this means leaked connections and file descriptors.
 
-> [!CAUTION]
-> Never rely on the garbage collector to clean up async generators. The
-> `finally` block may run, but the *timing* is unpredictable and async
-> operations inside it may fail or be silently skipped. Always close async
-> generators explicitly.
+!!! danger
+
+    Never rely on the garbage collector to clean up async generators. The
+    `finally` block may run, but the *timing* is unpredictable and async
+    operations inside it may fail or be silently skipped. Always close async
+    generators explicitly.
 
 ## `contextlib.aclosing()`
 
@@ -329,16 +333,18 @@ when the `async with` block exits -- not at some unpredictable later time by
 the garbage collector. The `finally` block inside the generator runs promptly,
 and any async cleanup it needs to do happens in the right context.
 
-> [!TIP]
-> The rule is simple: **always wrap async generators in `aclosing()` when you
-> consume them.** If you iterate to completion you don't strictly need it, but
-> applying it consistently means you never have to think about whether early
-> exit is possible.
+!!! tip
 
-> [!TIP]
-> **Trio users:** Trio requires `aclosing()` for every async generator
-> iteration and will warn you loudly if you forget. asyncio is more lenient at
-> runtime, but the same discipline applies.
+    The rule is simple: **always wrap async generators in `aclosing()` when you
+    consume them.** If you iterate to completion you don't strictly need it, but
+    applying it consistently means you never have to think about whether early
+    exit is possible.
+
+!!! tip "Trio users"
+
+    Trio requires `aclosing()` for every async generator
+    iteration and will warn you loudly if you forget. asyncio is more lenient at
+    runtime, but the same discipline applies.
 
 ## `async for`
 
@@ -364,11 +370,12 @@ The loop calls `__anext__()` before each iteration, which is a coroutine that
 may suspend while waiting for the next item. When the iterable is exhausted,
 it raises `StopAsyncIteration` and the loop ends.
 
-> [!NOTE]
-> `async for` does **not** automatically close the iterable when the loop
-> exits early (via `break` or exception). That is why `aclosing()` is
-> necessary for async generators -- it provides the cleanup that `async for`
-> does not.
+!!! note
+
+    `async for` does **not** automatically close the iterable when the loop
+    exits early (via `break` or exception). That is why `aclosing()` is
+    necessary for async generators -- it provides the cleanup that `async for`
+    does not.
 
 ## Putting It Together
 

@@ -182,11 +182,12 @@ def test_fetch_double(runner: asyncio.Runner) -> None:
     assert result == 42
 ```
 
-> [!TIP]
-> This is useful when you need fine-grained control or cannot use
-> [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio). If you
-> *can* use pytest-asyncio, its `@pytest.mark.asyncio` decorator is usually
-> simpler.
+!!! tip
+
+    This is useful when you need fine-grained control or cannot use
+    [pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio). If you
+    *can* use pytest-asyncio, its `@pytest.mark.asyncio` decorator is
+    usually simpler.
 
 ## `Runner.close()`
 
@@ -204,8 +205,10 @@ You can also call `runner.close()` manually if you are not using the context
 manager form, but the `with` statement is strongly preferred -- it guarantees
 cleanup even if an exception is raised.
 
-> [!WARNING]
-> After `close()`, the `Runner` is spent. Calling `runner.run()` again will
-> raise `RuntimeError`. If you need another loop, create a new `Runner`.
+!!! warning
+
+    After `close()`, the `Runner` is spent. Calling `runner.run()` again
+    will raise `RuntimeError`. If you need another loop, create a new
+    `Runner`.
 
 ---

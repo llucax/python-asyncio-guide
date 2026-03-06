@@ -66,11 +66,12 @@ through a deliberate multi-step teardown:
 Only after all seven steps complete does `asyncio.run()` return (or re-raise)
 the result from step 1.
 
-> [!NOTE]
-> Steps 5 and 6 were added in Python 3.9 and 3.12 respectively, but if you
-> are on Python 3.11+ (which this guide assumes), both are part of the standard
-> shutdown. You do not need to call them yourself -- `asyncio.run()` handles
-> everything.
+!!! note
+
+    Steps 5 and 6 were added in Python 3.9 and 3.12 respectively, but if
+    you are on Python 3.11+ (which this guide assumes), both are part of
+    the standard shutdown. You do not need to call them yourself --
+    `asyncio.run()` handles everything.
 
 ## Leaked Tasks
 
@@ -119,11 +120,13 @@ and had to be forcibly cleaned up. It is not always fatal, but it signals a
 structural problem: somewhere in your code, a task's lifetime was not tied to a
 scope.
 
-> [!WARNING]
-> The "Task was destroyed but it is pending" warning means you have an
-> ownership gap. A task was created but nobody was responsible for awaiting it.
-> Even though `asyncio.run()` cancels these tasks, the warning is telling you
-> that your program's concurrency structure has a hole.
+!!! warning
+
+    The "Task was destroyed but it is pending" warning means you have an
+    ownership gap. A task was created but nobody was responsible for
+    awaiting it. Even though `asyncio.run()` cancels these tasks, the
+    warning is telling you that your program's concurrency structure has a
+    hole.
 
 ### Why `TaskGroup` Prevents This
 
@@ -199,10 +202,11 @@ every async generator you consume in
 so it is closed deterministically when you are done with it, not at some
 later point during shutdown.
 
-> [!TIP]
-> Think of `shutdown_asyncgens()` as a safety net, not a strategy. Use
-> `aclosing()` so your generators are cleaned up at the right time, not just
-> at the last possible moment.
+!!! tip
+
+    Think of `shutdown_asyncgens()` as a safety net, not a strategy. Use
+    `aclosing()` so your generators are cleaned up at the right time, not
+    just at the last possible moment.
 
 ## Executor Shutdown
 
@@ -267,12 +271,13 @@ clean up. `asyncio.run()` still runs its full shutdown sequence, but steps 2
 through 5 find nothing to do -- every task is already done, every generator
 already closed, every resource already released. That is the ideal.
 
-> [!IMPORTANT]
-> Clean shutdown is not about adding shutdown *code*. It is about structuring
-> your program so that lifetimes are explicit and scoped. If you find yourself
-> writing manual shutdown logic -- collecting tasks, cancelling them one by
-> one, catching stray exceptions -- step back and ask whether the tasks should
-> have been in a `TaskGroup` to begin with.
+!!! info
+
+    Clean shutdown is not about adding shutdown *code*. It is about
+    structuring your program so that lifetimes are explicit and scoped. If
+    you find yourself writing manual shutdown logic -- collecting tasks,
+    cancelling them one by one, catching stray exceptions -- step back and
+    ask whether the tasks should have been in a `TaskGroup` to begin with.
 
 ## Signal Handling
 

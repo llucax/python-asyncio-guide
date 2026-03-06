@@ -77,11 +77,12 @@ task.cancel(msg="parent timed out")
 The message appears in the exception's `args`, which can be helpful for
 debugging when multiple cancellation sources exist.
 
-> [!NOTE]
-> `task.cancel()` returns `True` if the cancellation was successfully
-> scheduled, and `False` if the task is already done. A return value of `True`
-> does **not** mean the task *will* be cancelled -- only that the request was
-> delivered. The task can still catch and suppress the error.
+!!! note
+
+    `task.cancel()` returns `True` if the cancellation was successfully
+    scheduled, and `False` if the task is already done. A return value of
+    `True` does **not** mean the task *will* be cancelled -- only that the
+    request was delivered. The task can still catch and suppress the error.
 
 ## The Cancellation Counter
 
@@ -183,12 +184,13 @@ back to zero, and returned a value instead of re-raising. Because the task
 finished with a result rather than a `CancelledError`, `task.cancelled()` is
 `False`.
 
-> [!CAUTION]
-> This is a demonstration of the mechanism, not a pattern to follow. Calling
-> `uncancel()` in application code is almost always wrong -- it violates the
-> "never swallow cancellation" rule from Chapter 1. The APIs exist for
-> *framework* code like `asyncio.timeout()` and `TaskGroup`, which need to
-> intercept one cancellation source while preserving others.
+!!! danger
+
+    This is a demonstration of the mechanism, not a pattern to follow.
+    Calling `uncancel()` in application code is almost always wrong -- it
+    violates the "never swallow cancellation" rule from Chapter 1. The APIs
+    exist for *framework* code like `asyncio.timeout()` and `TaskGroup`,
+    which need to intercept one cancellation source while preserving others.
 
 ## How `asyncio.timeout()` Works Internally
 
@@ -302,11 +304,12 @@ child also fails, the `TaskGroup` increments to 2, does its work, then
 decrements back to 1. The external cancellation is preserved -- the parent
 stays in a "being cancelled" state after the `TaskGroup` exits.
 
-> [!NOTE]
-> This is why you might see `CancelledError` propagate out of a `TaskGroup`
-> even though the group itself raises `ExceptionGroup` for child failures.
-> If the group was cancelled from *outside*, the external `CancelledError`
-> survives the group's uncancel and continues upward.
+!!! note
+
+    This is why you might see `CancelledError` propagate out of a
+    `TaskGroup` even though the group itself raises `ExceptionGroup` for
+    child failures. If the group was cancelled from *outside*, the external
+    `CancelledError` survives the group's uncancel and continues upward.
 
 ## "Cancellation Requested" vs "Actually Cancelled"
 
