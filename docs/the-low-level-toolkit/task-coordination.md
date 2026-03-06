@@ -1,8 +1,5 @@
 # Task Coordination
 
-Previous: [Loop Access and Inspection](loop-access-and-inspection.md)
-Next: [Futures](futures.md)
-
 `TaskGroup` is the right default for concurrent work -- it owns every child,
 cancels siblings on failure, and guarantees that nothing outlives the scope.
 But its contract is strict: *all* tasks must complete (or fail) before the
@@ -499,9 +496,3 @@ the group fails? That is `TaskGroup`.
 > tools are indispensable.
 
 ---
-
-That covers the low-level task coordination APIs -- the tools you reach for
-when `TaskGroup`'s structured contract is too rigid. Next up:
-[Futures](futures.md), where you will work with `asyncio.Future` directly,
-bridge `concurrent.futures`, and see how manual result resolution works under
-the hood.

@@ -1,8 +1,5 @@
 # Shutdown Sequence
 
-Previous: [Cancellation Internals](cancellation-internals.md)
-Next: [The Low-Level Toolkit](../the-low-level-toolkit/index.md)
-
 Your `main()` coroutine returns, and you might think the program is done. It is
 not -- at least, not yet.
 [`asyncio.run()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.run)
@@ -286,9 +283,3 @@ you cancel the main task in response to a signal, `asyncio.run()` still walks
 through the same seven steps.
 
 ---
-
-That covers the full lifecycle of an asyncio program -- from `asyncio.run()`
-creating the loop, through your coroutines doing their work, to the methodical
-teardown when everything is done. Next up:
-[The Low-Level Toolkit](../the-low-level-toolkit/index.md), where you will
-meet the primitives that the high-level abstractions are built on.

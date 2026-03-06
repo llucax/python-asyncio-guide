@@ -1,8 +1,5 @@
 # The Event Loop
 
-Previous: [Chapter Index](index.md)
-Next: [Tasks and Futures](tasks-and-futures.md)
-
 You already know how to write async programs. You can spawn tasks in a
 `TaskGroup`, cancel them with timeouts, offload blocking work to threads. All
 of that sits on top of a single piece of machinery: the *event loop*. This
@@ -404,8 +401,3 @@ you block it, everything stops. If you don't yield, nobody else runs. The
 machinery does exactly what the pseudocode says, nothing more.
 
 ---
-
-Next up: [Tasks and Futures](tasks-and-futures.md), where you will see the
-objects that sit on top of the event loop -- how `asyncio.Task` wraps a
-coroutine, how `asyncio.Future` represents a pending result, and how the two
-work together to drive your async programs forward.

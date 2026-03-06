@@ -1,8 +1,5 @@
 # Best Practices, Pitfalls, and Gotchas
 
-Previous: [Checkpoint Contract](checkpoint-contract.md)
-Next: [Debugging Guide](debugging.md)
-
 This page distills every recommendation from the guide into one place. The
 pattern is always the same: use structured concurrency to bound task lifetimes,
 respect cancellation so timeouts and teardown actually work, manage resources

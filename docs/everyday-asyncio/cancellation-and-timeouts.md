@@ -1,8 +1,5 @@
 # Cancellation and Timeouts
 
-Previous: [Concurrent Tasks](concurrent-tasks.md)
-Next: [Resource Management](resource-management.md)
-
 Cancellation is what makes task lifetimes *real*. Without it, timeouts are
 wishes and `TaskGroup` has no way to shut down children when a sibling fails.
 Everything you saw in the previous section -- sibling cancellation, the clean
@@ -444,9 +441,3 @@ re-raise at the end.
 > exception or have a very good comment explaining why it doesn't.
 
 ---
-
-That covers cancellation and timeouts -- the mechanisms that give your async
-code real deadlines and real cleanup. Next up:
-[Resource Management](resource-management.md), where you will learn how
-`async with`, `try`/`finally`, and async generators work together to manage
-resources that need asynchronous teardown.

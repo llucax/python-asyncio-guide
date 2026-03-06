@@ -1,8 +1,5 @@
 # Concurrent Tasks
 
-Previous: [Getting Started](getting-started.md)
-Next: [Cancellation and Timeouts](cancellation-and-timeouts.md)
-
 This is where asyncio gets interesting. Everything in the previous section was
 sequential -- one coroutine, one `await` at a time, no overlap. The whole
 reason you reached for asyncio is to do multiple things at once. This section
@@ -486,9 +483,3 @@ of the guide. They apply everywhere -- cancellation, timeouts, queues,
 locks -- and they will save you from the most common async bugs.
 
 ---
-
-That's concurrent tasks. You now know how to run multiple coroutines at the
-same time, handle failures, and collect results -- all within a safe,
-structured scope. Next up:
-[Cancellation and Timeouts](cancellation-and-timeouts.md), where you will
-learn how to stop tasks that take too long.

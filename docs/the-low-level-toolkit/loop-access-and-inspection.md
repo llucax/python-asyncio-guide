@@ -1,8 +1,5 @@
 # Loop Access and Inspection
 
-Previous: [Chapter Index](index.md)
-Next: [Task Coordination](task-coordination.md)
-
 Most async code never touches the event loop directly. You `await` coroutines,
 create tasks through a `TaskGroup`, and let `asyncio.run()` manage the loop's
 lifecycle. But if you are writing a library, a framework, or a bridge to
@@ -197,8 +194,3 @@ That single keyword argument replaces the entire policy machinery. Inside
 your running program, `get_running_loop()` is the only accessor you need.
 
 ---
-
-That covers loop access and inspection -- a small surface area, but one that
-library authors reach for regularly. Next up:
-[Task Coordination](task-coordination.md), where you will work with
-`asyncio.wait()`, `asyncio.as_completed()`, and manual task management.

@@ -1,8 +1,5 @@
 # How Asyncio Works
 
-Previous: [Beyond the Basics](../beyond-the-basics/index.md)
-Next: [The Low-Level Toolkit](../the-low-level-toolkit/index.md)
-
 Chapters 1 and 2 taught you how to *use* asyncio. This chapter teaches you how
 it *works*. You don't need this material to write correct async programs -- but
 you do need it when something surprising happens and you want to understand

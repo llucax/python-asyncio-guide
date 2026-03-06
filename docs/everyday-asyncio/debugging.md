@@ -1,8 +1,5 @@
 # Debugging
 
-Previous: [Building a Pipeline](building-a-pipeline.md)
-Next: [Beyond the Basics](../beyond-the-basics/index.md)
-
 Async bugs can be genuinely confusing. A forgotten `await` produces a
 coroutine object instead of a value. A blocking call freezes the entire loop
 with no obvious error. A swallowed `CancelledError` makes a timeout silently
@@ -161,11 +158,3 @@ is invaluable when a task was spawned in one place and failed in another.
 > through task groups and `except*` handlers.
 
 ---
-
-That covers the essentials for debugging your first async programs: turn on
-debug mode, check the common mistakes list, understand which operations are
-checkpoints, and learn to read the tracebacks. When you need more -- diagnosing
-blocked loops, tracking down task leaks, profiling event loop latency -- the
-[Debugging Guide](../appendices/debugging.md) appendix goes deeper. Next up:
-[Beyond the Basics](../beyond-the-basics/index.md), where you will learn
-`asyncio.to_thread()`, `shield()`, subprocesses, and more.

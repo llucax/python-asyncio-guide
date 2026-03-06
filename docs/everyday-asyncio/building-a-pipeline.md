@@ -1,8 +1,5 @@
 # Building a Pipeline
 
-Previous: [Coordination](coordination.md)
-Next: [Debugging](debugging.md)
-
 This section ties together everything from this chapter --
 [`TaskGroup`](concurrent-tasks.md#asynciotaskgroup),
 [queues](coordination.md#asyncioqueue), backpressure, cancellation,
@@ -649,7 +646,3 @@ as the lifetime manager, sentinels for shutdown -- scale from toy
 examples to production systems without changing shape.
 
 ---
-
-That covers actor pipelines. Next up: [Debugging](debugging.md),
-where you will learn how to track down the most common asyncio
-mistakes.

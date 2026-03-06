@@ -1,8 +1,5 @@
 # Resource Management
 
-Previous: [Cancellation and Timeouts](cancellation-and-timeouts.md)
-Next: [Streams](streams.md)
-
 Async code opens connections, acquires locks, and allocates resources that need
 cleanup -- just like synchronous code. The difference is that concurrency and
 cancellation make it much easier for cleanup to be skipped by accident. A task
@@ -437,7 +434,3 @@ a clear owner, every cleanup path is covered, and cancellation would not change
 any of that -- the `async with` blocks and `finally` blocks would still run.
 
 ---
-
-That covers resource management -- the patterns that keep your async code from
-leaking connections, locks, and file descriptors. Next up:
-[Streams](streams.md), where you will use these patterns with real network I/O.

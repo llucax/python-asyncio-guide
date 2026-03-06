@@ -1,8 +1,5 @@
 # Transports and Protocols
 
-Previous: [Callbacks and Threading](callbacks-and-threading.md)
-Next: [Appendices](../appendices/checkpoint-contract.md)
-
 In Chapter 1 you learned the Streams API -- `asyncio.open_connection()` and
 `asyncio.start_server()` give you a `StreamReader` and `StreamWriter` that you
 `await` like any other coroutine. That API is comfortable, familiar, and the
@@ -420,10 +417,3 @@ classes for routine networking.
 > control on your behalf -- bypassing it can cause lost data or deadlocks.
 
 ---
-
-That covers transports and protocols -- the callback-based networking layer at
-the bottom of asyncio's stack. You now have the full picture: from the
-high-level Streams API you learned in Chapter 1, down through the event loop
-internals in Chapter 3, to the raw transport/protocol machinery here. For
-quick reference material and checklists, continue to the
-[Appendices](../appendices/checkpoint-contract.md).

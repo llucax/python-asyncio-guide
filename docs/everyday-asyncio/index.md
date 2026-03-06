@@ -1,8 +1,5 @@
 # Everyday Asyncio
 
-Previous: [Guide Index](../index.md)
-Next: [Beyond the Basics](../beyond-the-basics/index.md)
-
 This chapter covers everything you need to write correct, robust async
 programs. By the end, you will be comfortable with coroutines, concurrent
 tasks, cancellation, timeouts, resource management, networking, and

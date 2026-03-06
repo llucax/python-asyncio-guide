@@ -1,8 +1,5 @@
 # Tasks and Futures
 
-Previous: [The Event Loop](the-event-loop.md)
-Next: [Cancellation Internals](cancellation-internals.md)
-
 The event loop is the scheduler, but it doesn't do much by itself. It needs
 *objects* it can schedule -- things that represent "work in progress" and can
 report back when they're done. Those objects are
@@ -394,11 +391,3 @@ comes back and picks up where it left off.
 > is the mental model you need; read the source when you want the full picture.
 
 ---
-
-That's what futures and tasks are: futures are passive result containers, tasks
-are active coroutine drivers, and `create_task()` bridges the two by wrapping
-a coroutine in a task and scheduling its first step. You now have the complete
-picture of how your `async def` functions actually run on the event loop. Next
-up: [Cancellation Internals](cancellation-internals.md), where you will see
-how `task.cancel()` injects a `CancelledError` into this step machinery and
-how `TaskGroup` and `asyncio.timeout()` use it under the hood.

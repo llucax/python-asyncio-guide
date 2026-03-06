@@ -1,8 +1,5 @@
 # Getting Started
 
-Previous: [Chapter Index](index.md)
-Next: [Concurrent Tasks](concurrent-tasks.md)
-
 This section introduces the core vocabulary of asyncio: coroutines, `await`,
 `asyncio.run()`, and `asyncio.sleep()`. By the end you will be able to write
 and run a simple async program and understand what happens under the hood.
@@ -434,7 +431,3 @@ code at this stage:
    `asyncio.run()` to catch common mistakes early.
 
 ---
-
-Next up: [Concurrent Tasks](concurrent-tasks.md) -- where asyncio gets
-interesting. You will learn how to run multiple coroutines at the same time
-using `TaskGroup`.

@@ -1,8 +1,5 @@
 # Futures
 
-Previous: [Task Coordination](task-coordination.md)
-Next: [Callbacks and Threading](callbacks-and-threading.md)
-
 Chapter 3 covered [what futures are](../how-asyncio-works/tasks-and-futures.md):
 passive containers for a value that doesn't exist yet. You know the API --
 `.done()`, `.result()`, `.set_result()`, `await`. This section is about
@@ -283,8 +280,3 @@ For everything else -- running coroutines concurrently, collecting results,
 handling cancellation -- use tasks and task groups. They are futures under the
 hood, but they handle the lifecycle management that you would otherwise have to
 do yourself.
-
-Next up: [Callbacks and Threading](callbacks-and-threading.md), where you'll
-see `add_done_callback()`, `call_soon_threadsafe()`, and
-`run_coroutine_threadsafe()` -- the rest of the toolkit for bridging asyncio
-with callback-based and threaded code.

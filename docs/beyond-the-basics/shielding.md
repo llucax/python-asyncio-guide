@@ -1,8 +1,5 @@
 # Shielding
 
-Previous: [Blocking Code](blocking-code.md)
-Next: [Custom Context Managers](custom-context-managers.md)
-
 Sometimes you genuinely need work to survive cancellation. A database
 transaction is half-committed, a websocket client needs to send a goodbye
 frame, a buffer must flush before the process exits. In these situations the
@@ -368,5 +365,3 @@ work short, give it an explicit owner, and make sure someone awaits the result
 before the program exits. If you cannot articulate who owns the shielded task,
 you do not need `shield()` -- you need a redesign.
 
-Next up: [Custom Context Managers](custom-context-managers.md), where you will
-build async context managers that compose resource lifetimes cleanly.

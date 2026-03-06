@@ -1,8 +1,5 @@
 # Checkpoint Contract
 
-Previous: [The Low-Level Toolkit](../the-low-level-toolkit/index.md)
-Next: [Best Practices](best-practices.md)
-
 Every `await` expression is a *potential* checkpoint -- a point where the
 current task may suspend and let another task run. But "potential" is the key
 word. Some `await`s always suspend. Some only suspend when a certain condition

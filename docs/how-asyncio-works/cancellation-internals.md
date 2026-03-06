@@ -1,8 +1,5 @@
 # Cancellation Internals
 
-Previous: [Tasks and Futures](tasks-and-futures.md)
-Next: [Shutdown Sequence](shutdown-sequence.md)
-
 Chapter 1 taught you the user-facing rules: `CancelledError` is how asyncio
 asks your code to stop, you must never swallow it, and `asyncio.timeout()`
 converts it into `TimeoutError` at the `async with` boundary. Those rules are
@@ -390,9 +387,3 @@ In all three cases, the explanation comes down to the counter: who incremented
 it, who decremented it, and what the value was when a decision had to be made.
 
 ---
-
-That covers the cancellation machinery -- the counter protocol that powers
-`asyncio.timeout()` and `TaskGroup` under the hood. Next up:
-[Shutdown Sequence](shutdown-sequence.md), where you will see what
-`asyncio.run()` does when your main coroutine returns and there are still
-tasks alive.

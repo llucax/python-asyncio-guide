@@ -1,8 +1,5 @@
 # Runner
 
-Previous: [Subprocesses](subprocesses.md)
-Next: [How Asyncio Works](../how-asyncio-works/index.md)
-
 Every example in this guide ends the same way: `asyncio.run(main())`. That
 call creates a fresh event loop, runs your coroutine to completion, and tears
 the loop down. One shot, one loop. Most of the time that is exactly what you
@@ -204,13 +201,3 @@ cleanup even if an exception is raised.
 > raise `RuntimeError`. If you need another loop, create a new `Runner`.
 
 ---
-
-`asyncio.Runner` is a small addition with a clear purpose: it is a *reusable*
-`asyncio.run()`. When you need multiple top-level coroutine runs on the same
-event loop -- for tests, REPL sessions, or multi-step orchestration -- reach
-for a `Runner`. For everything else, plain `asyncio.run()` remains the right
-default.
-
-Next up: [How Asyncio Works](../how-asyncio-works/index.md), where you
-drop below the application layer and see what the event loop is actually
-doing.

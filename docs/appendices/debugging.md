@@ -1,8 +1,5 @@
 # Debugging Guide
 
-Previous: [Best Practices](best-practices.md)
-Next: [Guide Index](../index.md)
-
 The [Debugging](../everyday-asyncio/debugging.md) section in Chapter 1
 covers the most common async mistakes. This appendix is the full reference --
 it goes deeper on debug mode and adds diagnostic techniques for problems that
@@ -411,8 +408,3 @@ you need to inspect a running production process or generate a performance
 profile.
 
 ---
-
-That covers the full debugging toolkit. Most async bugs fall into one of these
-categories, and most are diagnosed the same way -- enable debug mode, inspect
-the running tasks, read the tracebacks carefully. When you hit something that
-does not fit these patterns, the third-party tools give you the next step.

@@ -1,8 +1,5 @@
 # Custom Context Managers
 
-Previous: [Shielding](shielding.md)
-Next: [Advanced Coordination](advanced-coordination.md)
-
 Chapter 1 covered *using* `async with` with context managers that asyncio
 hands you -- `Lock`, `TaskGroup`, `timeout()`. You know the contract:
 `__aenter__` runs on entry, `__aexit__` runs on exit, cleanup is guaranteed
@@ -401,8 +398,3 @@ a variable number of pools (say, one per tenant), it could use an
 | Composing context managers | Layering setup/teardown of multiple resources behind a single `async with`. Keep lifetimes nested and explicit. |
 
 ---
-
-That covers creating async context managers -- from quick decorator-based
-wrappers to dynamic stacks. Next up: [Advanced Coordination](advanced-coordination.md),
-where you will meet `Condition`, `Barrier`, and the other synchronisation
-primitives that go beyond Chapter 1's basics.

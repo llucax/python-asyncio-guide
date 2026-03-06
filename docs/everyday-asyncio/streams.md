@@ -1,8 +1,5 @@
 # Streams
 
-Previous: [Resource Management](resource-management.md)
-Next: [Coordination](coordination.md)
-
 Everything up to this point has used `asyncio.sleep()` as a stand-in for real
 work. Streams are where asyncio earns its keep: actual TCP networking with
 clean async/await syntax. The streams API gives you a high-level interface for
@@ -409,11 +406,3 @@ consumers.
 > which is the coroutine that actually waits for the buffer to flush.
 
 ---
-
-That covers the streams API -- asyncio's high-level interface for TCP
-networking. You have seen how to open client connections, build servers, read
-and write data, manage stream lifetimes, and apply timeouts. For the
-lower-level Transports and Protocols API (which the streams layer is built
-on), see Chapter 4. Next up:
-[Coordination](coordination.md), where you will learn how to use queues,
-events, and locks to coordinate between concurrent tasks.

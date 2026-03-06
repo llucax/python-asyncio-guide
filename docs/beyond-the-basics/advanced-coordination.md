@@ -1,8 +1,5 @@
 # Advanced Coordination
 
-Previous: [Custom Context Managers](custom-context-managers.md)
-Next: [Subprocesses](subprocesses.md)
-
 Chapter 1 covered the four coordination primitives you will use most often --
 [Queue, Lock, Event, and Semaphore](../everyday-asyncio/coordination.md).
 Those handle the vast majority of inter-task communication. This section
@@ -343,8 +340,3 @@ All three queue types share the same interface (`put`, `get`, `maxsize`,
 > or stack-like semantics. All three support `maxsize` for backpressure.
 
 ---
-
-That covers the advanced coordination primitives -- the specialised tools that
-complement Chapter 1's everyday `Queue`, `Lock`, `Event`, and `Semaphore`.
-Next up: [Subprocesses](subprocesses.md), where you will learn to run and
-communicate with external processes from async code.

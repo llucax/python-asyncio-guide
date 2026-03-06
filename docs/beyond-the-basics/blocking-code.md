@@ -1,8 +1,5 @@
 # Blocking Code
 
-Previous: [Chapter Index](index.md)
-Next: [Shielding](shielding.md)
-
 Not everything in the Python ecosystem is async. You will need to call
 libraries that talk to databases, read files, or crunch numbers -- and many of
 them are synchronous. That is fine. Asyncio has good tools for bridging the
@@ -343,10 +340,3 @@ synchronous `requests` in `to_thread` works, but switching to
 better performance and cleaner code.
 
 ---
-
-That covers the tools for running blocking code inside an async program. The
-key takeaway: never call a blocking function directly in a coroutine. Use
-`to_thread` for I/O-bound work, `ProcessPoolExecutor` for CPU-bound work, and
-keep the event loop free to do what it does best -- juggle thousands of tasks
-without breaking a sweat. Next up: [Shielding](shielding.md), where you will
-learn how to protect critical operations from cancellation.

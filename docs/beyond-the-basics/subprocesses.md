@@ -1,8 +1,5 @@
 # Subprocesses
 
-Previous: [Advanced Coordination](advanced-coordination.md)
-Next: [Runner](runner.md)
-
 Running external commands is a common need in async programs. You might be
 shelling out to `ffmpeg` to transcode a video, running `git` to inspect a
 repository, or piping data through a command-line tool. The standard library's
@@ -343,11 +340,3 @@ needs -- add logging, check return codes, decode output -- but keep the
 > Explicit cleanup makes the behaviour deterministic.
 
 ---
-
-That covers async subprocesses. The key points: use `create_subprocess_exec()`
-as your default, reach for `create_subprocess_shell()` only when you need
-actual shell features, use `communicate()` to avoid pipe deadlocks, stream
-output with `readline()` when you need live progress, and always -- always --
-wait for the process to finish, especially on the error path. Next up:
-[Runner](runner.md), where you will learn how `asyncio.Runner` lets you run
-multiple top-level coroutines without repeated `asyncio.run()` calls.

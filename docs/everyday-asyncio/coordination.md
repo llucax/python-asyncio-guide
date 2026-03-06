@@ -1,8 +1,5 @@
 # Coordination
 
-Previous: [Streams](streams.md)
-Next: [Building a Pipeline](building-a-pipeline.md)
-
 Up to this point, your concurrent tasks have been independent -- they each do
 their own work and you collect the results when the `TaskGroup` finishes. Real
 programs are rarely that tidy. Tasks need to *talk* to each other: pass data,
@@ -452,8 +449,3 @@ cover the vast majority of coordination needs; for `Condition`, `Barrier`,
 and the bounded/priority queue variants, see Chapter 2.
 
 ---
-
-That covers inter-task coordination -- the primitives that let your concurrent
-tasks work together instead of just working in parallel. Next up:
-[Building a Pipeline](building-a-pipeline.md), where you will tie all of
-these pieces together into a realistic actor-based application.

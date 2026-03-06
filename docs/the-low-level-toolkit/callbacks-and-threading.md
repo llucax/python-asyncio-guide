@@ -1,8 +1,5 @@
 # Callbacks and Threading
 
-Previous: [Futures](futures.md)
-Next: [Transports and Protocols](transports-and-protocols.md)
-
 Chapter 2 covered
 [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
 -- the way to call blocking code *from* an async context. But sometimes the
@@ -345,6 +342,3 @@ application code, but when you are building a framework, integrating with
 legacy systems, or writing a server with graceful shutdown, they are essential.
 
 ---
-
-Next up: [Transports and Protocols](transports-and-protocols.md), the
-callback-based networking layer that sits underneath asyncio's stream API.
