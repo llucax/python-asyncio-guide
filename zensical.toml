@@ -41,6 +41,10 @@ Copyright &copy; 2026 Frequenz Energy-as-a-Service GmbH.
 # project.
 repo_url = "https://github.com/frequenz-floss/python-asyncio-guide"
 
+# The repository name is used to link to the source code repository of your
+# project.
+repo_name = "python-asyncio-guide"
+
 # The repository URL is used to link to the source code repository of your
 # project.
 edit_uri = "edit/v0.x.x/docs/"
