@@ -342,6 +342,7 @@ toggle.name = "Switch to light mode"
 #
 # See https://zensical.org/docs/setup/extensions/
 # ----------------------------------------------------------------------------
+[project.markdown_extensions.callouts]
 [project.markdown_extensions.pymdownx.blocks.caption]
 [project.markdown_extensions.pymdownx.highlight]
 anchor_linenums = true

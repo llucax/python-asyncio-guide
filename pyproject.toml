@@ -8,5 +8,6 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "markdown-callouts>=0.4.0",
     "zensical>=0.0.24",
 ]
