@@ -55,19 +55,19 @@ consolidated best practices, and a debugging guide.
 
 ## Chapters
 
-1. [Everyday Asyncio](01-everyday-asyncio/index.md) — `asyncio.run()`,
+1. [Everyday Asyncio](everyday-asyncio/index.md) — `asyncio.run()`,
    coroutines, `TaskGroup`, `asyncio.timeout()`, `Event`, `Queue`, and
    everything you need for day-to-day async programming.
 
-2. [Beyond the Basics](02-beyond-the-basics/index.md) — `asyncio.to_thread()`,
+2. [Beyond the Basics](beyond-the-basics/index.md) — `asyncio.to_thread()`,
    `shield()`, subprocesses, async context managers, advanced synchronization,
    and `asyncio.Runner`.
 
-3. [How Asyncio Works](03-how-asyncio-works/index.md) — the event loop model,
+3. [How Asyncio Works](how-asyncio-works/index.md) — the event loop model,
    `asyncio.Future`, `asyncio.Task`, task lifecycle, and the full cancellation
    mechanics.
 
-4. [The Low-Level Toolkit](04-the-low-level-toolkit/index.md) —
+4. [The Low-Level Toolkit](the-low-level-toolkit/index.md) —
    `get_running_loop()`, `wait()`, `as_completed()`, `wait_for()`,
    cross-thread communication, protocols/transports, and low-level server APIs.
 

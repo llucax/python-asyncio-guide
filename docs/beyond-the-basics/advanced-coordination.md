@@ -4,7 +4,7 @@ Previous: [Custom Context Managers](custom-context-managers.md)
 Next: [Subprocesses](subprocesses.md)
 
 Chapter 1 covered the four coordination primitives you will use most often --
-[Queue, Lock, Event, and Semaphore](../01-everyday-asyncio/coordination.md).
+[Queue, Lock, Event, and Semaphore](../everyday-asyncio/coordination.md).
 Those handle the vast majority of inter-task communication. This section
 covers the *specialised* primitives -- tools you reach for less often, but
 that solve specific problems cleanly when you do need them. Each one gets a

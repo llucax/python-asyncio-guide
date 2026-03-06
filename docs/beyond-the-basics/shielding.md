@@ -360,7 +360,7 @@ outer task, then await the inner one and assert on its side effects.
 ---
 
 `shield()` is the one legitimate exception to the "never swallow
-cancellation" rule from [Chapter 1](../01-everyday-asyncio/cancellation-and-timeouts.md).
+cancellation" rule from [Chapter 1](../everyday-asyncio/cancellation-and-timeouts.md).
 It exists because real systems have work that must not be interrupted --
 commits, close frames, flushes. But it breaks structured concurrency by
 design, so treat every use as a small, deliberate exception: keep the shielded

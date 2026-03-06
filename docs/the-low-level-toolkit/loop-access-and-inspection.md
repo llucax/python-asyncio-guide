@@ -165,7 +165,7 @@ application is doing.
 
 > [!TIP]
 > `asyncio.all_tasks()` is what `asyncio.run()` calls during
-> [shutdown](../03-how-asyncio-works/shutdown-sequence.md) to find and cancel
+> [shutdown](../how-asyncio-works/shutdown-sequence.md) to find and cancel
 > leftover tasks. If you ever need to implement a similar graceful-shutdown
 > routine yourself, this is the function to reach for.
 

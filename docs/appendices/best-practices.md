@@ -28,7 +28,7 @@ operational discipline.
    `ExceptionGroup`, and cancels siblings on failure. Reach for `create_task()`
    only when you are building library internals that genuinely need unscoped
    tasks.
-   See [Concurrent Tasks -- `asyncio.TaskGroup`](../01-everyday-asyncio/concurrent-tasks.md#asynciotaskgroup).
+   See [Concurrent Tasks -- `asyncio.TaskGroup`](../everyday-asyncio/concurrent-tasks.md#asynciotaskgroup).
 
 2. **Never swallow `CancelledError`.** Catching `CancelledError` and not
    re-raising it defeats timeouts, `TaskGroup` teardown, and graceful
@@ -36,14 +36,14 @@ operational discipline.
    happened. If you catch it for logging or cleanup, always `raise` at the
    end. This is the single most important cancellation rule in the entire
    guide.
-   See [Cancellation and Timeouts -- The Cardinal Rule: Never Swallow Cancellation](../01-everyday-asyncio/cancellation-and-timeouts.md#the-cardinal-rule-never-swallow-cancellation).
+   See [Cancellation and Timeouts -- The Cardinal Rule: Never Swallow Cancellation](../everyday-asyncio/cancellation-and-timeouts.md#the-cardinal-rule-never-swallow-cancellation).
 
 3. **Always set `maxsize` on `Queue`.** An unbounded queue hides backpressure.
    If the producer is faster than the consumer, memory grows without limit and
    you discover the problem only when the process is killed by the OS. Setting
    `maxsize` makes `put()` suspend when the queue is full, which naturally
    throttles producers and surfaces design mismatches early.
-   See [Coordination -- Backpressure](../01-everyday-asyncio/coordination.md#backpressure).
+   See [Coordination -- Backpressure](../everyday-asyncio/coordination.md#backpressure).
 
 4. **Always close `StreamWriter` and call `wait_closed()`.** Calling
    `writer.close()` initiates shutdown but does not wait for the transport to
@@ -51,8 +51,8 @@ operational discipline.
    the coroutine while data is still in the send buffer and the OS socket is
    still open. Do both, in sequence, every time. Better yet, wrap the stream
    in an async context manager so the cleanup cannot be skipped (see rule 5).
-   See [Streams -- `StreamWriter`](../01-everyday-asyncio/streams.md#streamwriter)
-   and [Streams -- Resource Management for Streams](../01-everyday-asyncio/streams.md#resource-management-for-streams).
+   See [Streams -- `StreamWriter`](../everyday-asyncio/streams.md#streamwriter)
+   and [Streams -- Resource Management for Streams](../everyday-asyncio/streams.md#resource-management-for-streams).
 
 5. **Use `async with` for every resource that supports it.** Locks, task
    groups, timeouts, streams, database connections -- anything with
@@ -60,7 +60,7 @@ operational discipline.
    guarantees cleanup runs even when the block is interrupted by an exception
    or a cancellation. Manual `acquire()`/`release()` and `close()` calls are
    easy to skip under cancellation; `async with` makes skipping impossible.
-   See [Resource Management -- `async with`](../01-everyday-asyncio/resource-management.md#async-with).
+   See [Resource Management -- `async with`](../everyday-asyncio/resource-management.md#async-with).
 
 6. **Use `contextlib.aclosing()` for async generators.** An async generator
    that is abandoned mid-iteration never runs its `finally` block -- the
@@ -69,7 +69,7 @@ operational discipline.
    cleanup runs reliably even if the consumer breaks out early or gets
    cancelled. This is easy to forget because synchronous generators do not
    have the same problem.
-   See [Resource Management -- `contextlib.aclosing()`](../01-everyday-asyncio/resource-management.md#contextlibaclosing).
+   See [Resource Management -- `contextlib.aclosing()`](../everyday-asyncio/resource-management.md#contextlibaclosing).
 
 7. **Don't block the event loop.** The event loop is single-threaded. A call
    to `time.sleep()`, `requests.get()`, `open().read()`, or any CPU-heavy
@@ -77,7 +77,7 @@ operational discipline.
    indirect -- timeouts fire late, heartbeats miss, the UI freezes. Debug mode
    warns about calls that exceed 100 ms, but the real fix is to move the
    blocking work out of the coroutine entirely (see rules 8 and 9).
-   See [Blocking Code -- The Problem: Blocking the Event Loop](../02-beyond-the-basics/blocking-code.md#the-problem-blocking-the-event-loop).
+   See [Blocking Code -- The Problem: Blocking the Event Loop](../beyond-the-basics/blocking-code.md#the-problem-blocking-the-event-loop).
 
 8. **Use `asyncio.to_thread()` for blocking I/O.** When you must call a
    synchronous function that does I/O -- file reads, synchronous HTTP clients,
@@ -85,7 +85,7 @@ operational discipline.
    runs the function in a thread-pool worker, freeing the event loop to
    service other tasks while the blocking call completes. For CPU-bound work
    that needs to release the GIL, consider `ProcessPoolExecutor` instead.
-   See [Blocking Code -- `asyncio.to_thread()`](../02-beyond-the-basics/blocking-code.md#asyncioto_thread).
+   See [Blocking Code -- `asyncio.to_thread()`](../beyond-the-basics/blocking-code.md#asyncioto_thread).
 
 9. **Don't make sync-only functions `async`.** Adding `async def` to a
    function that never `await`s anything gives it a coroutine wrapper for no
@@ -94,7 +94,7 @@ operational discipline.
    the function yields control. Pure computations, data transformations, and
    validation logic should stay synchronous. If a function does no async I/O,
    keep it as a regular `def`.
-   See [Getting Started -- Coroutines](../01-everyday-asyncio/getting-started.md#coroutines).
+   See [Getting Started -- Coroutines](../everyday-asyncio/getting-started.md#coroutines).
 
 10. **Enable debug mode during development.** Pass `debug=True` to
     `asyncio.run()` or set the `PYTHONASYNCIODEBUG=1` environment variable.
@@ -102,7 +102,7 @@ operational discipline.
     loop, and unclosed resources. The runtime overhead is negligible and the
     diagnostics catch mistakes that are otherwise completely silent until
     production.
-    See [Debugging -- Debug Mode](../01-everyday-asyncio/debugging.md#debug-mode).
+    See [Debugging -- Debug Mode](../everyday-asyncio/debugging.md#debug-mode).
 
 11. **Use `asyncio.timeout()` instead of `wait_for()`.** `asyncio.timeout()`
     is a structured context manager -- the timeout scope is visible in the
@@ -110,8 +110,8 @@ operational discipline.
     whether it fired after the block exits. `wait_for()` is a low-level
     function with subtle cancellation edge cases and exists primarily for
     backward compatibility. Prefer `timeout()` in all new code.
-    See [Cancellation and Timeouts -- `asyncio.timeout()`](../01-everyday-asyncio/cancellation-and-timeouts.md#asynciotimeout)
-    and [Task Coordination -- `asyncio.wait_for()`](../04-the-low-level-toolkit/task-coordination.md#asynciowait_for).
+    See [Cancellation and Timeouts -- `asyncio.timeout()`](../everyday-asyncio/cancellation-and-timeouts.md#asynciotimeout)
+    and [Task Coordination -- `asyncio.wait_for()`](../the-low-level-toolkit/task-coordination.md#asynciowait_for).
 
 12. **Keep shielded work short and deliberate.** `asyncio.shield()` lets an
     inner task survive the cancellation of its outer task, but the outer task
@@ -120,7 +120,7 @@ operational discipline.
     handle its errors. Shield only small, critical operations like flushing a
     buffer or committing a transaction, and always document *why* the work
     needs to survive cancellation.
-    See [Shielding -- When to Use It](../02-beyond-the-basics/shielding.md#when-to-use-it).
+    See [Shielding -- When to Use It](../beyond-the-basics/shielding.md#when-to-use-it).
 
 13. **Use sentinel values for queue shutdown.** Cancelling consumer tasks
     while they are blocked on `queue.get()` works, but sentinel values give
@@ -129,7 +129,7 @@ operational discipline.
     dedicated sentinel with `_STOP = object()` and compare with `is`. The
     sentinel pattern composes well with `TaskGroup` -- producers finish first,
     then the cleanup code sends sentinels, and consumers exit naturally.
-    See [Coordination -- Queue Shutdown Patterns](../01-everyday-asyncio/coordination.md#queue-shutdown-patterns).
+    See [Coordination -- Queue Shutdown Patterns](../everyday-asyncio/coordination.md#queue-shutdown-patterns).
 
 14. **Use `try`/`finally` for cleanup, not `except CancelledError`.** Cleanup
     logic -- closing connections, releasing locks, flushing files -- belongs in
@@ -139,7 +139,7 @@ operational discipline.
     remember to re-raise, and the code wrongly suggests that cleanup only
     matters during cancellation. Reserve `except CancelledError` for the rare
     case where you need cancellation-specific *logic*, not just cleanup.
-    See [Cancellation and Timeouts -- Cleanup with `try`/`finally`](../01-everyday-asyncio/cancellation-and-timeouts.md#cleanup-with-tryfinally).
+    See [Cancellation and Timeouts -- Cleanup with `try`/`finally`](../everyday-asyncio/cancellation-and-timeouts.md#cleanup-with-tryfinally).
 
 15. **Avoid bare `except:` and `except BaseException:` without re-raising
     `CancelledError`.** Both of these catch `CancelledError` alongside
@@ -148,7 +148,7 @@ operational discipline.
     accident because the intent to catch cancellation is not visible in the
     code. If you need a broad catch, filter out `CancelledError` explicitly
     and re-raise it, or use `except Exception:` which deliberately excludes it.
-    See [Cancellation and Timeouts -- The `except BaseException:` Trap](../01-everyday-asyncio/cancellation-and-timeouts.md#the-except-baseexception-trap).
+    See [Cancellation and Timeouts -- The `except BaseException:` Trap](../everyday-asyncio/cancellation-and-timeouts.md#the-except-baseexception-trap).
 
 16. **Name your tasks for debugging.** Pass `name=` to `tg.create_task()` or
     `asyncio.create_task()`. Task names appear in tracebacks, debug-mode
@@ -157,8 +157,8 @@ operational discipline.
     staring at a log trying to figure out which task is stuck or leaking. A
     descriptive name like `"fetch-user-42"` makes the difference between a
     five-second diagnosis and a thirty-minute investigation.
-    See [Concurrent Tasks -- Collecting Results](../01-everyday-asyncio/concurrent-tasks.md#collecting-results)
-    and [Tasks and Futures](../03-how-asyncio-works/tasks-and-futures.md).
+    See [Concurrent Tasks -- Collecting Results](../everyday-asyncio/concurrent-tasks.md#collecting-results)
+    and [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
 
 17. **Use `asyncio.run()` exactly once at the top level.** `asyncio.run()`
     creates an event loop, runs your top-level coroutine, and tears everything
@@ -167,8 +167,8 @@ operational discipline.
     event loop" errors and resources that belong to a dead loop. If you need
     to run multiple top-level coroutines on the same loop, use
     `asyncio.Runner` as a context manager.
-    See [Getting Started -- `asyncio.run()`](../01-everyday-asyncio/getting-started.md#asynciorun)
-    and [Runner](../02-beyond-the-basics/runner.md).
+    See [Getting Started -- `asyncio.run()`](../everyday-asyncio/getting-started.md#asynciorun)
+    and [Runner](../beyond-the-basics/runner.md).
 
 18. **Don't mix threading primitives with asyncio primitives.** `asyncio.Lock`
     and `threading.Lock` solve the same problem for different concurrency
@@ -178,7 +178,7 @@ operational discipline.
     asyncio primitives in coroutines, threading primitives in threads, and
     `asyncio.to_thread()` or `run_coroutine_threadsafe()` at the boundary
     between them.
-    See [Blocking Code -- Thread Safety](../02-beyond-the-basics/blocking-code.md#thread-safety).
+    See [Blocking Code -- Thread Safety](../beyond-the-basics/blocking-code.md#thread-safety).
 
 19. **Prefer bounded concurrency (`Semaphore`) over unlimited fan-out.**
     Launching thousands of tasks at once to hit an external API will exhaust
@@ -187,7 +187,7 @@ operational discipline.
     operation concurrently. The semaphore acts as an async-friendly throttle:
     tasks that exceed the limit suspend on `async with sem:` instead of
     blocking, and proceed as earlier tasks finish.
-    See [Coordination -- `asyncio.Semaphore`](../01-everyday-asyncio/coordination.md#asynciosemaphore).
+    See [Coordination -- `asyncio.Semaphore`](../everyday-asyncio/coordination.md#asynciosemaphore).
 
 20. **Test with debug mode and strict exception handling.** Run your test
     suite with `asyncio.run(main(), debug=True)` or the `PYTHONASYNCIODEBUG`
@@ -197,7 +197,7 @@ operational discipline.
     transports before they reach production. Combining debug mode with Python's
     `-W error` flag turns warnings into hard failures that your CI pipeline
     cannot miss.
-    See [Debugging -- Debug Mode](../01-everyday-asyncio/debugging.md#debug-mode).
+    See [Debugging -- Debug Mode](../everyday-asyncio/debugging.md#debug-mode).
 
 ---
 

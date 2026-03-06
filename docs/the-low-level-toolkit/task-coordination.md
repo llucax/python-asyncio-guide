@@ -435,7 +435,7 @@ Got: fallback result
 The coroutine swallowed `CancelledError` and returned a string. `wait_for()`
 saw the task complete "successfully" and returned the result. This is
 another reason to never suppress `CancelledError` -- the
-[Cancellation and Timeouts](../01-everyday-asyncio/cancellation-and-timeouts.md)
+[Cancellation and Timeouts](../everyday-asyncio/cancellation-and-timeouts.md)
 section in Chapter 1 explains this rule in detail.
 
 > [!NOTE]

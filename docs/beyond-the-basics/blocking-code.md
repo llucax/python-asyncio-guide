@@ -69,7 +69,7 @@ seconds mean dropped connections, missed heartbeats, and unresponsive
 services.
 
 > [!CAUTION]
-> Asyncio debug mode (covered in [Debugging](../01-everyday-asyncio/debugging.md))
+> Asyncio debug mode (covered in [Debugging](../everyday-asyncio/debugging.md))
 > logs a warning when a callback blocks the loop for more than 100 ms, but it
 > cannot *prevent* the freeze. The only fix is to not block the loop in the
 > first place.
@@ -205,7 +205,7 @@ Results: ['item-0', 'item-1', 'item-2']
 > [!NOTE]
 > `asyncio.get_running_loop()` and `loop.call_soon_threadsafe()` are low-level
 > event loop APIs covered in detail in
-> [Chapter 4](../04-the-low-level-toolkit/loop-access-and-inspection.md).
+> [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
 > They appear here because they are the *only* way to safely communicate from
 > a background thread back to the event loop -- there is no high-level
 > alternative for this pattern.
@@ -291,7 +291,7 @@ Checked 5 numbers in 0.43s
 > [!NOTE]
 > Like the `call_soon_threadsafe` example above, this recipe uses the low-level
 > APIs `asyncio.get_running_loop()` and `loop.run_in_executor()`, which are
-> covered in [Chapter 4](../04-the-low-level-toolkit/loop-access-and-inspection.md).
+> covered in [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
 > `run_in_executor` is the only built-in way to dispatch work to a
 > `ProcessPoolExecutor` from async code, so you will see it whenever CPU-bound
 > offloading comes up.

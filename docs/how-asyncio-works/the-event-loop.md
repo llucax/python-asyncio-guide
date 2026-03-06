@@ -197,7 +197,7 @@ a convenience wrapper around `call_at`.
 
 ## Cooperative Scheduling
 
-In [Everyday Asyncio](../01-everyday-asyncio/getting-started.md#checkpoints)
+In [Everyday Asyncio](../everyday-asyncio/getting-started.md#checkpoints)
 you learned that every `await` is a potential checkpoint -- a place where the
 loop *may* pause your coroutine and let other tasks run. You also learned the
 `await asyncio.sleep(0)` idiom for forcing a yield. That is the user-facing
@@ -311,7 +311,7 @@ series) instead of the ~1s you would see if they overlapped.
 > every N iterations is a band-aid. The better solution is
 > `asyncio.to_thread()` or `loop.run_in_executor()` with a
 > `ProcessPoolExecutor`, as covered in
-> [Blocking Code](../02-beyond-the-basics/blocking-code.md). Reserve
+> [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
 > `sleep(0)` for cases where the overhead of a thread switch is not justified.
 
 ## Fairness
@@ -372,7 +372,7 @@ provides -- there is no preemption, no time budgets, no automatic yielding.
 > The output order above depends on the order in which tasks were created.
 > If you need a specific execution order between tasks, use explicit
 > coordination primitives (`Event`, `Queue`, etc.) from
-> [Coordination](../01-everyday-asyncio/coordination.md). Relying on
+> [Coordination](../everyday-asyncio/coordination.md). Relying on
 > scheduling order is fragile.
 
 ## Why This Matters

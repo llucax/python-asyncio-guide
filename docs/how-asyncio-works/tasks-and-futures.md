@@ -176,7 +176,7 @@ something goes wrong.
 > prevents orphaned tasks. Bare `create_task()` is a building block -- it is
 > what `TaskGroup` calls internally -- but in application code the unowned
 > version is almost always a mistake. See the
-> [Concurrent Tasks](../01-everyday-asyncio/concurrent-tasks.md) section in
+> [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) section in
 > Chapter 1 for the full argument.
 
 ## Task Lifecycle
@@ -264,7 +264,7 @@ you call it on a task that isn't done yet, you get `InvalidStateError`.
 > [!TIP]
 > After a `TaskGroup` block exits normally, every task in the group is
 > guaranteed done. That is why the
-> [Collecting Results](../01-everyday-asyncio/concurrent-tasks.md) pattern
+> [Collecting Results](../everyday-asyncio/concurrent-tasks.md) pattern
 > calls `.result()` *after* the `async with` block -- it is always safe there.
 
 ## Task References

@@ -168,7 +168,7 @@ hello
 ```
 
 Compare this with the echo server from
-[Streams](../01-everyday-asyncio/streams.md). The Streams version is a
+[Streams](../everyday-asyncio/streams.md). The Streams version is a
 coroutine with `await reader.readline()` and `await writer.drain()`. The
 protocol version is a class with callbacks -- no coroutines, no `await`. The
 protocol version is slightly more verbose, but it has zero per-message

@@ -222,7 +222,7 @@ event loop's internal clock, rather than a relative delay.
 
 > [!NOTE]
 > `asyncio.get_running_loop()` is covered in
-> [Chapter 4](../04-the-low-level-toolkit/loop-access-and-inspection.md).
+> [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
 > Here you use it only to read the event-loop clock for `timeout_at()`.
 
 ```python

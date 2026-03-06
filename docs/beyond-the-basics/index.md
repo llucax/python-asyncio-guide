@@ -1,7 +1,7 @@
 # Beyond the Basics
 
-Previous: [Everyday Asyncio](../01-everyday-asyncio/index.md)
-Next: [How Asyncio Works](../03-how-asyncio-works/index.md)
+Previous: [Everyday Asyncio](../everyday-asyncio/index.md)
+Next: [How Asyncio Works](../how-asyncio-works/index.md)
 
 This chapter covers patterns you will reach for once you are comfortable with
 the material in Chapter 1. Everything here is still application-level code --

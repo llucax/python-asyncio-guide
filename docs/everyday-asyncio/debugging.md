@@ -1,7 +1,7 @@
 # Debugging
 
 Previous: [Building a Pipeline](building-a-pipeline.md)
-Next: [Beyond the Basics](../02-beyond-the-basics/index.md)
+Next: [Beyond the Basics](../beyond-the-basics/index.md)
 
 Async bugs can be genuinely confusing. A forgotten `await` produces a
 coroutine object instead of a value. A blocking call freezes the entire loop
@@ -74,7 +74,7 @@ file I/O, any C extension that holds the GIL for a long time.
 
 *Fix:* Replace with the async equivalent (`asyncio.sleep()`, `aiohttp`,
 `asyncio.to_thread()` for unavoidable blocking work -- covered in
-[Chapter 2](../02-beyond-the-basics/index.md)).
+[Chapter 2](../beyond-the-basics/index.md)).
 
 **3. Swallowing `CancelledError`**
 
@@ -167,5 +167,5 @@ debug mode, check the common mistakes list, understand which operations are
 checkpoints, and learn to read the tracebacks. When you need more -- diagnosing
 blocked loops, tracking down task leaks, profiling event loop latency -- the
 [Debugging Guide](../appendices/debugging.md) appendix goes deeper. Next up:
-[Beyond the Basics](../02-beyond-the-basics/index.md), where you will learn
+[Beyond the Basics](../beyond-the-basics/index.md), where you will learn
 `asyncio.to_thread()`, `shield()`, subprocesses, and more.

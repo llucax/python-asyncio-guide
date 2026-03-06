@@ -20,7 +20,7 @@ Every
 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task),
 which is a subclass) supports *done callbacks* -- plain functions that fire
 when the future completes. You saw the API listed in
-[Tasks and Futures](../03-how-asyncio-works/tasks-and-futures.md); here is how
+[Tasks and Futures](../how-asyncio-works/tasks-and-futures.md); here is how
 you actually use it.
 
 The callback receives the future as its only argument. You can inspect it to
@@ -79,7 +79,7 @@ A few things to know:
 > [!NOTE]
 > Done callbacks are the low-level mechanism that makes `await task` work.
 > The task pseudocode in
-> [Chapter 3](../03-how-asyncio-works/tasks-and-futures.md) showed how a task
+> [Chapter 3](../how-asyncio-works/tasks-and-futures.md) showed how a task
 > registers `__step` as a done callback on the future it is awaiting. You
 > rarely need done callbacks yourself -- `await` is almost always cleaner --
 > but they are indispensable in library code that must react to completion
@@ -94,7 +94,7 @@ calling it from a background thread can corrupt internal data structures.
 `call_soon_threadsafe()` uses proper synchronization and wakes the loop's
 selector so the callback runs promptly, even if the loop is blocked on I/O.
 
-Chapter 2's [Blocking Code](../02-beyond-the-basics/blocking-code.md) section
+Chapter 2's [Blocking Code](../beyond-the-basics/blocking-code.md) section
 introduced this briefly. Here is a fuller example -- a background thread that
 sends progress updates to the event loop:
 
@@ -254,7 +254,7 @@ registers a callback that the event loop invokes when a signal arrives. Unlike
 the asyncio variant is loop-safe -- the callback runs via `call_soon()` in the
 loop thread, not in a signal-handler context.
 
-The [Shutdown Sequence](../03-how-asyncio-works/shutdown-sequence.md) section
+The [Shutdown Sequence](../how-asyncio-works/shutdown-sequence.md) section
 mentioned that signal handling belongs here. The recommended pattern is to set
 an [`asyncio.Event`](https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event)
 when the signal arrives and have your main code wait on that event:
@@ -338,7 +338,7 @@ These APIs bridge the gap between the async event loop and everything else:
 | `loop.add_signal_handler()` | OS → loop | Respond to Unix signals inside the event loop |
 
 For the common case -- calling blocking code *from* async -- stick with
-[`asyncio.to_thread()`](../02-beyond-the-basics/blocking-code.md). The tools
+[`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md). The tools
 in this section are for the reverse: when synchronous code, external threads,
 or the OS need to reach into your event loop. You will not need them in most
 application code, but when you are building a framework, integrating with

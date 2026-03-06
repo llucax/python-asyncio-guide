@@ -1,7 +1,7 @@
 # Shutdown Sequence
 
 Previous: [Cancellation Internals](cancellation-internals.md)
-Next: [The Low-Level Toolkit](../04-the-low-level-toolkit/index.md)
+Next: [The Low-Level Toolkit](../the-low-level-toolkit/index.md)
 
 Your `main()` coroutine returns, and you might think the program is done. It is
 not -- at least, not yet.
@@ -187,7 +187,7 @@ generator holds a resource that should be released *before* shutdown, it will
 be too late.
 
 The right approach is the one covered in
-[Resource Management](../01-everyday-asyncio/resource-management.md): wrap
+[Resource Management](../everyday-asyncio/resource-management.md): wrap
 every async generator you consume in
 [`contextlib.aclosing()`](https://docs.python.org/3/library/contextlib.html#contextlib.aclosing)
 so it is closed deterministically when you are done with it, not at some
@@ -279,7 +279,7 @@ initiate a graceful shutdown -- cancelling a sentinel event, setting a flag, or
 cancelling the main task -- instead of just crashing.
 
 Signal handling is a lower-level topic that belongs in
-[The Low-Level Toolkit](../04-the-low-level-toolkit/index.md). For now, the
+[The Low-Level Toolkit](../the-low-level-toolkit/index.md). For now, the
 important thing to know is that the shutdown *sequence* described above is the
 same regardless of what triggered it. Whether `main()` returns on its own or
 you cancel the main task in response to a signal, `asyncio.run()` still walks
@@ -290,5 +290,5 @@ through the same seven steps.
 That covers the full lifecycle of an asyncio program -- from `asyncio.run()`
 creating the loop, through your coroutines doing their work, to the methodical
 teardown when everything is done. Next up:
-[The Low-Level Toolkit](../04-the-low-level-toolkit/index.md), where you will
+[The Low-Level Toolkit](../the-low-level-toolkit/index.md), where you will
 meet the primitives that the high-level abstractions are built on.

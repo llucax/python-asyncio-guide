@@ -3,7 +3,7 @@
 Previous: [Task Coordination](task-coordination.md)
 Next: [Callbacks and Threading](callbacks-and-threading.md)
 
-Chapter 3 covered [what futures are](../03-how-asyncio-works/tasks-and-futures.md):
+Chapter 3 covered [what futures are](../how-asyncio-works/tasks-and-futures.md):
 passive containers for a value that doesn't exist yet. You know the API --
 `.done()`, `.result()`, `.set_result()`, `await`. This section is about
 *using* them in practice: creating them, resolving them manually, and bridging

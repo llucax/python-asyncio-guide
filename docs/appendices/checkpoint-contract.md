@@ -1,6 +1,6 @@
 # Checkpoint Contract
 
-Previous: [The Low-Level Toolkit](../04-the-low-level-toolkit/index.md)
+Previous: [The Low-Level Toolkit](../the-low-level-toolkit/index.md)
 Next: [Best Practices](best-practices.md)
 
 Every `await` expression is a *potential* checkpoint -- a point where the
@@ -9,7 +9,7 @@ word. Some `await`s always suspend. Some only suspend when a certain condition
 holds. And many asyncio operations are not `await`able at all -- they are plain
 synchronous calls that never yield control. Knowing which category an operation
 falls into is essential for reasoning about task interleaving, cancellation
-delivery, and starvation. [Debugging](../01-everyday-asyncio/debugging.md)
+delivery, and starvation. [Debugging](../everyday-asyncio/debugging.md)
 introduced a condensed three-row version of this table; what follows is the
 full reference.
 

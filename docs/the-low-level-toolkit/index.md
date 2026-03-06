@@ -1,6 +1,6 @@
 # The Low-Level Toolkit
 
-Previous: [How Asyncio Works](../03-how-asyncio-works/index.md)
+Previous: [How Asyncio Works](../how-asyncio-works/index.md)
 Next: [Appendices](../appendices/checkpoint-contract.md)
 
 This chapter is for library and framework authors who need to build on top of

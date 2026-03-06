@@ -3,7 +3,7 @@
 Previous: [Best Practices](best-practices.md)
 Next: [Guide Index](../index.md)
 
-The [Debugging](../01-everyday-asyncio/debugging.md) section in Chapter 1
+The [Debugging](../everyday-asyncio/debugging.md) section in Chapter 1
 covers the most common async mistakes. This appendix is the full reference --
 it goes deeper on debug mode and adds diagnostic techniques for problems that
 show up in larger programs: blocked loops, task leaks, deadlocks, and timeout
@@ -93,7 +93,7 @@ computation, synchronous file I/O.
    ```
 
 **Fix:** Replace the blocking call with a non-blocking equivalent, or offload
-it to a thread. See [Blocking Code](../02-beyond-the-basics/blocking-code.md)
+it to a thread. See [Blocking Code](../beyond-the-basics/blocking-code.md)
 for the full treatment.
 
 ```python
@@ -119,7 +119,7 @@ Memory usage grows over time. Exceptions go unreported.
 [`create_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task)
 but never awaited, or tasks outlive the scope they were meant to run in -- the
 "fire-and-forget" problem from
-[Concurrent Tasks](../01-everyday-asyncio/concurrent-tasks.md).
+[Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md).
 
 **Diagnosis:**
 
@@ -198,7 +198,7 @@ CancelledError` and `except BaseException` blocks in the call chain -- every
 one must end with `raise`.
 
 **Fix:** Re-raise the `CancelledError`. Always. This is the cardinal rule from
-[Cancellation and Timeouts](../01-everyday-asyncio/cancellation-and-timeouts.md):
+[Cancellation and Timeouts](../everyday-asyncio/cancellation-and-timeouts.md):
 
 ```python
 except asyncio.CancelledError:
@@ -261,7 +261,7 @@ async def main() -> None:
 
 `except*` splits the `ExceptionGroup`, routes each sub-exception to the
 matching handler, and re-raises anything unhandled as a new `ExceptionGroup`.
-See [Concurrent Tasks](../01-everyday-asyncio/concurrent-tasks.md) for the
+See [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) for the
 full explanation.
 
 > [!IMPORTANT]
@@ -321,7 +321,7 @@ find the cycle.
 
 - **Sentinel values for queues.** If a producer might crash or finish early,
   send a sentinel so consumers stop waiting. See the fan-out pattern in
-  [Concurrent Tasks](../01-everyday-asyncio/concurrent-tasks.md).
+  [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md).
 - **Timeouts as a safety net.** Wrapping lock acquisitions or queue gets in
   `asyncio.timeout()` turns a deadlock into a `TimeoutError`, which is at
   least diagnosable:
