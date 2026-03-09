@@ -68,7 +68,7 @@ consolidated best practices, and a debugging guide.
    everything you need for day-to-day async programming.
 
 2. [Beyond the Basics](beyond-the-basics/index.md) — [`asyncio.to_thread()`][asyncio-to-thread],
-   `shield()`, subprocesses, async context managers, advanced synchronization,
+   `#!py shield()`, subprocesses, async context managers, advanced synchronization,
    and [`asyncio.Runner`][asyncio-runner].
 
 3. [How Asyncio Works](how-asyncio-works/index.md) — the event loop model,
@@ -76,7 +76,7 @@ consolidated best practices, and a debugging guide.
    mechanics.
 
 4. [The Low-Level Toolkit](the-low-level-toolkit/index.md) —
-   `get_running_loop()`, `wait()`, `as_completed()`, `wait_for()`,
+   `#!py get_running_loop()`, `#!py wait()`, `#!py as_completed()`, `#!py wait_for()`,
    cross-thread communication, protocols/transports, and low-level server APIs.
 
 ---

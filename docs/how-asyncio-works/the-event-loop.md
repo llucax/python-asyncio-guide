@@ -16,7 +16,7 @@ section opens the hood and shows you what that machinery looks like.
 
 Understanding the event loop is not something you need for everyday coding. But
 when a timeout fires later than you expected, when a task appears to starve, or
-when you want to know what `await asyncio.sleep(0)` actually *does* -- this is
+when you want to know what `#!py await asyncio.sleep(0)` actually *does* -- this is
 where the answers live.
 
 ## The Loop Iteration
@@ -114,12 +114,12 @@ if __name__ == "__main__":
 ```
 
 The three callbacks ran in registration order, all at essentially the same
-time. That `await asyncio.sleep(0)` is what gave the loop the chance to run
+time. That `#!py await asyncio.sleep(0)` is what gave the loop the chance to run
 them -- without it, `main` would hold the loop and the callbacks would only
 fire after `main` returned.
 
 This is a low-level API. You will rarely call it directly, but it matters
-because it is the foundation. When you call `tg.create_task(some_coro())`,
+because it is the foundation. When you call `#!py tg.create_task(some_coro())`,
 asyncio creates a [`Task`][task] object and then calls `call_soon` to schedule the
 first step of that task. Every task begins life as a callback on the ready
 queue.
@@ -128,10 +128,10 @@ queue.
 
     `call_soon` returns a
     [`Handle`][handle]
-    object. You can call `handle.cancel()` to prevent the callback from
+    object. You can call `#!py handle.cancel()` to prevent the callback from
     running, as long as it hasn't been executed yet.
 
-## Timers: `call_later()` and `call_at()`
+## Timers: `#!py call_later()` and `#!py call_at()`
 
 [`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
 schedules a callback to run after *delay* seconds.
@@ -183,14 +183,14 @@ returns the current time as a `float`, according to the event loop's
 -- it never goes backwards, and it is not affected by system clock adjustments.
 All timer deadlines are expressed in terms of this clock.
 
-When you call `loop.call_later(0.5, cb)`, asyncio computes
-`loop.time() + 0.5` and inserts that into the timer heap. `call_later` is just
+When you call `#!py loop.call_later(0.5, cb)`, asyncio computes
+`#!py loop.time() + 0.5` and inserts that into the timer heap. `call_later` is just
 a convenience wrapper around `call_at`.
 
 !!! info
 
-    [`asyncio.sleep()`][asyncio-sleep] is built on `call_later()` under the hood. When you
-    write `await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
+    [`asyncio.sleep()`][asyncio-sleep] is built on `#!py call_later()` under the hood. When you
+    write `#!py await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
     a `call_later` to resolve it after one second, and suspends your
     coroutine until that future completes. Now you know why it is a
     checkpoint -- your coroutine genuinely gives up control and waits for a
@@ -201,7 +201,7 @@ a convenience wrapper around `call_at`.
 In [The Basics](../the-basics/getting-started.md#checkpoints)
 you learned that every [`await`][await] is a potential checkpoint -- a place where the
 loop *may* pause your coroutine and let other tasks run. You also learned the
-`await asyncio.sleep(0)` idiom for forcing a yield. That is the user-facing
+`#!py await asyncio.sleep(0)` idiom for forcing a yield. That is the user-facing
 mental model, and it is enough for most day-to-day work.
 
 Here you will see what the loop actually *does* when your coroutine hits one of
@@ -211,7 +211,7 @@ those checkpoints.
 
 A coroutine is driven by a [`Task`][task] (covered fully in
 [Tasks and Futures](tasks-and-futures.md)). When the task calls
-`coro.send(None)` and the coroutine reaches an [`await`][await] that needs to suspend,
+`#!py coro.send(None)` and the coroutine reaches an [`await`][await] that needs to suspend,
 the coroutine *yields* a [`Future`][future] back to the task. The task then does two
 things:
 
@@ -224,7 +224,7 @@ polls for I/O, checks timers, and eventually the future completes (because a
 timer fired, data arrived on a socket, etc.). The completion triggers the
 callback from step 1, which places `task.__step` back onto the ready queue.
 Next time the loop reaches phase 1, it calls `task.__step`, which calls
-`coro.send(result)`, and your coroutine picks up right where it left off.
+`#!py coro.send(result)`, and your coroutine picks up right where it left off.
 
 That is the full round trip. No magic, no thread switching, no signals -- just
 callbacks and a queue.
@@ -296,7 +296,7 @@ Here is exactly what happened inside the loop:
    suspending [`await`][await], so `task.__step` never returns. The loop is stuck
    inside phase 1 for the full second.
 3. During that second, `polite`'s step callback is sitting in the ready queue
-   doing nothing. The timer for `polite`'s first `sleep(0.2)` cannot even be
+   doing nothing. The timer for `polite`'s first `#!py sleep(0.2)` cannot even be
    *checked* because the loop never reaches phase 3.
 4. When `hog` finally returns, the loop finishes phase 1, does a zero-timeout
    I/O poll in phase 2, processes the now-overdue timers in phase 3, and only
@@ -307,12 +307,12 @@ series) instead of the ~1s you would see if they overlapped.
 
 !!! tip
 
-    If a computation is genuinely heavy, sprinkling `await asyncio.sleep(0)`
+    If a computation is genuinely heavy, sprinkling `#!py await asyncio.sleep(0)`
     every N iterations is a band-aid. The better solution is
     [`asyncio.to_thread()`][asyncio-to-thread] or [`loop.run_in_executor()`][loop-run-in-executor] with a
     [`ProcessPoolExecutor`][processpoolexecutor], as covered in
     [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
-    `sleep(0)` for cases where the overhead of a thread switch is not
+    `#!py sleep(0)` for cases where the overhead of a thread switch is not
     justified.
 
 ## Fairness
@@ -394,7 +394,7 @@ loop model pays off:
   during phase 1 run on the *next* iteration, not the current one. If you
   expected immediate execution, you are off by one loop turn.
 
-- **"My `sleep(0)` didn't help."** `sleep(0)` yields to the loop, but if
+- **"My `#!py sleep(0)` didn't help."** `#!py sleep(0)` yields to the loop, but if
   the ready queue has 200 other callbacks ahead of you, you won't resume
   until they have all run. It is a yield, not a priority boost.
 

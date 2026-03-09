@@ -17,7 +17,7 @@ reach *into* the asyncio event loop to schedule work or collect results. That
 requires a different set of tools: done callbacks, thread-safe scheduling,
 coroutine submission from non-async threads, and signal handling.
 
-## `add_done_callback()` and `remove_done_callback()`
+## `#!py add_done_callback()` and `#!py remove_done_callback()`
 
 Every
 [`asyncio.Future`][asyncio-future]
@@ -65,7 +65,7 @@ task succeeded: all good
 
 A few things to know:
 
-- **The callback is a plain `def`, not `async def`.** It is scheduled via
+- **The callback is a plain `def`, not `#!py async def`.** It is scheduled via
   [`call_soon()`][call-soon],
   so it runs on the event loop thread in the next iteration of the loop --
   *not* in a separate thread. Keep it fast. If you need to do real work in
@@ -81,7 +81,7 @@ A few things to know:
 
 !!! note
 
-    Done callbacks are the low-level mechanism that makes `await task`
+    Done callbacks are the low-level mechanism that makes `#!py await task`
     work. The task pseudocode in
     [Chapter 3](../how-asyncio-works/tasks-and-futures.md) showed how a
     task registers `__step` as a done callback on the future it is
@@ -89,13 +89,13 @@ A few things to know:
     always cleaner -- but they are indispensable in library code that must
     react to completion without suspending.
 
-## `call_soon_threadsafe()`
+## `#!py call_soon_threadsafe()`
 
 [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]
 is the thread-safe variant of [`call_soon()`][call-soon]. It schedules a callback on the
 event loop from *any* thread. The regular [`call_soon()`][call-soon] is not thread-safe --
 calling it from a background thread can corrupt internal data structures.
-`call_soon_threadsafe()` uses proper synchronization and wakes the loop's
+`#!py call_soon_threadsafe()` uses proper synchronization and wakes the loop's
 selector so the callback runs promptly, even if the loop is blocked on I/O.
 
 Chapter 2's [Blocking Code](../beyond-the-basics/blocking-code.md) section
@@ -154,12 +154,12 @@ background work complete
 
 !!! warning
 
-    `call_soon_threadsafe()` only schedules *plain callbacks* -- regular
+    `#!py call_soon_threadsafe()` only schedules *plain callbacks* -- regular
     functions with positional arguments. You cannot pass a coroutine to it.
     If you need to schedule a coroutine from another thread, use
-    `run_coroutine_threadsafe()` (next section).
+    `#!py run_coroutine_threadsafe()` (next section).
 
-## `run_coroutine_threadsafe()`
+## `#!py run_coroutine_threadsafe()`
 
 [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe]
 is the big one. It takes a coroutine and a running event loop, schedules it as
@@ -232,17 +232,17 @@ all handlers complete
 Key details:
 
 - The returned object is a [`concurrent.futures.Future`][concurrent-futures-future] with a blocking
-  `.result(timeout=...)` method. Safe to call from a thread -- *not* from the
+  `#!py .result(timeout=...)` method. Safe to call from a thread -- *not* from the
   event loop thread (that would deadlock).
 
-- If the coroutine raises, `cf_future.result()` re-raises it in the calling
-  thread. You can also call `cf_future.cancel()` to cancel the underlying
+- If the coroutine raises, `#!py cf_future.result()` re-raises it in the calling
+  thread. You can also call `#!py cf_future.cancel()` to cancel the underlying
   asyncio task.
 
 !!! warning
 
     You need a *running* event loop to use
-    `run_coroutine_threadsafe()`. It does not start one for you. The
+    `#!py run_coroutine_threadsafe()`. It does not start one for you. The
     typical pattern is to start the loop in a dedicated thread (or with
     [`asyncio.run()`][asyncio-run] in the main thread) and pass the loop object to any
     sync threads that need it.
@@ -307,13 +307,13 @@ down in a structured way, at a point where you have full context.
 
 A few notes:
 
-- **`remove_signal_handler(sig)`** unregisters the handler and returns `True`
+- **`#!py remove_signal_handler(sig)`** unregisters the handler and returns `True`
   if one was removed, `False` otherwise. Cleaning up in `finally` is good
   practice, though [`asyncio.run()`][asyncio-run] will close the loop regardless.
 
-- **Unix only.** `add_signal_handler()` raises `NotImplementedError` on
+- **Unix only.** `#!py add_signal_handler()` raises `NotImplementedError` on
   Windows. For portable signal handling, combine [`signal.signal()`][signal-signal] with
-  `call_soon_threadsafe()` -- but most long-running async services run on
+  `#!py call_soon_threadsafe()` -- but most long-running async services run on
   Linux anyway.
 
 - **Limited signal set.** You cannot handle `SIGKILL` or `SIGSTOP` (the OS
@@ -335,7 +335,7 @@ These APIs bridge the gap between the async event loop and everything else:
 
 | API | Direction | Use case |
 | :-- | :-- | :-- |
-| `future.add_done_callback()` | async → async | React to task/future completion without [`await`][await] |
+| `#!py future.add_done_callback()` | async → async | React to task/future completion without [`await`][await] |
 | [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] | thread → loop | Schedule a plain callback from a non-async thread |
 | [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe] | thread → loop | Run a coroutine from a non-async thread, get a blocking future |
 | [`loop.add_signal_handler()`][loop-add-signal-handler] | OS → loop | Respond to Unix signals inside the event loop |

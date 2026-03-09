@@ -160,6 +160,11 @@ Validation is manual:
 - Language-agnostic pseudocode: use `text` fences.
 - Python-flavoured pseudocode: `python` fences are allowed when the Python-like
   structure helps explain the idea, even if the snippet is not runnable.
+- For inline Python syntax in prose, prefer inline highlighting with
+  backticks plus `#!py` when it improves readability, for example
+  `` `#!py async with sem:` `` or `` `#!py await queue.get()` ``.
+- Keep plain backticks for file paths, environment variables, headings, and
+  non-Python snippets.
 - Prefer code annotations (`# (1)!`) over dense inline comments for step-by-step
   explanations.
 - Use `hl_lines` sparingly to emphasize 1-3 critical lines.

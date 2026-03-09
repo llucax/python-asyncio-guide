@@ -17,7 +17,7 @@ concurrently.
 ## Hello World!
 
 An *async function* (also called a *coroutine function*) is any function
-defined with `async def` instead of plain `def`. Let's start with a
+defined with `#!py async def` instead of plain `def`. Let's start with a
 complete, working program:
 
 ```python title="hello_async.py"
@@ -35,10 +35,10 @@ if __name__ == "__main__":
 ```
 
 1. [`await`][await] drives the coroutine to completion and gives you the return
-   value. Without it, `greet("world")` returns a coroutine object
+   value. Without it, `#!py greet("world")` returns a coroutine object
    instead of a string.
 2. [`asyncio.run()`][asyncio-run] is the bridge between sync and async. It creates an
-   event loop, runs `main()` to completion, and tears the loop down.
+   event loop, runs `#!py main()` to completion, and tears the loop down.
    Call it **once**, at the top level of your program.
 
 ```text title="$ python hello_async.py"
@@ -47,18 +47,18 @@ Hello, world
 
 Here is what happens when you run this:
 
-1. `async def greet` and `async def main` define coroutine functions.
+1. `#!py async def greet` and `#!py async def main` define coroutine functions.
 2. [`asyncio.run()`][asyncio-run]
-   creates an event loop, drives `main()` to completion, and tears the
+   creates an event loop, drives `#!py main()` to completion, and tears the
    loop down cleanly. It is the bridge between the synchronous world and
    the async world.
-3. Inside `main`, `await greet("world")` calls the coroutine function,
+3. Inside `main`, `#!py await greet("world")` calls the coroutine function,
    drives the resulting coroutine to completion, and gives you back its
    return value.
 
 That is the pattern you will use in nearly every asyncio program: define
-an `async def main()`, put your logic there, and call
-`asyncio.run(main())` at the bottom. [`asyncio.run()`][asyncio-run] is meant to be
+an `#!py async def main()`, put your logic there, and call
+`#!py asyncio.run(main())` at the bottom. [`asyncio.run()`][asyncio-run] is meant to be
 called **once**, at the top level of your program.
 
 ## Cooperative Scheduling
@@ -157,7 +157,7 @@ The [`await`][await] keyword does two things:
 2. It marks a potential *suspension point* -- a place where the event loop
    **may** pause your coroutine and go do other work.
 
-You can only use [`await`][await] inside an `async def`. This is enforced by the
+You can only use [`await`][await] inside an `#!py async def`. This is enforced by the
 Python interpreter, not by convention. If you try to use it in a regular
 function you will get a `SyntaxError`.
 
@@ -276,7 +276,7 @@ Think of your program as a sandwich:
 
 - **Top slice** -- [`asyncio.run()`][asyncio-run]. This is synchronous code that starts the
   loop. You call it once, at the very top.
-- **Filling** -- your async application code. Functions here are `async def`
+- **Filling** -- your async application code. Functions here are `#!py async def`
   and they [`await`][await] each other freely.
 - **Bottom slice** -- asyncio primitives (I/O operations, [`asyncio.sleep()`][asyncio-sleep],
   task groups, etc.). These are the points where the loop can actually suspend
@@ -315,7 +315,7 @@ flowchart TD
     io3 -. resume .-> app2
 ```
 
-So when you see a tall stack of `async def` calling `async def`, that is not
+So when you see a tall stack of `#!py async def` calling `#!py async def`, that is not
 ceremony -- it is the language telling you, at every level, "this function may
 pause."
 
@@ -362,7 +362,7 @@ code to avoid starving other tasks.
     [Trio][trio-docs] has an explicit [`trio.testing.checkpoints()`][trio-testing] and
     guarantees that *every* checkpoint is documented. In asyncio the contract is
     less strict -- most I/O operations are checkpoints, but it is not always
-    guaranteed. The `asyncio.sleep(0)` idiom is the closest equivalent to
+    guaranteed. The `#!py asyncio.sleep(0)` idiom is the closest equivalent to
     [Trio][trio-docs]'s [`await trio.sleep(0)`][trio-sleep].
 
 ## [`asyncio.sleep()`][asyncio-sleep]
@@ -394,7 +394,7 @@ A: 1
 A: done!
 ```
 
-Each `await asyncio.sleep(1)` pauses the coroutine for one second **and**
+Each `#!py await asyncio.sleep(1)` pauses the coroutine for one second **and**
 gives the loop a chance to run other tasks (if there were any -- right now you
 only have one). You will put this to real use in the next section when you run
 multiple countdowns concurrently.
@@ -411,11 +411,11 @@ Before moving on, here are a few things to check every time you write async
 code at this stage:
 
 1. **Every async function call is [`await`][await]-ed.** If you see a bare
-   `some_async_fn()` without [`await`][await] in front of it, that is almost certainly
+   `#!py some_async_fn()` without [`await`][await] in front of it, that is almost certainly
    a bug.
 
 2. **No blocking calls in async code.** [`time.sleep()`][time-sleep],
-   `requests.get()`, `open().read()` on large files -- anything that makes the
+   `#!py requests.get()`, `#!py open().read()` on large files -- anything that makes the
    thread wait -- will freeze the entire loop. If you must call blocking code,
    use [`asyncio.to_thread()`][asyncio-to-thread]
    (covered in Chapter 2).

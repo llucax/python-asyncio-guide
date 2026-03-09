@@ -63,7 +63,7 @@ run through this list before reaching for heavier tools.
 
 **1. Forgotten [`await`][await]**
 
-*Symptom:* You get a `RuntimeWarning: coroutine '...' was never awaited`, or a
+*Symptom:* You get a `#!py RuntimeWarning: coroutine '...' was never awaited`, or a
 variable contains a coroutine object instead of the value you expected.
 
 *Fix:* Add [`await`][await] in front of the async function call. Debug mode makes this
@@ -74,7 +74,7 @@ warning harder to miss.
 *Symptom:* The event loop freezes. Other tasks stop making progress. In debug
 mode you see "Executing ... took X.XXX seconds" warnings.
 
-*Culprits:* `time.sleep()`, `requests.get()`, heavy computation, synchronous
+*Culprits:* `#!py time.sleep()`, `#!py requests.get()`, heavy computation, synchronous
 file I/O, any C extension that holds the GIL for a long time.
 
 *Fix:* Replace with the async equivalent ([`asyncio.sleep()`][asyncio-sleep], `aiohttp`,
@@ -125,9 +125,9 @@ for everyday debugging. The full table is in the
 
 | Category                | Examples                                                        |
 |-------------------------|-----------------------------------------------------------------|
-| **Always suspends**     | [`asyncio.sleep()`][asyncio-sleep], stream `read`/`readline`/`readexactly`, [`Queue.get()`][queue-get] on empty queue, `Queue.put()` on full queue, [`Lock.acquire()`][lock-acquire] when held by another task |
-| **May or may not suspend** | [`Lock.acquire()`][lock-acquire] when free, [`Queue.get()`][queue-get] on non-empty queue, `Queue.put()` on non-full queue |
-| **Never suspends**      | `StreamWriter.write()` (buffers only), [`Queue.get_nowait()`][queue-get-nowait], `Queue.put_nowait()`, [`Event.set()`][event-set], [`Event.is_set()`][event-is-set] |
+| **Always suspends**     | [`asyncio.sleep()`][asyncio-sleep], stream `read`/`readline`/`readexactly`, [`Queue.get()`][queue-get] on empty queue, `#!py Queue.put()` on full queue, [`Lock.acquire()`][lock-acquire] when held by another task |
+| **May or may not suspend** | [`Lock.acquire()`][lock-acquire] when free, [`Queue.get()`][queue-get] on non-empty queue, `#!py Queue.put()` on non-full queue |
+| **Never suspends**      | `#!py StreamWriter.write()` (buffers only), [`Queue.get_nowait()`][queue-get-nowait], `#!py Queue.put_nowait()`, [`Event.set()`][event-set], [`Event.is_set()`][event-is-set] |
 
 The practical implication: if you are wondering "can another task run between
 these two lines?", check whether there is an [`await`][await] on something in the
@@ -147,7 +147,7 @@ Asyncio tracebacks look different from synchronous ones, and the differences
 can be disorienting at first. A few things to know:
 
 **Task names in tracebacks.** When a task raises, the traceback includes the
-task's name. If you passed `name=` to `tg.create_task()`, that name appears in
+task's name. If you passed `name=` to `#!py tg.create_task()`, that name appears in
 the output -- one good reason to always name your tasks during development.
 
 **[`ExceptionGroup`][exceptiongroup] tracebacks are nested.** When a [`TaskGroup`][taskgroup] propagates

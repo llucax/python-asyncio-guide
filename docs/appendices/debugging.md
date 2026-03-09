@@ -71,7 +71,7 @@ on time. Your async server stops responding, then catches up in a burst.
 
 **Cause:** A blocking call is running directly in a coroutine. While it
 executes, nothing else can run -- the event loop is single-threaded. Common
-culprits: `time.sleep()`, synchronous HTTP libraries like `requests`, heavy
+culprits: `#!py time.sleep()`, synchronous HTTP libraries like `requests`, heavy
 computation, synchronous file I/O.
 
 **Diagnosis:**
@@ -120,7 +120,7 @@ with ProcessPoolExecutor() as pool:
 
 ## Diagnosing Task Leaks
 
-**Symptoms:** You see `"Task was destroyed but it is pending"` warnings.
+**Symptoms:** You see `#!py "Task was destroyed but it is pending"` warnings.
 Memory usage grows over time. Exceptions go unreported.
 
 **Cause:** Tasks were created with
@@ -178,7 +178,7 @@ with` block never sees the cancellation, so it never raises `TimeoutError`.
 
 **Diagnosis:**
 
-Add logging around any `except CancelledError` or `except BaseException`
+Add logging around any `#!py except CancelledError` or `#!py except BaseException`
 handlers inside the timeout scope:
 
 ```python
@@ -223,7 +223,7 @@ except asyncio.CancelledError:
 
 ## Diagnosing ExceptionGroup Confusion
 
-**Symptoms:** You have a `try`/`except Exception` around a [`TaskGroup`][taskgroup], but
+**Symptoms:** You have a `try`/`#!py except Exception` around a [`TaskGroup`][taskgroup], but
 errors from child tasks are not caught. The exception propagates as if the
 `except` clause does not exist.
 
@@ -232,7 +232,7 @@ errors from child tasks are not caught. The exception propagates as if the
 wraps child exceptions in an
 [`ExceptionGroup`][exceptiongroup].
 [`ExceptionGroup`][exceptiongroup] inherits from [`BaseException`][baseexception], not `Exception`, so a plain
-`except Exception` does not match it.
+`#!py except Exception` does not match it.
 
 **Diagnosis:**
 
@@ -289,9 +289,9 @@ full explanation.
   Y. Task B holds lock Y and waits for lock X. Neither can proceed.
 - **[`Lock.acquire()`][lock-acquire] without release.** A task acquires an
   [`asyncio.Lock`][asyncio-lock]
-  but an exception prevents the release. Use `async with lock:` instead of
-  manual `acquire()`/`release()`.
-- **[`Queue.get()`][queue-get] with no corresponding `put()`.** A consumer waits for data
+  but an exception prevents the release. Use `#!py async with lock:` instead of
+  manual `#!py acquire()`/`#!py release()`.
+- **[`Queue.get()`][queue-get] with no corresponding `#!py put()`.** A consumer waits for data
   that will never arrive because the producer has finished or crashed.
 - **Blocking call masquerading as a hang.** Sometimes what looks like a
   deadlock is actually a blocking call that takes a very long time. Check the
@@ -320,7 +320,7 @@ find the cycle.
 - **Lock ordering.** If multiple tasks need multiple locks, acquire them in a
   consistent order. Circular waits cannot happen if every task acquires lock X
   before lock Y.
-- **Use `async with` for locks.** This guarantees the lock is released even if
+- **Use `#!py async with` for locks.** This guarantees the lock is released even if
   the body raises:
 
   ```python

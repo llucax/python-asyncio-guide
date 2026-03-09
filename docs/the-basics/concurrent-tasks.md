@@ -55,14 +55,14 @@ Task exception was never retrieved
 ValueError: Failed to fetch https://example.com/bad
 ```
 
-`main()` finished after half a second, abandoning both tasks. The `ValueError`
+`#!py main()` finished after half a second, abandoning both tasks. The `ValueError`
 went uncaught -- just a warning in the logs. This pattern has three problems:
 
 1. **Lost references.** Without storing the [`Task`][task] object you cannot await it,
    check its result, or cancel it.
 2. **Swallowed exceptions.** An orphaned task that raises produces a log
    warning, but your program keeps running as if nothing happened.
-3. **Unclear lifetime.** When does the task finish? What happens when `main()`
+3. **Unclear lifetime.** When does the task finish? What happens when `#!py main()`
    returns? The answer is "it depends."
 
 !!! tip
@@ -81,7 +81,7 @@ you don't use `goto` to jump out of a function, you don't launch tasks that
 outlive their scope.
 
 When you open a [`TaskGroup`][taskgroup], you create a scope. Tasks spawned
-inside it are *children* of the group. The `async with` block will not exit
+inside it are *children* of the group. The `#!py async with` block will not exit
 until every child has finished -- whether successfully, by raising, or by being
 cancelled. No orphans, no forgotten work, no swallowed errors.
 
@@ -94,7 +94,7 @@ cancelled. No orphans, no forgotten work, no swallowed errors.
 
 ## [`asyncio.TaskGroup`][asyncio-taskgroup]
 
-Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with `async with`,
+Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with `#!py async with`,
 spawn tasks with [`tg.create_task()`][tg-create-task], and when the block ends
 all tasks are guaranteed complete:
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. The `async with` block is the **ownership boundary**. Tasks spawned
+1. The `#!py async with` block is the **ownership boundary**. Tasks spawned
    inside cannot outlive it -- the block will not exit until every child
    has finished, failed, or been cancelled.
 
@@ -139,18 +139,18 @@ tasks have completed. No orphans.
 
 Here is exactly what happens inside the event loop, step by step:
 
-1. `#!py asyncio.run(main())` creates the event loop and schedules `main()`.
-2. `#!py main()` runs. It enters the `async with asyncio.TaskGroup() as tg:`
+1. `#!py asyncio.run(main())` creates the event loop and schedules `#!py main()`.
+2. `#!py main()` runs. It enters the `#!py async with asyncio.TaskGroup() as tg:`
    block, creating a new task group.
 3. `#!py tg.create_task(greet("Alice", 1.0))` puts Alice's coroutine on the
    ready queue as a task. `#!py tg.create_task(greet("Bob", 0.5))` does the
    same for Bob. Neither has started yet.
 4. `#!py print("Tasks are running...")` executes -- this is synchronous code
-   inside the `async with` block, so it runs immediately.
+   inside the `#!py async with` block, so it runs immediately.
 5. Execution reaches the end of the `#!py async with` block. The [`TaskGroup`][taskgroup]
-   now waits for all its children to complete. `main()` suspends.
+   now waits for all its children to complete. `#!py main()` suspends.
 6. The loop picks Alice's task (first scheduled). Alice hits
-   `await asyncio.sleep(1.0)` and suspends -- the loop sets a 1-second
+   `#!py await asyncio.sleep(1.0)` and suspends -- the loop sets a 1-second
    timer.
 7. The loop picks Bob's task. Bob hits `#!py await asyncio.sleep(0.5)` and
    suspends -- the loop sets a 0.5-second timer.
@@ -161,7 +161,7 @@ Here is exactly what happens inside the event loop, step by step:
 10. After another 0.5 seconds (1.0 s total), Alice's timer fires. Alice
     resumes, prints `#!py "Hello, Alice!"`, returns, and her task is marked
     done.
-11. All children are done, so the [`TaskGroup`][taskgroup] unblocks. `main()` resumes
+11. All children are done, so the [`TaskGroup`][taskgroup] unblocks. `#!py main()` resumes
     and prints `#!py "All greetings done."`.
 12. `#!py main()` returns and [`asyncio.run()`][asyncio-run] tears down the loop.
 
@@ -301,7 +301,7 @@ any exceptions are *not* matched, they propagate upward as a new
 
 In many cases you want return values from your concurrent tasks, not just side
 effects. The pattern is straightforward: store the [`Task`][task] handles from
-[`tg.create_task()`][tg-create-task], then call `.result()` after the `async with` block:
+[`tg.create_task()`][tg-create-task], then call `#!py .result()` after the `#!py async with` block:
 
 ```python title="collect_results.py"
 import asyncio
@@ -342,14 +342,14 @@ https://example.com/page3 -> 40 chars
 ```
 
 All three fetches ran concurrently (total wall time ~0.5s, not ~1.5s). After
-the `async with` block, every task is guaranteed complete, so `.result()`
+the `#!py async with` block, every task is guaranteed complete, so `#!py .result()`
 returns immediately. If any task had failed, the [`TaskGroup`][taskgroup] would have raised
-an [`ExceptionGroup`][exceptiongroup] before you ever reach the `.result()` calls.
+an [`ExceptionGroup`][exceptiongroup] before you ever reach the `#!py .result()` calls.
 
 !!! tip
 
     You can also give tasks names for easier debugging:
-    `tg.create_task(fetch_page(url), name=f"fetch-{url}")`. The name shows up
+    `#!py tg.create_task(fetch_page(url), name=f"fetch-{url}")`. The name shows up
     in logs and tracebacks.
 
 ## Nested TaskGroups
@@ -469,7 +469,7 @@ become obvious:
 1. **Who owns the lifetime of this work?** Every task should have a
    clear owner -- something that will await it, cancel it, or handle
    its exceptions. With [`TaskGroup`][taskgroup], the answer is always "the group,"
-   and the `async with` block is the boundary.
+   and the `#!py async with` block is the boundary.
 
 2. **Where are the suspension points?** Every [`await`][await] is a place where
    your coroutine can pause and other tasks can run. Between two
@@ -477,13 +477,13 @@ become obvious:
    task can interleave.
 
 Try applying them to code you have already seen. Look at
-`tg.create_task(fetch_page(url))`: who owns that task? The [`TaskGroup`][taskgroup].
+`#!py tg.create_task(fetch_page(url))`: who owns that task? The [`TaskGroup`][taskgroup].
 Where can it suspend? At every [`await`][await] inside `fetch_page` -- in this
-case, `await asyncio.sleep(0.5)`. Between creating the task and the
+case, `#!py await asyncio.sleep(0.5)`. Between creating the task and the
 next [`await`][await], no other task touches your variables.
 
 Or look at the `worker` coroutine in the fan-out example: the code
-between `await asyncio.sleep(0.3)` and the next iteration of the loop
+between `#!py await asyncio.sleep(0.3)` and the next iteration of the loop
 runs without interruption. You can safely append to `results` without
 worrying about another worker modifying it -- each worker has its own
 local list.

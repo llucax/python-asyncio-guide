@@ -28,20 +28,20 @@ future is *pending*.
 
 The API is small:
 
-- **`.done()`** -- returns `True` if the future has a result, an exception, or
+- **`#!py .done()`** -- returns `True` if the future has a result, an exception, or
   was cancelled. Returns `False` while it's still pending.
-- **`.result()`** -- returns the value. Raises `InvalidStateError` if the
+- **`#!py .result()`** -- returns the value. Raises `InvalidStateError` if the
   future isn't done yet, or re-raises the stored exception if one was set.
-- **`.exception()`** -- returns the stored exception (or `None` if the future
+- **`#!py .exception()`** -- returns the stored exception (or `None` if the future
   completed successfully). Raises `InvalidStateError` if not done.
-- **`.set_result(value)`** -- fills the box with a value and marks the future
+- **`#!py .set_result(value)`** -- fills the box with a value and marks the future
   done. Can only be called once.
-- **`.set_exception(exc)`** -- fills the box with an exception. Can only be
+- **`#!py .set_exception(exc)`** -- fills the box with an exception. Can only be
   called once.
-- **`.add_done_callback(fn)`** -- registers a function that will be called
+- **`#!py .add_done_callback(fn)`** -- registers a function that will be called
   (via [`call_soon()`][call-soon]) when the future completes. You can add multiple
   callbacks; they fire in the order they were added.
-- **`.cancel()`** -- marks the future as cancelled. Any callbacks are still
+- **`#!py .cancel()`** -- marks the future as cancelled. Any callbacks are still
   called.
 
 You can also [`await`][await] a future. When you do, the current coroutine suspends
@@ -101,14 +101,14 @@ I/O completions, and coroutines into a single coherent system.
 
 A *task* is a future that wraps a coroutine and drives it on the event loop.
 Where a plain future is a passive container (someone else must call
-`set_result()`), a task is *active* -- it repeatedly resumes the coroutine,
+`#!py set_result()`), a task is *active* -- it repeatedly resumes the coroutine,
 handles whatever it yields, and eventually sets its own result when the
 coroutine returns.
 
 [`asyncio.Task`][asyncio-task] is a subclass of [`asyncio.Future`][asyncio-future], so everything you just
-learned about futures applies to tasks too: `.done()`, `.result()`,
-`.exception()`, `.cancelled()`, `await task`, and done callbacks all work the
-same way. The difference is that nobody calls `task.set_result()` from the
+learned about futures applies to tasks too: `#!py .done()`, `#!py .result()`,
+`#!py .exception()`, `#!py .cancelled()`, `#!py await task`, and done callbacks all work the
+same way. The difference is that nobody calls `#!py task.set_result()` from the
 outside -- the task does it itself when the coroutine finishes.
 
 When you create a task, two things happen immediately:
@@ -125,8 +125,8 @@ loop, when the loop processes the [`call_soon()`][call-soon] callback. This is w
 
 [`asyncio.create_task()`][asyncio-create-task]
 is the function that wraps a coroutine in a [`Task`][task] and schedules it on the
-running loop. In Chapter 1 you saw `tg.create_task()` -- the [`TaskGroup`][taskgroup]
-method that gives tasks an owner. Under the hood, `TaskGroup.create_task()`
+running loop. In Chapter 1 you saw `#!py tg.create_task()` -- the [`TaskGroup`][taskgroup]
+method that gives tasks an owner. Under the hood, `#!py TaskGroup.create_task()`
 calls [`asyncio.create_task()`][asyncio-create-task] and then tracks the resulting task so it can
 enforce structured concurrency. This section is about the raw function
 underneath.
@@ -162,8 +162,8 @@ result: 49
 ```
 
 The `name` parameter is optional. If you omit it, asyncio assigns a default
-like `"Task-1"`, `"Task-2"`, etc. You can also change the name after
-creation with `.set_name()`:
+like `#!py "Task-1"`, `#!py "Task-2"`, etc. You can also change the name after
+creation with `#!py .set_name()`:
 
 ```python
 task.set_name("new-name")
@@ -171,12 +171,12 @@ print(task.get_name())  # "new-name"
 ```
 
 Task names appear in tracebacks and debug output, so naming your tasks -- even
-with something short like `f"fetch-{url}"` -- pays off immediately when
+with something short like `#!py f"fetch-{url}"` -- pays off immediately when
 something goes wrong.
 
 !!! info
 
-    **Prefer `TaskGroup.create_task()` over bare [`asyncio.create_task()`][asyncio-create-task].**
+    **Prefer `#!py TaskGroup.create_task()` over bare [`asyncio.create_task()`][asyncio-create-task].**
     A [`TaskGroup`][taskgroup] gives every task an owner, ensures exceptions propagate,
     and prevents orphaned tasks. Bare [`create_task()`][create-task] is a building block
     -- it is what [`TaskGroup`][taskgroup] calls internally -- but in application code
@@ -200,10 +200,10 @@ inspection methods tell you which state you're in:
 
 | Method          | Pending | Result | Exception | Cancelled |
 |-----------------|---------|--------|-----------|-----------|
-| `.done()`       | `False` | `True` | `True`    | `True`    |
-| `.cancelled()`  | `False` | `False`| `False`   | `True`    |
-| `.result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
-| `.exception()`  | raises `InvalidStateError` | returns `None` | returns exception | raises [`CancelledError`][cancellederror] |
+| `#!py .done()`       | `False` | `True` | `True`    | `True`    |
+| `#!py .cancelled()`  | `False` | `False`| `False`   | `True`    |
+| `#!py .result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
+| `#!py .exception()`  | raises `InvalidStateError` | returns `None` | returns exception | raises [`CancelledError`][cancellederror] |
 
 The following example walks through all three outcomes:
 
@@ -259,9 +259,9 @@ t2 done=True, cancelled=False, exception=ValueError('something broke')
 t3 done=True, cancelled=True
 ```
 
-Notice the pattern: `await task` either returns the result or re-raises
+Notice the pattern: `#!py await task` either returns the result or re-raises
 whatever ended the task (the stored exception, or [`CancelledError`][cancellederror]). Calling
-`.result()` on a done task does the same thing without suspending -- but if
+`#!py .result()` on a done task does the same thing without suspending -- but if
 you call it on a task that isn't done yet, you get `InvalidStateError`.
 
 !!! tip
@@ -269,7 +269,7 @@ you call it on a task that isn't done yet, you get `InvalidStateError`.
     After a [`TaskGroup`][taskgroup] block exits normally, every task in the group is
     guaranteed done. That is why the
     [Collecting Results](../the-basics/concurrent-tasks.md) pattern
-    calls `.result()` *after* the `async with` block -- it is always safe
+    calls `#!py .result()` *after* the `#!py async with` block -- it is always safe
     there.
 
 ## Task References
@@ -322,7 +322,7 @@ async def main() -> None:
 !!! warning
 
     This is one more reason to prefer [`TaskGroup`][taskgroup]. When you call
-    `tg.create_task()`, the group stores a strong reference to the task
+    `#!py tg.create_task()`, the group stores a strong reference to the task
     internally. You never have to worry about lost references inside a
     [`TaskGroup`][taskgroup] scope.
 
@@ -361,11 +361,11 @@ class Task(Future):
 Here is what happens, step by step:
 
 1. **Creation.** The task is created with a coroutine. It calls
-   `call_soon(self.__step)` to schedule the first step on the loop's ready
+   `#!py call_soon(self.__step)` to schedule the first step on the loop's ready
    queue.
 
 2. **First step.** On the next loop iteration, `__step` runs. It calls
-   `coro.send(None)`, which resumes the coroutine from the beginning. The
+   `#!py coro.send(None)`, which resumes the coroutine from the beginning. The
    coroutine runs until it hits an [`await`][await] on something that isn't ready yet
    -- typically a future representing an I/O completion or a timer.
 
@@ -376,13 +376,13 @@ Here is what happens, step by step:
 
 4. **Resumption.** When the awaited future completes (because I/O finished, a
    timer expired, etc.), its done callbacks fire. That calls `__step` again,
-   which calls `coro.send(None)` again, resuming the coroutine right after
+   which calls `#!py coro.send(None)` again, resuming the coroutine right after
    the [`await`][await] that suspended it. This cycle repeats.
 
 5. **Completion.** Eventually the coroutine either returns a value (raising
    `StopIteration` -- that's how Python generators and coroutines signal
    completion) or raises an exception. The task catches this, calls
-   `set_result()` or `set_exception()` on itself, and fires its own done
+   `#!py set_result()` or `#!py set_exception()` on itself, and fires its own done
    callbacks.
 
 This send-yield-callback loop is the heartbeat of asyncio concurrency. Every

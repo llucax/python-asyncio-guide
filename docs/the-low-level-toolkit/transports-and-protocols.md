@@ -43,7 +43,7 @@ flowchart TB
 ```
 
 When a connection is established, asyncio creates a transport and a protocol,
-wires them together, and calls `protocol.connection_made(transport)`. From that
+wires them together, and calls `#!py protocol.connection_made(transport)`. From that
 point on, the protocol receives callbacks as data arrives, and uses the
 transport to send data back. There is no [`await`][await] in sight -- this is a purely
 callback-driven model.
@@ -60,32 +60,32 @@ represents the I/O channel and exposes methods for writing data and controlling
 the connection. The hierarchy looks like this:
 
 - [`BaseTransport`][basetransport]
-  -- common base. Methods: `close()`, `is_closing()`, `get_extra_info()`.
+  -- common base. Methods: `#!py close()`, `#!py is_closing()`, `#!py get_extra_info()`.
 - [`ReadTransport`][readtransport]
-  -- adds `pause_reading()`, `resume_reading()`.
+  -- adds `#!py pause_reading()`, `#!py resume_reading()`.
 - [`WriteTransport`][writetransport]
-  -- adds `write()`, `writelines()`, `write_eof()`, `can_write_eof()`,
-  `abort()`, `set_write_buffer_limits()`, `get_write_buffer_size()`.
+  -- adds `#!py write()`, `#!py writelines()`, `#!py write_eof()`, `#!py can_write_eof()`,
+  `#!py abort()`, `#!py set_write_buffer_limits()`, `#!py get_write_buffer_size()`.
 - [`Transport`][transport]
   -- combines [`ReadTransport`][readtransport] and [`WriteTransport`][writetransport]. This is the one you will
   interact with for TCP connections.
 
 The key methods you use day-to-day:
 
-- **`transport.write(data)`** -- buffer `data` for sending. This never blocks
+- **`#!py transport.write(data)`** -- buffer `data` for sending. This never blocks
   and never suspends -- it returns immediately. The event loop will flush the
   buffer to the OS when the socket is ready. This is the fundamental
-  difference from `StreamWriter.drain()`: there is no coroutine to await.
-- **`transport.close()`** -- flush remaining data and close the connection.
-  The protocol's `connection_lost()` callback will fire once the close is
+  difference from `#!py StreamWriter.drain()`: there is no coroutine to await.
+- **`#!py transport.close()`** -- flush remaining data and close the connection.
+  The protocol's `#!py connection_lost()` callback will fire once the close is
   complete.
-- **`transport.get_extra_info(name)`** -- retrieve metadata about the
-  connection. Common keys: `"peername"` (remote address), `"sockname"` (local
-  address), `"socket"` (the raw socket object), `"ssl_object"` (TLS info).
+- **`#!py transport.get_extra_info(name)`** -- retrieve metadata about the
+  connection. Common keys: `#!py "peername"` (remote address), `#!py "sockname"` (local
+  address), `#!py "socket"` (the raw socket object), `#!py "ssl_object"` (TLS info).
 
 !!! note
 
-    `transport.write()` accepts `bytes`, not `str`. If you pass a string
+    `#!py transport.write()` accepts `bytes`, not `str`. If you pass a string
     you get a `TypeError`. Encode your data before writing.
 
 ## Protocols
@@ -103,13 +103,13 @@ protocol bases:
 
 For TCP work, you subclass [`asyncio.Protocol`][asyncio-protocol] and override three callbacks:
 
-- **`connection_made(transport)`** -- called once when the connection is
+- **`#!py connection_made(transport)`** -- called once when the connection is
   established. Save the transport reference -- you will need it to send data.
-- **`data_received(data)`** -- called whenever data arrives. `data` is a
+- **`#!py data_received(data)`** -- called whenever data arrives. `data` is a
   non-empty `bytes` object, but there are no message boundaries -- you may
   receive a partial message, a full message, or several messages in one call.
   Framing is your responsibility.
-- **`connection_lost(exc)`** -- called once when the connection is closed.
+- **`#!py connection_lost(exc)`** -- called once when the connection is closed.
   `exc` is `None` for a clean close, or an exception for an error.
 
 Here is the simplest useful protocol -- an echo server that sends back
@@ -169,19 +169,19 @@ hello
 
 Compare this with the echo server from
 [Streams](../the-basics/streams.md). The Streams version is a
-coroutine with `await reader.readline()` and `await writer.drain()`. The
+coroutine with `#!py await reader.readline()` and `#!py await writer.drain()`. The
 protocol version is a class with callbacks -- no coroutines, no [`await`][await]. The
 protocol version is slightly more verbose, but it has zero per-message
 coroutine overhead.
 
-## [`loop.create_connection()`][loop-create-connection] and `loop.create_server()`
+## [`loop.create_connection()`][loop-create-connection] and `#!py loop.create_server()`
 
-You have already seen `loop.create_server()` above. Both it and
+You have already seen `#!py loop.create_server()` above. Both it and
 [`loop.create_connection()`][loop-create-connection]
 take a *protocol factory* -- a callable that returns a new protocol instance.
 Typically this is a `lambda` or a class reference.
 
-`loop.create_server()` creates a listening socket and calls the factory once
+`#!py loop.create_server()` creates a listening socket and calls the factory once
 per incoming connection. [`loop.create_connection()`][loop-create-connection] opens a client connection
 and calls the factory once for the outgoing connection. Both return the
 transport and protocol:
@@ -234,8 +234,8 @@ and [`await`][await] it from your coroutine.
 
 !!! warning
 
-    The protocol factory (the first argument to `create_server()` and
-    `create_connection()`) must return a *new* protocol instance each time
+    The protocol factory (the first argument to `#!py create_server()` and
+    `#!py create_connection()`) must return a *new* protocol instance each time
     it is called. Each connection gets its own protocol. Do not return the
     same instance for multiple connections.
 
@@ -247,21 +247,21 @@ control -- a form of *backpressure*.
 
 On the **read side**, the transport controls the pace:
 
-- **`transport.pause_reading()`** -- tell the transport to stop delivering
-  `data_received()` callbacks. Data accumulates in the OS receive buffer. If
+- **`#!py transport.pause_reading()`** -- tell the transport to stop delivering
+  `#!py data_received()` callbacks. Data accumulates in the OS receive buffer. If
   that buffer fills up, TCP itself will apply backpressure to the sender.
-- **`transport.resume_reading()`** -- start delivering data again.
+- **`#!py transport.resume_reading()`** -- start delivering data again.
 
 On the **write side**, the protocol receives notifications:
 
-- **`protocol.pause_writing()`** -- called by the transport when the write
+- **`#!py protocol.pause_writing()`** -- called by the transport when the write
   buffer exceeds the high-water mark. You should stop calling
-  `transport.write()` until told otherwise.
-- **`protocol.resume_writing()`** -- called when the buffer drains below the
+  `#!py transport.write()` until told otherwise.
+- **`#!py protocol.resume_writing()`** -- called when the buffer drains below the
   low-water mark. You can resume writing.
 
 You can configure the water marks with
-`transport.set_write_buffer_limits(high, low)`.
+`#!py transport.set_write_buffer_limits(high, low)`.
 
 ```mermaid
 stateDiagram-v2
@@ -273,19 +273,19 @@ stateDiagram-v2
     paused --> writing : Buffer drains below low‑water mark\nresume_writing() called
 ```
 
-This is the same backpressure mechanism that drives `StreamWriter.drain()`.
+This is the same backpressure mechanism that drives `#!py StreamWriter.drain()`.
 When you call [`drain()`][drain] on a stream writer, it is checking whether the
 underlying transport has asked the protocol to pause, and suspending your
-coroutine until `resume_writing()` fires. The streams API hides the callbacks
+coroutine until `#!py resume_writing()` fires. The streams API hides the callbacks
 behind an [`await`][await] -- but the machinery is the same.
 
 !!! tip
 
     If you are implementing a proxy or relay (reading from one transport
     and writing to another), flow control is critical. When the downstream
-    transport signals `pause_writing()`, call `pause_reading()` on the
-    upstream transport. When `resume_writing()` fires, call
-    `resume_reading()`. This chains backpressure end-to-end and prevents
+    transport signals `#!py pause_writing()`, call `#!py pause_reading()` on the
+    upstream transport. When `#!py resume_writing()` fires, call
+    `#!py resume_reading()`. This chains backpressure end-to-end and prevents
     your proxy from buffering the entire data stream in memory.
 
 ## A Complete Example: Echo Server with Client
@@ -409,7 +409,7 @@ classes for routine networking.
 
     Do not mix the two layers carelessly. If you are using `StreamReader`
     and `StreamWriter`, do not also call methods on the underlying
-    transport directly (like `transport.pause_reading()`) unless you
+    transport directly (like `#!py transport.pause_reading()`) unless you
     understand how the stream layer uses those methods internally. The
     stream layer manages flow control on your behalf -- bypassing it can
     cause lost data or deadlocks.

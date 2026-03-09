@@ -11,9 +11,9 @@ description: >-
 Chapter 1 taught you the user-facing rules: [`CancelledError`][cancellederror] is how asyncio
 asks your code to stop, you must never swallow it, and
 [`asyncio.timeout()`][asyncio-timeout]
-converts it into [`TimeoutError`][timeouterror] at the `async with` boundary. Those rules are
+converts it into [`TimeoutError`][timeouterror] at the `#!py async with` boundary. Those rules are
 enough to write correct programs. This section explains the machinery that
-makes those rules *work* -- the internal protocol that `timeout()`,
+makes those rules *work* -- the internal protocol that `#!py timeout()`,
 [`TaskGroup`][taskgroup],
 and the event loop use to coordinate cancellation behind the scenes.
 
@@ -62,7 +62,7 @@ task.cancelled() = True
 
 Two things to notice. First, calling [`task.cancel()`][task-cancel] does not immediately
 stop the task. It schedules a [`CancelledError`][cancellederror] to be raised at the *next*
-[`await`][await]. Between the call to `cancel()` and the next checkpoint, the task runs
+[`await`][await]. Between the call to `#!py cancel()` and the next checkpoint, the task runs
 normally. Second, the task has to *cooperate*. If the task catches
 [`CancelledError`][cancellederror] and suppresses it (the cardinal rule violation from Chapter 1),
 cancellation silently fails.
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 cancelling() = 3
 ```
 
-Three calls to `cancel()`, so `cancelling()` returns 3. Only one
+Three calls to `#!py cancel()`, so `#!py cancelling()` returns 3. Only one
 [`CancelledError`][cancellederror] is raised -- the counter tracks how many *sources* requested
 cancellation, not how many exceptions will appear.
 
@@ -175,7 +175,7 @@ result = recovered
 task.cancelled() = False
 ```
 
-The task caught the [`CancelledError`][cancellederror], called `uncancel()` to bring the counter
+The task caught the [`CancelledError`][cancellederror], called `#!py uncancel()` to bring the counter
 back to zero, and returned a value instead of re-raising. Because the task
 finished with a result rather than a [`CancelledError`][cancellederror], [`task.cancelled()`][task-cancelled] is
 `False`.
@@ -183,7 +183,7 @@ finished with a result rather than a [`CancelledError`][cancellederror], [`task.
 !!! danger
 
     This is a demonstration of the mechanism, not a pattern to follow.
-    Calling `uncancel()` in application code is almost always wrong -- it
+    Calling `#!py uncancel()` in application code is almost always wrong -- it
     violates the "never swallow cancellation" rule from Chapter 1. The APIs
     exist for *framework* code like [`asyncio.timeout()`][asyncio-timeout] and [`TaskGroup`][taskgroup],
     which need to intercept one cancellation source while preserving others.
@@ -195,7 +195,7 @@ the deadline expires. Here is the step-by-step mechanism that makes it happen:
 
 1. **Entry (`__aenter__`).** The timeout context manager registers a timer
    callback with the event loop. If the delay is 2 seconds, it calls
-   `loop.call_later(2, ...)` to schedule a callback at the deadline.
+   `#!py loop.call_later(2, ...)` to schedule a callback at the deadline.
 
 2. **Timer fires.** When the deadline arrives, the callback calls
    [`task.cancel()`][task-cancel] on the current task. This increments the cancellation
@@ -205,12 +205,12 @@ the deadline expires. Here is the step-by-step mechanism that makes it happen:
    with` block, the task receives a `CancelledError`. The error propagates up
    through your code, running `finally` blocks normally.
 
-4. **Exit (`__aexit__`).** When the [`CancelledError`][cancellederror] reaches the `async with`
+4. **Exit (`__aexit__`).** When the [`CancelledError`][cancellederror] reaches the `#!py async with`
    boundary, the timeout's `__aexit__` method runs. It sees that the error is a
    [`CancelledError`][cancellederror] *and* that the timeout's own timer has fired. It calls
-   `task.uncancel()`, decrementing the counter by one.
+   `#!py task.uncancel()`, decrementing the counter by one.
 
-5. **Counter check.** If `uncancel()` brings the counter back to zero, the
+5. **Counter check.** If `#!py uncancel()` brings the counter back to zero, the
    task is no longer in a "being cancelled" state. The timeout replaces the
    [`CancelledError`][cancellederror] with a [`TimeoutError`][timeouterror] and returns. Your code sees
    [`TimeoutError`][timeouterror], not [`CancelledError`][cancellederror].
@@ -218,7 +218,7 @@ the deadline expires. Here is the step-by-step mechanism that makes it happen:
 This is why external cancellation passes through a timeout unchanged. Suppose
 a parent [`TaskGroup`][taskgroup] cancels your task *while* a timeout is also active. The
 counter goes to 2 (one from the [`TaskGroup`][taskgroup], one from the timeout). When the
-timeout's `__aexit__` calls `uncancel()`, the counter drops to 1 -- not zero.
+timeout's `__aexit__` calls `#!py uncancel()`, the counter drops to 1 -- not zero.
 The timeout sees that someone *else* still wants this task cancelled, so it
 lets the [`CancelledError`][cancellederror] propagate instead of converting it to [`TimeoutError`][timeouterror].
 
@@ -257,7 +257,7 @@ inner: got CancelledError (external cancellation)
 main: task was cancelled
 ```
 
-The timeout had a 10-second deadline and never fired. The external `cancel()`
+The timeout had a 10-second deadline and never fired. The external `#!py cancel()`
 call raised [`CancelledError`][cancellederror], and the timeout's `__aexit__` recognized that
 *it* did not cause the cancellation. The error passed through as a
 [`CancelledError`][cancellederror], not a [`TimeoutError`][timeouterror]. This is the counter at work.
@@ -267,14 +267,14 @@ call raised [`CancelledError`][cancellederror], and the timeout's `__aexit__` re
 [`TaskGroup`][taskgroup] uses the same cancel/uncancel protocol to implement sibling
 cancellation. Here is what happens when a child task fails:
 
-1. **A child raises.** One of the tasks spawned by `tg.create_task()` raises
+1. **A child raises.** One of the tasks spawned by `#!py tg.create_task()` raises
    an exception (any exception, not just [`CancelledError`][cancellederror]).
 
-2. **Sibling cancellation.** The [`TaskGroup`][taskgroup] calls `cancel()` on every other
+2. **Sibling cancellation.** The [`TaskGroup`][taskgroup] calls `#!py cancel()` on every other
    child task. This ensures all siblings wind down.
 
-3. **Parent interruption.** The [`TaskGroup`][taskgroup] also calls `cancel()` on the
-   *parent* task -- the task running the `async with asyncio.TaskGroup()` body.
+3. **Parent interruption.** The [`TaskGroup`][taskgroup] also calls `#!py cancel()` on the
+   *parent* task -- the task running the `#!py async with asyncio.TaskGroup()` body.
    This interrupts whatever the parent is doing inside the group (typically
    another [`await`][await]), so the `__aexit__` can run promptly.
 
@@ -282,7 +282,7 @@ cancellation. Here is what happens when a child task fails:
    (whether by completing, raising, or being cancelled).
 
 5. **Uncancel and raise.** Once all children are done, the [`TaskGroup`][taskgroup] calls
-   `uncancel()` on the parent task -- undoing the cancel it issued in step 3.
+   `#!py uncancel()` on the parent task -- undoing the cancel it issued in step 3.
    It then raises an
    [`ExceptionGroup`][exceptiongroup]
    containing the original child failures.
@@ -318,13 +318,13 @@ A task's final state depends on how it finishes, not on what was requested:
 
 - **[`task.cancelling()`][task-cancelling]** returns the current number of pending cancel
   requests. It is a statement about *right now*, and it changes over time as
-  `cancel()` and `uncancel()` are called.
+  `#!py cancel()` and `#!py uncancel()` are called.
 
-A task can have `cancel()` called on it and still finish normally. This is
-exactly what happens with [`asyncio.timeout()`][asyncio-timeout]: the timeout calls `cancel()`,
-the [`CancelledError`][cancellederror] is caught by `__aexit__`, `uncancel()` brings the counter
-to zero, and the task continues running whatever comes after the `async with`
-block. The task's final `.cancelled()` state will be `False` -- it was never
+A task can have `#!py cancel()` called on it and still finish normally. This is
+exactly what happens with [`asyncio.timeout()`][asyncio-timeout]: the timeout calls `#!py cancel()`,
+the [`CancelledError`][cancellederror] is caught by `__aexit__`, `#!py uncancel()` brings the counter
+to zero, and the task continues running whatever comes after the `#!py async with`
+block. The task's final `#!py .cancelled()` state will be `False` -- it was never
 "actually cancelled," even though cancellation was requested and delivered.
 
 ```python title="requested_vs_actual.py"
@@ -359,15 +359,15 @@ after awaiting:  cancelled()  = True
 
 Here the task had no `try`/`except`, so the [`CancelledError`][cancellederror] propagated out
 and the task ended up in the cancelled state. But if the task had caught the
-error and called `uncancel()` -- as `timeout()` does internally -- `cancelled()`
+error and called `#!py uncancel()` -- as `#!py timeout()` does internally -- `#!py cancelled()`
 would be `False`.
 
 ## Why This Matters
 
 For everyday code, the rules from Chapter 1 are all you need: don't swallow
 [`CancelledError`][cancellederror], use [`asyncio.timeout()`][asyncio-timeout] for deadlines, and let [`TaskGroup`][taskgroup]
-handle sibling cleanup. You will not call `cancel()`, `cancelling()`, or
-`uncancel()` yourself.
+handle sibling cleanup. You will not call `#!py cancel()`, `#!py cancelling()`, or
+`#!py uncancel()` yourself.
 
 But when something goes wrong in a complex program -- nested [`TaskGroup`][taskgroup]s
 wrapped in timeouts, with multiple layers of cancellation in flight -- the
@@ -379,11 +379,11 @@ counter model is what you reach for. Here are the questions it answers:
 
 - **"I got [`CancelledError`][cancellederror] instead of [`TimeoutError`][timeouterror]."** There was an
   additional cancel request from outside the timeout. After the timeout called
-  `uncancel()`, the counter was still positive, so the [`CancelledError`][cancellederror]
+  `#!py uncancel()`, the counter was still positive, so the [`CancelledError`][cancellederror]
   propagated instead of being converted.
 
 - **"A task in my [`TaskGroup`][taskgroup] wasn't cancelled."** If a child task catches
-  [`CancelledError`][cancellederror] and calls `uncancel()` (or swallows the error entirely),
+  [`CancelledError`][cancellederror] and calls `#!py uncancel()` (or swallows the error entirely),
   the [`TaskGroup`][taskgroup]'s cancellation request is defeated. That child keeps running.
 
 In all three cases, the explanation comes down to the counter: who incremented

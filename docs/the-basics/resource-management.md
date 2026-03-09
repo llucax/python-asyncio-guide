@@ -16,7 +16,7 @@ you get leaked connections, stuck locks, and file descriptors that pile up
 until the OS complains. The good news: the tools for handling this are
 straightforward, and if you follow a few rules you will never leak a resource.
 
-## `async with`
+## `#!py async with`
 
 The
 [`async with` statement][async-with-statement]
@@ -67,22 +67,22 @@ Incremented to 3
 Final count: 3
 ```
 
-The `async with lock:` line acquires the lock (`__aenter__`), and when the
+The `#!py async with lock:` line acquires the lock (`__aenter__`), and when the
 block exits -- for any reason -- it is released (`__aexit__`). If a
 cancellation arrives while the body is running, the [`CancelledError`][cancellederror] unwinds
 through the block, `__aexit__` runs, and the lock is freed. No task is left
 waiting forever for a lock that will never be released.
 
-You have already been using `async with` throughout this chapter:
-`asyncio.TaskGroup()`, [`asyncio.timeout()`][asyncio-timeout], and [`asyncio.timeout_at()`][asyncio-timeout-at] are all
+You have already been using `#!py async with` throughout this chapter:
+`#!py asyncio.TaskGroup()`, [`asyncio.timeout()`][asyncio-timeout], and [`asyncio.timeout_at()`][asyncio-timeout-at] are all
 async context managers. The pattern is always the same -- enter with
-`async with`, and the cleanup is guaranteed.
+`#!py async with`, and the cleanup is guaranteed.
 
 !!! warning
 
     If an API gives you an async context manager, **always** use it with
-    `async with`. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
-    and error-prone. The whole point of the protocol is that the `async with`
+    `#!py async with`. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
+    and error-prone. The whole point of the protocol is that the `#!py async with`
     statement guarantees `__aexit__` runs even when things go wrong.
 
 ## Cleanup Under Cancellation
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 Timed out, but connection was still closed
 ```
 
-The timeout fires after one second, cancelling the `await conn.query()` call.
+The timeout fires after one second, cancelling the `#!py await conn.query()` call.
 The [`CancelledError`][cancellederror] unwinds the `try` block, the `finally` block runs, and
 the connection is closed properly. This is exactly the behaviour you want.
 
@@ -169,7 +169,7 @@ that is the caller's job. A function that creates a connection must ensure it
 is closed before returning, whether that return is normal, an exception, or a
 cancellation.
 
-This is why [`TaskGroup`][taskgroup] and `async with` compose so well. The `async with`
+This is why [`TaskGroup`][taskgroup] and `#!py async with` compose so well. The `#!py async with`
 block is the owner scope: everything created inside it is cleaned up when the
 block exits. A [`TaskGroup`][taskgroup] guarantees all its children finish before
 `__aexit__` runs, so resources opened inside the group are still valid for the
@@ -185,7 +185,7 @@ async def process_batch(urls: list[str]) -> None:
 
 When you find yourself passing a resource across multiple scopes without a
 clear owner, stop and restructure. The resource should live in an
-`async with` block, and every piece of code that uses it should be a child of
+`#!py async with` block, and every piece of code that uses it should be a child of
 that scope.
 
 ## Async Generators
@@ -318,14 +318,14 @@ Done
 ```
 
 The output looks the same, but the behaviour is fundamentally different.
-With `aclosing()`, the generator's [`aclose()`][aclose] method is called *immediately*
-when the `async with` block exits -- not at some unpredictable later time by
+With `#!py aclosing()`, the generator's [`aclose()`][aclose] method is called *immediately*
+when the `#!py async with` block exits -- not at some unpredictable later time by
 the garbage collector. The `finally` block inside the generator runs promptly,
 and any async cleanup it needs to do happens in the right context.
 
 !!! tip
 
-    The rule is simple: **always wrap async generators in `aclosing()` when you
+    The rule is simple: **always wrap async generators in `#!py aclosing()` when you
     consume them.** If you iterate to completion you don't strictly need it, but
     applying it consistently means you never have to think about whether early
     exit is possible.
@@ -336,7 +336,7 @@ and any async cleanup it needs to do happens in the right context.
     iteration and will warn you loudly if you forget. asyncio is more lenient at
     runtime, but the same discipline applies.
 
-## `async for`
+## `#!py async for`
 
 The
 [`async for` statement][async-for-statement]
@@ -348,7 +348,7 @@ Async generators are the most common source of async iterables, but you will
 encounter them elsewhere too: network streams, database cursors, message
 queues, and any API that delivers items one at a time over I/O.
 
-There is not much ceremony -- `async for` works just like regular `for`, but
+There is not much ceremony -- `#!py async for` works just like regular `for`, but
 each iteration step can [`await`][await]:
 
 ```python
@@ -362,16 +362,16 @@ it raises `StopAsyncIteration` and the loop ends.
 
 !!! note
 
-    `async for` does **not** automatically close the iterable when the loop
-    exits early (via `break` or exception). That is why `aclosing()` is
-    necessary for async generators -- it provides the cleanup that `async for`
+    `#!py async for` does **not** automatically close the iterable when the loop
+    exits early (via `break` or exception). That is why `#!py aclosing()` is
+    necessary for async generators -- it provides the cleanup that `#!py async for`
     does not.
 
 ## Putting It Together
 
 Here is a small example that combines everything from this section: an async
 generator that produces items from a simulated resource, proper cleanup with
-`aclosing()`, and concurrent consumers managed by a [`TaskGroup`][taskgroup].
+`#!py aclosing()`, and concurrent consumers managed by a [`TaskGroup`][taskgroup].
 
 ```python title="resource_pipeline.py"
 import asyncio
@@ -430,11 +430,11 @@ fast collected: ['A/event-0', 'A/event-1']
 slow collected: ['B/event-0', 'B/event-1', 'B/event-2']
 ```
 
-Both consumers stop early (before the stream is exhausted), but `aclosing()`
+Both consumers stop early (before the stream is exhausted), but `#!py aclosing()`
 ensures each stream's `finally` block runs immediately. The [`TaskGroup`][taskgroup]
-guarantees both consumers finish before `main()` continues. Every resource has
+guarantees both consumers finish before `#!py main()` continues. Every resource has
 a clear owner, every cleanup path is covered, and cancellation would not change
-any of that -- the `async with` blocks and `finally` blocks would still run.
+any of that -- the `#!py async with` blocks and `finally` blocks would still run.
 
 ---
 

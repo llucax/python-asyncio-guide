@@ -58,7 +58,7 @@ where you do are almost all low-level:
 - **[`loop.create_future()`][loop-create-future]** -- to create a bare
   [`Future`][future]
   for manual result resolution in protocol or callback-style code.
-- **[`loop.call_soon()`][loop-call-soon] / `loop.call_later()` / `loop.call_at()`** -- to
+- **[`loop.call_soon()`][loop-call-soon] / `#!py loop.call_later()` / `#!py loop.call_at()`** -- to
   schedule plain callbacks instead of coroutines.
 - **[`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]** -- to push work onto the event loop from
   another thread.
@@ -70,10 +70,10 @@ If none of these apply, you do not need the loop.
 The loop object has two boolean queries that are useful for defensive
 programming in library code:
 
-- **`loop.is_running()`** -- returns `True` if the loop is currently executing
+- **`#!py loop.is_running()`** -- returns `True` if the loop is currently executing
   callbacks. Inside a coroutine this is always `True`; it is mainly useful in
   library teardown code that might run after [`asyncio.run()`][asyncio-run] returns.
-- **`loop.is_closed()`** -- returns `True` after someone has called
+- **`#!py loop.is_closed()`** -- returns `True` after someone has called
   [`loop.close()`][loop-close]. A closed loop cannot be restarted. Calling any scheduling
   method on a closed loop raises `RuntimeError`.
 
@@ -99,7 +99,7 @@ class ConnectionPool:
 
 !!! note
 
-    Checking `is_running()` and `is_closed()` avoids `RuntimeError`
+    Checking `#!py is_running()` and `#!py is_closed()` avoids `RuntimeError`
     exceptions that would otherwise fire silently during interpreter
     shutdown, when the loop has already been torn down.
 
@@ -160,7 +160,7 @@ total live tasks: 4
 ```
 
 Four tasks: the three you created plus the implicit `Task-1` that wraps
-`main()` itself. This kind of snapshot is invaluable for debugging hung
+`#!py main()` itself. This kind of snapshot is invaluable for debugging hung
 programs or building health-check endpoints that report what your async
 application is doing.
 
@@ -176,13 +176,13 @@ application is doing.
 If you have seen older asyncio code or tutorials, you may have encountered
 these functions:
 
-- `asyncio.get_event_loop()`
-- `asyncio.set_event_loop()`
-- `asyncio.set_event_loop_policy()` / custom event loop policies
+- `#!py asyncio.get_event_loop()`
+- `#!py asyncio.set_event_loop()`
+- `#!py asyncio.set_event_loop_policy()` / custom event loop policies
 
 Forget they exist. They date from a time before [`asyncio.run()`][asyncio-run], when you
 had to create and manage the loop manually. In modern Python (3.10+),
-`get_event_loop()` emits a `DeprecationWarning` when no loop is running, and
+`#!py get_event_loop()` emits a `DeprecationWarning` when no loop is running, and
 the entire policy system is a relic of an era when swapping event loop
 implementations (uvloop, Proactor on Windows) required global mutation at
 startup. Today, [`asyncio.run()`][asyncio-run] accepts a `loop_factory` parameter if you
@@ -196,7 +196,7 @@ asyncio.run(main(), loop_factory=uvloop.new_event_loop)
 ```
 
 That single keyword argument replaces the entire policy machinery. Inside
-your running program, `get_running_loop()` is the only accessor you need.
+your running program, `#!py get_running_loop()` is the only accessor you need.
 
 ---
 

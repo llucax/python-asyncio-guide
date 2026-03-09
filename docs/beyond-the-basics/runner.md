@@ -15,7 +15,7 @@ tears the loop down. One shot, one loop. Most of the time that is exactly
 what you want.
 
 But sometimes you need to run *several* top-level coroutines on the *same*
-loop -- without building them all into a single `main()`. Maybe you are
+loop -- without building them all into a single `#!py main()`. Maybe you are
 driving async code from a synchronous test harness, experimenting in a REPL,
 or orchestrating setup/work/teardown steps that each need [`await`][await]. For this,
 Python 3.11 added
@@ -24,7 +24,7 @@ Python 3.11 added
 ## Using [`asyncio.Runner`][asyncio-runner]
 
 `Runner` is a context manager that holds an event loop open for as long as you
-need it. Inside the `with` block you call `runner.run()` as many times as you
+need it. Inside the `with` block you call `#!py runner.run()` as many times as you
 like -- each call executes one coroutine to completion on the same loop:
 
 ```python title="runner_basic.py"
@@ -137,13 +137,13 @@ This avoids the overhead of spinning up a new loop for every test and lets
 fixtures like database connections persist across tests.
 
 **REPL experimentation.** If you are driving async calls from a plain Python
-shell, a `Runner` lets you call `runner.run()` interactively without
+shell, a `Runner` lets you call `#!py runner.run()` interactively without
 restarting the loop each time.
 
 ## Runner in Tests
 
 Here is a pattern for pytest where a single `Runner` backs an entire test
-module. Each test calls `runner.run()` to execute its async code:
+module. Each test calls `#!py runner.run()` to execute its async code:
 
 ```python title="test_with_runner.py"
 import asyncio
@@ -185,9 +185,9 @@ def test_fetch_double(runner: asyncio.Runner) -> None:
     *can* use pytest-asyncio, its `@pytest.mark.asyncio` decorator is
     usually simpler.
 
-## `Runner.close()`
+## `#!py Runner.close()`
 
-When the `with` block exits, `Runner.close()` is called automatically. It
+When the `with` block exits, `#!py Runner.close()` is called automatically. It
 does the same cleanup that [`asyncio.run()`][asyncio-run] does at the end of its single
 call (see [Shutdown Sequence](../how-asyncio-works/shutdown-sequence.md)
 for the full details):
@@ -199,13 +199,13 @@ for the full details):
    ([`shutdown_default_executor`][shutdown-default-executor]).
 4. Closes the event loop.
 
-You can also call `runner.close()` manually if you are not using the context
+You can also call `#!py runner.close()` manually if you are not using the context
 manager form, but the `with` statement is strongly preferred -- it guarantees
 cleanup even if an exception is raised.
 
 !!! warning
 
-    After `close()`, the `Runner` is spent. Calling `runner.run()` again
+    After `#!py close()`, the `Runner` is spent. Calling `#!py runner.run()` again
     will raise `RuntimeError`. If you need another loop, create a new
     `Runner`.
 

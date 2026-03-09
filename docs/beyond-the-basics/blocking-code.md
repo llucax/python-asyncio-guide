@@ -19,7 +19,7 @@ break an async program.
 
 The event loop runs in a single thread. When you [`await`][await] something, control
 returns to the loop so it can service other tasks. But if you call a function
-that blocks -- `time.sleep()`, a synchronous HTTP request, a heavy computation
+that blocks -- `#!py time.sleep()`, a synchronous HTTP request, a heavy computation
 -- the loop cannot switch away. Every other task, every pending callback, every
 open connection just *waits*.
 
@@ -140,7 +140,7 @@ Now both tasks run concurrently. `polite_task` prints its ticks while
 `blocking_work` sleeps in a background thread. Total time is 2 seconds --
 the duration of the slowest task, as you would expect.
 
-Notice that `blocking_work` is a plain `def` function, not `async def`. That
+Notice that `blocking_work` is a plain `def` function, not `#!py async def`. That
 is the whole point: you already have synchronous code and you need to call it
 from an async context. `to_thread` bridges the gap.
 
@@ -153,7 +153,7 @@ from an async context. `to_thread` bridges the gap.
 
     `to_thread` uses Python's default
     [`ThreadPoolExecutor`][threadpoolexecutor].
-    The default pool size was changed to `min(32, os.cpu_count() + 4)` in Python
+    The default pool size was changed to `#!py min(32, os.cpu_count() + 4)` in Python
     3.8. For most I/O-bound workloads this is plenty. If you need a larger pool,
     pass a custom executor to [`loop.run_in_executor()`][loop-run-in-executor] instead.
 
@@ -174,7 +174,7 @@ state.
 
 **2. The threaded function calling back into asyncio.** Asyncio objects --
 tasks, futures, queues, locks -- are *not* thread-safe. You cannot call
-`asyncio.Queue.put()` from a thread. If the threaded function needs to send
+`#!py asyncio.Queue.put()` from a thread. If the threaded function needs to send
 data back to the event loop while it is still running, use
 [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]:
 
@@ -216,7 +216,7 @@ Results: ['item-0', 'item-1', 'item-2']
 `call_soon_threadsafe` schedules a callback on the event loop from any thread.
 It is the *only* safe way to touch event loop internals from outside the loop
 thread. For more complex patterns -- like feeding items into an
-[`asyncio.Queue`][asyncio-queue] from a thread -- wrap the `queue.put_nowait()` call inside
+[`asyncio.Queue`][asyncio-queue] from a thread -- wrap the `#!py queue.put_nowait()` call inside
 `call_soon_threadsafe`.
 
 !!! warning
@@ -309,7 +309,7 @@ A few things to note:
   [picklable][picklable], because they are
   serialized and sent to a child process. Lambda functions, closures, and
   objects with unpicklable state will raise a `PicklingError`.
-- The `with ProcessPoolExecutor()` block shuts down the pool cleanly when the
+- The `#!py with ProcessPoolExecutor()` block shuts down the pool cleanly when the
   work is done. In a long-running service, you would typically create the pool
   once at startup and reuse it.
 
@@ -332,7 +332,7 @@ Here is the short decision guide:
 
 Two rules of thumb:
 
-1. **Default to `to_thread()`.** Most blocking code you encounter is I/O-bound.
+1. **Default to `#!py to_thread()`.** Most blocking code you encounter is I/O-bound.
    Thread overhead is low, there is no pickling requirement, and the API is a
    single function call.
 2. **Reach for processes only when threads are not enough.** If you profile and

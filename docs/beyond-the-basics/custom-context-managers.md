@@ -8,7 +8,7 @@ description: >-
 
 # Custom Context Managers
 
-Chapter 1 covered *using* `async with` with context managers that asyncio
+Chapter 1 covered *using* `#!py async with` with context managers that asyncio
 hands you --
 [`Lock`][lock],
 [`TaskGroup`][taskgroup],
@@ -18,7 +18,7 @@ is guaranteed even under
 [cancellation](../the-basics/cancellation-and-timeouts.md). This
 section covers the other side: *creating* your
 own async context managers so you can wrap setup/teardown logic into a clean
-`async with` block that callers can use the same way.
+`#!py async with` block that callers can use the same way.
 
 ## `@asynccontextmanager`
 
@@ -83,10 +83,10 @@ Result of: SELECT 1
 [postgres://localhost/mydb] Closed
 ```
 
-The `yield conn` line is where the body of the caller's `async with` block
+The `#!py yield conn` line is where the body of the caller's `#!py async with` block
 runs. When that block exits -- whether normally, via exception, or via
 cancellation -- execution resumes after the `yield`, inside the `finally`
-block, and `conn.close()` runs.
+block, and `#!py conn.close()` runs.
 
 !!! note
 
@@ -132,7 +132,7 @@ Using resource
 Caught the error
 ```
 
-Notice that `"Teardown -- this may never run!"` never printed. The exception
+Notice that `#!py "Teardown -- this may never run!"` never printed. The exception
 terminated the generator before it reached the cleanup line. Wrap the `yield`
 in `try`/`finally` and the problem disappears:
 
@@ -155,7 +155,7 @@ async def fixed_manager() -> AsyncIterator[str]:
 
 ## The Class-Based Protocol
 
-Under the hood, `async with` calls two dunder methods:
+Under the hood, `#!py async with` calls two dunder methods:
 [`__aenter__()`][aenter]
 and
 [`__aexit__()`][aexit].
@@ -272,13 +272,13 @@ The key methods on `AsyncExitStack`:
 
 - **[`enter_async_context(cm)`][enter-async-context-cm]**
   -- enters `cm` and registers its `__aexit__` for cleanup. Returns whatever
-  `cm.__aenter__()` returned.
+  `#!py cm.__aenter__()` returned.
 - **[`push_async_callback(callback, /, *args, **kwds)`][push-async-callback-callback-args-kwds]**
   -- registers an arbitrary async callback to run at cleanup time. Useful for
   resources that don't have a context manager interface.
 - **[`aclose()`][aclose]**
-  -- explicitly unwinds the stack outside of an `async with` block. You rarely
-  need this if you're using `async with AsyncExitStack()`.
+  -- explicitly unwinds the stack outside of an `#!py async with` block. You rarely
+  need this if you're using `#!py async with AsyncExitStack()`.
 
 The `push_async_callback` method is handy when you need to clean up something
 that doesn't follow the context manager protocol:
@@ -384,7 +384,7 @@ Pool closed: all connections released
 ```
 
 The layering is clean: `app_context` delegates resource management to
-`managed_pool` via `async with`. The teardown sequence is natural --
+`managed_pool` via `#!py async with`. The teardown sequence is natural --
 `app_context`'s "App shutting down" message runs first, then `managed_pool`
 drains and closes. If you later add a cache layer or a metrics reporter, you
 wrap another context manager around the existing ones, and the lifetime nesting
@@ -393,7 +393,7 @@ stays correct.
 This pattern composes well with `AsyncExitStack` too. If `app_context` needed
 a variable number of pools (say, one per tenant), it could use an
 `AsyncExitStack` internally to manage them and still expose a single
-`async with` interface to callers.
+`#!py async with` interface to callers.
 
 ## When to Use Each Approach
 
@@ -402,7 +402,7 @@ a variable number of pools (say, one per tenant), it could use an
 | `@asynccontextmanager` | Most resource wrappers. Quick to write, easy to read. Use this by default. |
 | Class with `__aenter__`/`__aexit__` | When the context manager is itself a stateful object with methods callers need after the block (e.g. a timer, a session tracker). |
 | `AsyncExitStack` | Managing a dynamic number of context managers, or bridging resources that don't have a context manager interface via `push_async_callback`. |
-| Composing context managers | Layering setup/teardown of multiple resources behind a single `async with`. Keep lifetimes nested and explicit. |
+| Composing context managers | Layering setup/teardown of multiple resources behind a single `#!py async with`. Keep lifetimes nested and explicit. |
 
 ---
 

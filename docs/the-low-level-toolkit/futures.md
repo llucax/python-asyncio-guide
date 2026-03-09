@@ -10,7 +10,7 @@ description: >-
 
 Chapter 3 covered [what futures are](../how-asyncio-works/tasks-and-futures.md):
 passive containers for a value that doesn't exist yet. You know the API --
-`.done()`, `.result()`, `.set_result()`, [`await`][await]. This section is about
+`#!py .done()`, `#!py .result()`, `#!py .set_result()`, [`await`][await]. This section is about
 *using* them in practice: creating them, resolving them manually, and bridging
 them with `concurrent.futures`. These are the tools you reach for when you're
 building a library or framework that needs to glue callback-based code into the
@@ -62,16 +62,16 @@ result:  42
 awaited: 42
 ```
 
-Why [`loop.create_future()`][loop-create-future] instead of `asyncio.Future()`? Two reasons. First,
+Why [`loop.create_future()`][loop-create-future] instead of `#!py asyncio.Future()`? Two reasons. First,
 it's faster -- the loop can return an optimized C implementation. Second, it
 binds the future to the correct loop automatically, which avoids subtle bugs
 when multiple loops are involved (testing, embedded event loops). Always use
-`create_future()`.
+`#!py create_future()`.
 
 !!! warning
 
-    A future can only be resolved once. Calling `set_result()` or
-    `set_exception()` on a future that is already done raises
+    A future can only be resolved once. Calling `#!py set_result()` or
+    `#!py set_exception()` on a future that is already done raises
     [`asyncio.InvalidStateError`][asyncio-invalidstateerror].
 
 ## Wrapping Callback-Based APIs
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 Sensor reading: 23.7°C
 ```
 
-The `if not fut.done()` guard in the callback is defensive -- it prevents a
+The `#!py if not fut.done()` guard in the callback is defensive -- it prevents a
 double-resolution crash if the callback fires more than once. In most cases
 the guard won't trigger, but it costs nothing and saves you from hard-to-debug
 `InvalidStateError` exceptions in production.
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 Result: 333332833333500000
 ```
 
-`wrap_future()` creates an [`asyncio.Future`][asyncio-future], wires up a done callback on the
+`#!py wrap_future()` creates an [`asyncio.Future`][asyncio-future], wires up a done callback on the
 [`concurrent.futures.Future`][concurrent-futures-future] so that when the thread finishes, the asyncio
 future gets resolved -- and it does this thread-safely via
 [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]. You get a clean [`await`][await]-able handle into work
@@ -195,11 +195,11 @@ that is running on a completely different thread.
     [`asyncio.to_thread()`][asyncio-to-thread]
     or
     [`loop.run_in_executor()`][loop-run-in-executor]
-    -- they handle the wrapping for you. `wrap_future()` is for when
+    -- they handle the wrapping for you. `#!py wrap_future()` is for when
     someone *else* handed you a [`concurrent.futures.Future`][concurrent-futures-future] and you need to
     integrate it into your async code. A third-party job queue, a shared
     executor managed by another subsystem, a legacy API that returns
-    futures -- those are the cases where `wrap_future()` shines.
+    futures -- those are the cases where `#!py wrap_future()` shines.
 
 ## Error Propagation
 
@@ -252,19 +252,19 @@ if __name__ == "__main__":
 Read failed: sensor disconnected
 ```
 
-The `set_exception()` call stores the exception inside the future. When you
+The `#!py set_exception()` call stores the exception inside the future. When you
 [`await`][await] it, the exception is re-raised as if it happened at the [`await`][await] line.
 This means normal `try`/`except` works exactly as you'd expect -- the error
 propagates through the same channels as any other async exception.
 
-The same `if not fut.done()` guard applies here. If both a success callback
+The same `#!py if not fut.done()` guard applies here. If both a success callback
 and an error callback could fire (race conditions in some libraries), the
 guard ensures only the first one resolves the future.
 
 !!! danger
 
     Never pass a [`BaseException`][baseexception] subclass (like `KeyboardInterrupt` or
-    `SystemExit`) to `set_exception()`. It raises a `TypeError`. These are
+    `SystemExit`) to `#!py set_exception()`. It raises a `TypeError`. These are
     not meant to flow through futures -- they are process-level signals
     that bypass normal exception handling.
 

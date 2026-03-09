@@ -19,7 +19,7 @@ normally.
 [`asyncio.shield()`][asyncio-shield]
 is the tool for this job. It is a sharp tool -- use it deliberately.
 
-## What `shield()` Does
+## What `#!py shield()` Does
 
 [`asyncio.shield()`][asyncio-shield] wraps an awaitable so that cancelling the *outer* task does
 not cancel the *inner* work. Under the hood it creates a new [`Future`][future] that
@@ -71,18 +71,18 @@ main: done
 ```
 
 The handler was cancelled after 0.2 seconds, but `critical_write` ran to
-completion. That is the whole point of `shield()`.
+completion. That is the whole point of `#!py shield()`.
 
 !!! note
 
-    Notice that the `except CancelledError` block still re-raises. Shielding
+    Notice that the `#!py except CancelledError` block still re-raises. Shielding
     protects the *inner* awaitable -- it does not change the fact that the
     *outer* task has been cancelled. You are not swallowing cancellation here;
     you are splitting one piece of work off so it can finish independently.
 
 ## When to Use It
 
-`shield()` is appropriate when all of the following are true:
+`#!py shield()` is appropriate when all of the following are true:
 
 1. **The work is short.** A database commit, a single network frame, a buffer
    flush -- seconds at most, not minutes.
@@ -107,7 +107,7 @@ small and the rest cooperates with cancellation normally.
 
 ## The Sharp Edge
 
-Here is the uncomfortable truth: `shield()` creates *unstructured* work. The
+Here is the uncomfortable truth: `#!py shield()` creates *unstructured* work. The
 shielded coroutine keeps running with no parent, no [`TaskGroup`][taskgroup], no scope. If
 it raises an exception, nobody is listening. If it runs forever, nobody will
 cancel it. You have punched a hole in structured concurrency.
@@ -161,9 +161,9 @@ never retrieved" warning and nothing else.
 
 !!! warning
 
-    Every call to `shield()` is a promise: "I know this work will outlive its
+    Every call to `#!py shield()` is a promise: "I know this work will outlive its
     caller, and I have arranged for someone else to own it." If you cannot point
-    to that owner, do not use `shield()`.
+    to that owner, do not use `#!py shield()`.
 
 ## Safe Patterns
 
@@ -229,13 +229,13 @@ flush: done
 main: all flushed, exiting cleanly
 ```
 
-The key difference from the orphan example: `main()` holds a reference to the
+The key difference from the orphan example: `#!py main()` holds a reference to the
 flush task and awaits it before exiting. The shielded work has an owner.
 
 !!! tip
 
-    Notice you pass the *task* to `shield()`, not the coroutine directly. When
-    you write `asyncio.shield(some_coroutine())`, shield creates the task for
+    Notice you pass the *task* to `#!py shield()`, not the coroutine directly. When
+    you write `#!py asyncio.shield(some_coroutine())`, shield creates the task for
     you internally, and you have no reference to it. By creating the task
     yourself first, you keep a handle you can store, await, or cancel later.
 
@@ -306,7 +306,7 @@ main: all cleanup complete
 ```
 
 The `cleanup` [`TaskGroup`][taskgroup] outlives the request handler. When the program
-shuts down, exiting `cleanup_scope()` waits for all goodbye messages to be
+shuts down, exiting `#!py cleanup_scope()` waits for all goodbye messages to be
 sent. Every shielded task has a parent.
 
 ## Testing Shielded Code
@@ -358,14 +358,14 @@ outer task, then await the inner one and assert on its side effects.
 
 ---
 
-`shield()` is the one legitimate exception to the "never swallow
+`#!py shield()` is the one legitimate exception to the "never swallow
 cancellation" rule from [Chapter 1](../the-basics/cancellation-and-timeouts.md).
 It exists because real systems have work that must not be interrupted --
 commits, close frames, flushes. But it breaks structured concurrency by
 design, so treat every use as a small, deliberate exception: keep the shielded
 work short, give it an explicit owner, and make sure someone awaits the result
 before the program exits. If you cannot articulate who owns the shielded task,
-you do not need `shield()` -- you need a redesign.
+you do not need `#!py shield()` -- you need a redesign.
 
 [asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
 [future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future

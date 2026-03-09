@@ -11,7 +11,7 @@ description: >-
 Cancellation is what makes task lifetimes *real*. Without it, timeouts are
 wishes and [`TaskGroup`][taskgroup] has no way to shut down children when a sibling fails.
 Everything you saw in the previous section -- sibling cancellation, the clean
-`async with` guarantee -- relies on the machinery covered here.
+`#!py async with` guarantee -- relies on the machinery covered here.
 
 ## What is [`CancelledError`][cancellederror]?
 
@@ -26,9 +26,9 @@ other exception.
 
 The key detail: [`CancelledError`][cancellederror] inherits from
 [`BaseException`][baseexception],
-**not** `Exception`. This means a plain `except Exception:` will not catch it.
+**not** `Exception`. This means a plain `#!py except Exception:` will not catch it.
 That is deliberate -- cancellation should pass through most error handlers
-undisturbed. If it were a subclass of `Exception`, every `except Exception:`
+undisturbed. If it were a subclass of `Exception`, every `#!py except Exception:`
 in your code would accidentally swallow it.
 
 !!! note
@@ -75,7 +75,7 @@ Got: default
 ```
 
 The timeout fired after one second and tried to cancel the work. But
-`fetch_with_fallback` caught the [`CancelledError`][cancellederror] and returned `"default"` --
+`fetch_with_fallback` caught the [`CancelledError`][cancellederror] and returned `#!py "default"` --
 defeating the timeout entirely. This is a real bug in production code:
 timeouts that don't actually time out.
 
@@ -110,14 +110,14 @@ Timed out as expected
 ```
 
 Cancellation propagates correctly now. The [`asyncio.timeout()`][asyncio-timeout] context manager
-converts it to [`TimeoutError`][timeouterror] at the `async with` boundary, and the caller
+converts it to [`TimeoutError`][timeouterror] at the `#!py async with` boundary, and the caller
 handles the timeout cleanly.
 
 !!! danger
 
-    If you see `except asyncio.CancelledError:` without a `raise` in any code
+    If you see `#!py except asyncio.CancelledError:` without a `raise` in any code
     path, that is almost always a bug. Treat it the same way you would treat
-    `except BaseException: pass` -- something has gone wrong.
+    `#!py except BaseException: pass` -- something has gone wrong.
 
 ## Cleanup with `try`/`finally`
 
@@ -154,7 +154,7 @@ Timed out
 ```
 
 The `finally` block ran even though the coroutine was cancelled. Reach for
-`try`/`finally` first; reserve `except CancelledError` for the rare cases
+`try`/`finally` first; reserve `#!py except CancelledError` for the rare cases
 where cleanup is *specific* to cancellation (e.g., logging a different
 message).
 
@@ -165,7 +165,7 @@ is an async context manager that enforces a deadline on the code inside it. If
 the block takes longer than the specified number of seconds, asyncio cancels
 the current task and converts the resulting [`CancelledError`][cancellederror] into a
 [`TimeoutError`][timeouterror]
-at the `async with` boundary.
+at the `#!py async with` boundary.
 
 ```python title="timeout_basic.py"
 import asyncio
@@ -193,7 +193,7 @@ Operation timed out after 1 second
 There are two important things to understand here. First,
 [`asyncio.timeout()`][asyncio-timeout] cancels the *current task*. The [`CancelledError`][cancellederror] is raised
 at whatever [`await`][await] the task is suspended on. Second, the conversion from
-[`CancelledError`][cancellederror] to [`TimeoutError`][timeouterror] only happens at the `async with` boundary.
+[`CancelledError`][cancellederror] to [`TimeoutError`][timeouterror] only happens at the `#!py async with` boundary.
 If your code receives a [`CancelledError`][cancellederror] from *outside* the timeout scope
 (e.g., a parent [`TaskGroup`][taskgroup] shutting down), that cancellation passes through
 unchanged -- it does not become a [`TimeoutError`][timeouterror].
@@ -225,7 +225,7 @@ event loop's internal clock, rather than a relative delay.
 
     [`asyncio.get_running_loop()`][asyncio-get-running-loop] is covered in
     [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
-    Here you use it only to read the event-loop clock for `timeout_at()`.
+    Here you use it only to read the event-loop clock for `#!py timeout_at()`.
 
 ```python title="timeout_at_demo.py"
 import asyncio
@@ -293,13 +293,13 @@ if __name__ == "__main__":
 Fast path timed out, using slow fallback
 ```
 
-When the timeout fires, the `async with` block exits via [`TimeoutError`][timeouterror].
+When the timeout fires, the `#!py async with` block exits via [`TimeoutError`][timeouterror].
 The context manager handles it internally, so execution continues after the
-block. You then check `cm.expired()` to decide what to do next.
+block. You then check `#!py cm.expired()` to decide what to do next.
 
 !!! info
 
-    The code *after* the `async with` block runs only if the timeout fired or
+    The code *after* the `#!py async with` block runs only if the timeout fired or
     the block completed normally. If the task is cancelled for a reason *other*
     than this timeout, the [`CancelledError`][cancellederror] propagates out without reaching the
     code after the block.
@@ -383,10 +383,10 @@ operations.
     as a child failure and cancels all siblings. Make sure individual timeouts
     are handled within the child if you want the group to continue.
 
-## The `except BaseException:` Trap
+## The `#!py except BaseException:` Trap
 
-Because [`CancelledError`][cancellederror] inherits from [`BaseException`][baseexception], a bare `except:` or
-`except BaseException:` will catch it. This is almost never what you want.
+Because [`CancelledError`][cancellederror] inherits from [`BaseException`][baseexception], a bare `#!py except:` or
+`#!py except BaseException:` will catch it. This is almost never what you want.
 
 ```python
 # bare_except_broken.py — DO NOT DO THIS
@@ -416,7 +416,7 @@ Caught something, ignoring it
 The timeout never fires as far as the caller is concerned -- `bad_handler`
 swallowed the [`CancelledError`][cancellederror]. The [`TimeoutError`][timeouterror] never appears.
 
-If you genuinely need `except BaseException:` (for logging, metrics, or
+If you genuinely need `#!py except BaseException:` (for logging, metrics, or
 similar cross-cutting concerns), always re-raise:
 
 ```python
@@ -428,15 +428,15 @@ async def safe_handler() -> None:
         raise  # Critical: let CancelledError propagate
 ```
 
-The safe rule of thumb: use `except Exception:` for error handling -- it
+The safe rule of thumb: use `#!py except Exception:` for error handling -- it
 naturally lets [`CancelledError`][cancellederror] and `KeyboardInterrupt` pass through. Reach
-for `except BaseException:` only when you have a specific reason, and always
+for `#!py except BaseException:` only when you have a specific reason, and always
 re-raise at the end.
 
 !!! tip
 
-    A quick way to audit your codebase: search for `except BaseException` and
-    bare `except:` statements. Every match should either re-raise the caught
+    A quick way to audit your codebase: search for `#!py except BaseException` and
+    bare `#!py except:` statements. Every match should either re-raise the caught
     exception or have a very good comment explaining why it doesn't.
 
 ---

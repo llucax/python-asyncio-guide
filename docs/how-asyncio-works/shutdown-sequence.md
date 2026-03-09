@@ -9,7 +9,7 @@ description: >-
 
 # Shutdown Sequence
 
-Your `main()` coroutine returns, and you might think the program is done. It is
+Your `#!py main()` coroutine returns, and you might think the program is done. It is
 not -- at least, not yet.
 [`asyncio.run()`][asyncio-run]
 has a careful shutdown sequence to run before the process can exit cleanly. It
@@ -39,7 +39,7 @@ through a deliberate multi-step teardown:
    its next checkpoint.
 
 4. **Run the loop until all cancelled tasks are done.** [`asyncio.run()`][asyncio-run] calls
-   `loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))`
+   `#!py loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))`
    so that every cancelled task gets a chance to run its `finally` blocks and
    `__aexit__` methods. This is why cleanup code in cancelled tasks actually
    executes -- the loop keeps spinning long enough for the cancellation to
@@ -76,7 +76,7 @@ the result from step 1.
 ## Leaked Tasks
 
 The most common shutdown surprise comes from *leaked tasks* -- tasks you
-created with [`asyncio.create_task()`][asyncio-create-task] but never awaited. When `main()` returns,
+created with [`asyncio.create_task()`][asyncio-create-task] but never awaited. When `#!py main()` returns,
 those tasks are still pending. [`asyncio.run()`][asyncio-run] cancels them at step 3, and
 they typically get cleaned up. But you will see a warning like this in the
 logs:
@@ -104,7 +104,7 @@ working...
 main() is done
 ```
 
-The task runs in the background for a while, then `main()` returns and
+The task runs in the background for a while, then `#!py main()` returns and
 [`asyncio.run()`][asyncio-run] cancels it during shutdown. In debug mode (or depending on
 garbage collection timing), you may see:
 
@@ -129,8 +129,8 @@ scope.
 ### Why [`TaskGroup`][taskgroup] Prevents This
 
 A [`TaskGroup`][taskgroup] is the fix. Every
-task created with `tg.create_task()` is awaited
-before the `async with` block exits. There is no way for a task to leak out
+task created with `#!py tg.create_task()` is awaited
+before the `#!py async with` block exits. There is no way for a task to leak out
 of the group:
 
 ```python
@@ -141,8 +141,8 @@ async def main() -> None:
     # All tasks are done (or cancelled) before we get here
 ```
 
-When the `async with` block exits, the [`TaskGroup`][taskgroup] cancels any children that
-are still running and waits for them. By the time `main()` returns, there are
+When the `#!py async with` block exits, the [`TaskGroup`][taskgroup] cancels any children that
+are still running and waits for them. By the time `#!py main()` returns, there are
 no orphan tasks for [`asyncio.run()`][asyncio-run] to clean up. No warnings, no surprises.
 
 ## Async Generator Finalization
@@ -187,7 +187,7 @@ ticker: finalized after yielding 2 values
 ```
 
 The generator's `finally` block ran during shutdown, thanks to
-`shutdown_asyncgens()`. But relying on this is fragile -- it only runs during
+`#!py shutdown_asyncgens()`. But relying on this is fragile -- it only runs during
 [`asyncio.run()`][asyncio-run] teardown, so if you are using a custom loop setup or the
 generator holds a resource that should be released *before* shutdown, it will
 be too late.
@@ -201,8 +201,8 @@ later point during shutdown.
 
 !!! tip
 
-    Think of `shutdown_asyncgens()` as a safety net, not a strategy. Use
-    `aclosing()` so your generators are cleaned up at the right time, not
+    Think of `#!py shutdown_asyncgens()` as a safety net, not a strategy. Use
+    `#!py aclosing()` so your generators are cleaned up at the right time, not
     just at the last possible moment.
 
 ## Executor Shutdown
@@ -212,7 +212,7 @@ If your program used
 or
 [`loop.run_in_executor()`][loop-run-in-executor]
 to offload blocking work, the default [`ThreadPoolExecutor`][threadpoolexecutor] may still have
-threads running when `main()` returns. Step 6 of the shutdown sequence calls
+threads running when `#!py main()` returns. Step 6 of the shutdown sequence calls
 [`loop.shutdown_default_executor()`][loop-shutdown-default-executor], which signals the executor to stop
 accepting new work and then waits for all in-flight threads to complete.
 
@@ -239,8 +239,8 @@ async def main() -> None:
     # Both tasks guaranteed done here
 ```
 
-**Use `async with` for resources.** Connections, locks, sessions -- anything
-that needs cleanup gets an `async with` block. Cleanup runs on normal exit,
+**Use `#!py async with` for resources.** Connections, locks, sessions -- anything
+that needs cleanup gets an `#!py async with` block. Cleanup runs on normal exit,
 on exception, and on cancellation.
 
 ```python
@@ -250,8 +250,8 @@ async def main() -> None:
     # Connection closed, regardless of how the block exited
 ```
 
-**Use `aclosing()` for async generators.** Generators are closed
-deterministically when the `async with` block exits, not deferred to shutdown.
+**Use `#!py aclosing()` for async generators.** Generators are closed
+deterministically when the `#!py async with` block exits, not deferred to shutdown.
 
 ```python
 from contextlib import aclosing
@@ -263,7 +263,7 @@ async def main() -> None:
     # Generator finalized immediately
 ```
 
-If you combine all three, your `main()` coroutine returns with nothing left to
+If you combine all three, your `#!py main()` coroutine returns with nothing left to
 clean up. [`asyncio.run()`][asyncio-run] still runs its full shutdown sequence, but steps 2
 through 5 find nothing to do -- every task is already done, every generator
 already closed, every resource already released. That is the ideal.
@@ -278,7 +278,7 @@ already closed, every resource already released. That is the ideal.
 
 ## Signal Handling
 
-In long-running programs like servers, shutdown is not triggered by `main()`
+In long-running programs like servers, shutdown is not triggered by `#!py main()`
 returning -- it is triggered by a signal like `SIGINT` (Ctrl+C) or `SIGTERM`.
 The event loop provides
 [`loop.add_signal_handler()`][loop-add-signal-handler]
@@ -289,7 +289,7 @@ cancelling the main task -- instead of just crashing.
 Signal handling is a lower-level topic that belongs in
 [The Low-Level Toolkit](../the-low-level-toolkit/index.md). For now, the
 important thing to know is that the shutdown *sequence* described above is the
-same regardless of what triggered it. Whether `main()` returns on its own or
+same regardless of what triggered it. Whether `#!py main()` returns on its own or
 you cancel the main task in response to a signal, [`asyncio.run()`][asyncio-run] still walks
 through the same seven steps.
 

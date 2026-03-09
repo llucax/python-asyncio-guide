@@ -14,7 +14,7 @@ programs. By the end, you will be comfortable with coroutines, concurrent
 tasks, cancellation, timeouts, resource management, networking, and
 inter-task coordination — all using safe, high-level APIs.
 
-No low-level event loop manipulation, no [`create_task()`][create-task], no `wait_for()`.
+No low-level event loop manipulation, no [`create_task()`][create-task], no `#!py wait_for()`.
 Those exist, but you don't need them here, and reaching for them too early is
 where most asyncio bugs come from.
 
@@ -30,7 +30,7 @@ where most asyncio bugs come from.
    [`CancelledError`][cancellederror], [`asyncio.timeout()`][asyncio-timeout], [`asyncio.timeout_at()`][asyncio-timeout-at], and how
    they interact with [`TaskGroup`][taskgroup].
 
-4. [Resource Management](resource-management.md) — `async with`,
+4. [Resource Management](resource-management.md) — `#!py async with`,
    `try`/`finally`, [`contextlib.aclosing()`][contextlib-aclosing], and async generators.
 
 5. [Streams](streams.md) — [`asyncio.open_connection()`][asyncio-open-connection],

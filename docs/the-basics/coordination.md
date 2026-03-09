@@ -147,7 +147,7 @@ them will hang forever.
 !!! tip
 
     If `None` is a valid data value, define a dedicated sentinel:
-    `_STOP = object()`. Then compare with `is _STOP` instead of `is None`.
+    `#!py _STOP = object()`. Then compare with `#!py is _STOP` instead of `#!py is None`.
 
 An alternative is [`task_done()`][task-done]/[`join()`][join]: the producer calls [`join()`][join] after
 enqueuing all items, which blocks until every item has been marked done. This
@@ -263,7 +263,7 @@ Consumers run inside the outer group, draining the queue the whole time.
 When you *must* share mutable state between tasks, a
 [`Lock`][lock]
 serialises access. Only one task can hold the lock at a time; others suspend
-until it is released. The idiomatic usage is `async with`:
+until it is released. The idiomatic usage is `#!py async with`:
 
 ```python title="lock_example.py"
 import asyncio
@@ -307,7 +307,7 @@ Final balances: {'alice': 50, 'bob': 60}
 ```
 
 Without the lock, the [`await`][await] between reading and writing would create a race
-condition -- two tasks could both see `alice: 100` and each deduct 30.
+condition -- two tasks could both see `#!py alice: 100` and each deduct 30.
 
 !!! danger
 
@@ -375,8 +375,8 @@ req-2: done
 req-3: done
 ```
 
-All three handlers blocked on `db_ready.wait()` until `ready.set()` was
-called, then woke up simultaneously. Calling `wait()` *after* the event is
+All three handlers blocked on `#!py db_ready.wait()` until `#!py ready.set()` was
+called, then woke up simultaneously. Calling `#!py wait()` *after* the event is
 already set returns immediately -- no race condition.
 
 !!! note
@@ -390,7 +390,7 @@ already set returns immediately -- no race condition.
 
 A [`Semaphore`][semaphore]
 limits how many tasks can enter a section of code concurrently. Create one
-with a count, and each `async with semaphore:` decrements it. When it hits
+with a count, and each `#!py async with semaphore:` decrements it. When it hits
 zero, the next task suspends until someone exits.
 
 The most common use case is limiting concurrency against an external

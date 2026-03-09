@@ -33,7 +33,7 @@ these APIs correctly requires understanding the material in Chapter 3.
    manual result resolution, and bridging `concurrent.futures`.
 
 4. [Callbacks and Threading](callbacks-and-threading.md) —
-   `add_done_callback()`, [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe],
+   `#!py add_done_callback()`, [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe],
    [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe], signal handling.
 
 5. [Transports and Protocols](transports-and-protocols.md) — the callback-based

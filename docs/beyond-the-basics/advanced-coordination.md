@@ -21,8 +21,8 @@ short explanation and a runnable example.
 A [`Condition`][condition]
 combines a [`Lock`][lock] with the ability to *wait for a condition to become true*.
 The idea comes from threading: you acquire the lock, check whether the state
-you care about is ready, and if it isn't, you call `wait()` -- which releases
-the lock and suspends you until another task calls `notify()` or
+you care about is ready, and if it isn't, you call `#!py wait()` -- which releases
+the lock and suspends you until another task calls `#!py notify()` or
 [`notify_all()`][notify-all]. When you wake up, the lock is re-acquired automatically.
 
 This is useful when a simple [`Event`][event] isn't enough -- for example, when
@@ -31,15 +31,15 @@ state.
 
 The API:
 
-- **`async with condition:`** -- acquires the underlying lock.
-- **`await condition.wait()`** -- releases the lock, suspends until notified,
+- **`#!py async with condition:`** -- acquires the underlying lock.
+- **`#!py await condition.wait()`** -- releases the lock, suspends until notified,
   then re-acquires the lock. **Always call this inside a `while` loop** that
   checks the actual condition -- spurious wakeups are possible, and another
   task may have changed the state before you re-acquire.
-- **`await condition.wait_for(predicate)`** -- convenience wrapper that loops
-  on `wait()` until `predicate()` returns `True`.
-- **`condition.notify(n=1)`** -- wake up *n* waiting tasks.
-- **`condition.notify_all()`** -- wake up *all* waiting tasks.
+- **`#!py await condition.wait_for(predicate)`** -- convenience wrapper that loops
+  on `#!py wait()` until `#!py predicate()` returns `True`.
+- **`#!py condition.notify(n=1)`** -- wake up *n* waiting tasks.
+- **`#!py condition.notify_all()`** -- wake up *all* waiting tasks.
 
 Here is a bounded buffer where producers wait when the buffer is full and
 consumers wait when it is empty:
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 A [`Barrier`][barrier]
 is a synchronisation point where exactly *N* tasks must arrive before any of
 them can continue. You create a barrier with a *parties* count, and each task
-calls `await barrier.wait()`. The first *N - 1* callers suspend; the *N*-th
+calls `#!py await barrier.wait()`. The first *N - 1* callers suspend; the *N*-th
 caller unblocks everyone.
 
 !!! info
@@ -172,7 +172,7 @@ multiple phases.
 Other useful attributes and methods:
 [`barrier.parties`][barrier-parties] (required count),
 [`barrier.n_waiting`][barrier-n-waiting] (currently blocked),
-[`await barrier.abort()`][await-barrier-abort] (breaks the barrier -- all current and future `wait()` calls raise
+[`await barrier.abort()`][await-barrier-abort] (breaks the barrier -- all current and future `#!py wait()` calls raise
 [`BrokenBarrierError`][brokenbarriererror]),
 and [`await barrier.reset()`][await-barrier-reset] (returns to initial state; waiting tasks get [`BrokenBarrierError`][brokenbarriererror]).
 
@@ -182,8 +182,8 @@ Chapter 1 covered
 [`Semaphore`][semaphore]
 -- a counter that limits how many tasks can enter a section at once.
 [`BoundedSemaphore`][boundedsemaphore]
-works the same way with one extra safety check: if you `release()` more times
-than you `acquire()`, it raises `ValueError` instead of silently incrementing
+works the same way with one extra safety check: if you `#!py release()` more times
+than you `#!py acquire()`, it raises `ValueError` instead of silently incrementing
 the counter past its initial value.
 
 ```python title="bounded_semaphore.py"
@@ -216,25 +216,25 @@ Caught: BoundedSemaphore released too many times
 ```
 
 A regular [`Semaphore`][semaphore] would have silently bumped the count to 3 in that last
-`release()` call, allowing one more task than intended to enter the critical
+`#!py release()` call, allowing one more task than intended to enter the critical
 section. With [`BoundedSemaphore`][boundedsemaphore], the bug surfaces immediately.
 
 !!! tip
 
     Prefer [`BoundedSemaphore`][boundedsemaphore] over [`Semaphore`][semaphore] when the acquire/release
     calls happen in different places or different functions -- i.e., anywhere
-    you are *not* using `async with`. The `async with` pattern makes extra
+    you are *not* using `#!py async with`. The `#!py async with` pattern makes extra
     releases impossible, so a plain [`Semaphore`][semaphore] is fine there.
 
 ## `asyncio.PriorityQueue`
 
 [`PriorityQueue`][priorityqueue]
 is a subclass of [`Queue`][queue] that delivers items lowest-value-first instead of
-FIFO. Under the hood it uses a heap, so `put()` and [`get()`][get] are O(log n).
+FIFO. Under the hood it uses a heap, so `#!py put()` and [`get()`][get] are O(log n).
 
 The catch: items must be comparable with `<`. If you put in objects that don't
 support ordering, you will get a `TypeError`. The standard pattern is to use
-tuples of `(priority, sequence_number, payload)` -- the sequence number
+tuples of `#!py (priority, sequence_number, payload)` -- the sequence number
 breaks ties so that items with equal priority come out in insertion order, and
 the payload itself never needs to be compared:
 
@@ -335,7 +335,7 @@ All three queue types share the same interface (`put`, `get`, `maxsize`,
 |---|---|---|
 | [`Queue`][queue] | FIFO (first in, first out) | You want fair, predictable ordering. The default choice. |
 | [`LifoQueue`][lifoqueue] | LIFO (last in, first out) | Freshness matters more than fairness -- process the newest item first. |
-| [`PriorityQueue`][priorityqueue] | Lowest value first | Items have explicit priorities. Use `(priority, seq, payload)` tuples. |
+| [`PriorityQueue`][priorityqueue] | Lowest value first | Items have explicit priorities. Use `#!py (priority, seq, payload)` tuples. |
 
 !!! tip
 

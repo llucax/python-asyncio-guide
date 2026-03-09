@@ -17,7 +17,7 @@ async context blocks the event loop -- the same problem you saw in
 that let you launch processes, stream their output, and wait for them to
 finish, all without blocking.
 
-## `create_subprocess_exec()`
+## `#!py create_subprocess_exec()`
 
 [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec]
 is the primary way to run an external command. You pass the program and its
@@ -55,7 +55,7 @@ A few things to note:
   cannot read it from Python.
 - **`asyncio.subprocess.DEVNULL`** discards output entirely -- useful when you
   only care about the exit code.
-- **`communicate()`** waits for the process to finish and returns `(stdout,
+- **`#!py communicate()`** waits for the process to finish and returns `(stdout,
   stderr)` as bytes. More on this below.
 
 !!! note
@@ -64,10 +64,10 @@ A few things to note:
     constants as `subprocess.PIPE` and `subprocess.DEVNULL`. You can use
     either import. This guide uses `asyncio.subprocess.*` for clarity.
 
-To capture stderr, add `stderr=asyncio.subprocess.PIPE`. The `communicate()`
-call returns both streams as `(stdout_bytes, stderr_bytes)`.
+To capture stderr, add `stderr=asyncio.subprocess.PIPE`. The `#!py communicate()`
+call returns both streams as `#!py (stdout_bytes, stderr_bytes)`.
 
-## `create_subprocess_shell()`
+## `#!py create_subprocess_shell()`
 
 [`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell]
 runs a command through the system shell (`/bin/sh` on Unix, `cmd.exe` on
@@ -100,15 +100,15 @@ cost:
 
 !!! danger
 
-    **Never pass untrusted input to `create_subprocess_shell()`.** Shell
+    **Never pass untrusted input to `#!py create_subprocess_shell()`.** Shell
     injection is a serious security vulnerability -- an attacker-controlled
     string can execute arbitrary commands. If the command or any of its
-    arguments come from user input, use `create_subprocess_exec()` instead.
+    arguments come from user input, use `#!py create_subprocess_exec()` instead.
     It passes arguments directly to the process without shell
     interpretation.
 
-Prefer `create_subprocess_exec()` as your default. Reach for
-`create_subprocess_shell()` only when you genuinely need shell features like
+Prefer `#!py create_subprocess_exec()` as your default. Reach for
+`#!py create_subprocess_shell()` only when you genuinely need shell features like
 pipelines or glob expansion, and only with command strings you fully control.
 
 ## [`Process.communicate()`][process-communicate]
@@ -117,7 +117,7 @@ pipelines or glob expansion, and only with command strings you fully control.
 is the workhorse method for subprocess interaction. It sends data to stdin (if
 provided), closes stdin so the child knows input is complete, reads all of
 stdout and stderr into memory, and waits for the process to exit. It returns
-a `(stdout_bytes, stderr_bytes)` tuple:
+a `#!py (stdout_bytes, stderr_bytes)` tuple:
 
 ```python title="subprocess_communicate.py"
 import asyncio
@@ -145,18 +145,18 @@ Got 1200 bytes
 Return code: 0
 ```
 
-`communicate()` handles stdin, stdout, and stderr concurrently -- it will not
+`#!py communicate()` handles stdin, stdout, and stderr concurrently -- it will not
 deadlock even if the child writes enough output to fill the OS pipe buffer
 while you are still sending input. This is the same reason
-`subprocess.Popen.communicate()` exists in the synchronous world: manual reads
-and writes can deadlock, `communicate()` cannot.
+`#!py subprocess.Popen.communicate()` exists in the synchronous world: manual reads
+and writes can deadlock, `#!py communicate()` cannot.
 
 !!! tip
 
-    If you opened a pipe for stdout or stderr but used `wait()` instead of
-    `communicate()`, you risk a deadlock. The child blocks writing to a full
+    If you opened a pipe for stdout or stderr but used `#!py wait()` instead of
+    `#!py communicate()`, you risk a deadlock. The child blocks writing to a full
     pipe buffer, and your code blocks waiting for the child to exit. Always
-    use `communicate()` when you need to collect output, or read streams
+    use `#!py communicate()` when you need to collect output, or read streams
     manually as shown in the next section.
 
 ## Streaming Output
@@ -215,8 +215,8 @@ chunks instead of one at a time.
 !!! warning
 
     When you read streams manually, you **must** still call
-    `await proc.wait()` after you finish reading. This ensures the process's
-    resources are cleaned up. Skipping `wait()` can leave zombie processes
+    `#!py await proc.wait()` after you finish reading. This ensures the process's
+    resources are cleaned up. Skipping `#!py wait()` can leave zombie processes
     on Unix systems.
 
 ## Timeouts
@@ -261,20 +261,20 @@ not the subprocess itself. You need to explicitly kill it with
 (sends `SIGKILL` on Unix) or
 [`proc.terminate()`][proc-terminate]
 (sends `SIGTERM` on Unix, giving the process a chance to clean up). After
-killing, you still need `await proc.wait()` to reap the process.
+killing, you still need `#!py await proc.wait()` to reap the process.
 
 !!! note
 
     [`proc.kill()`][proc-kill] and [`proc.terminate()`][proc-terminate] are *not* coroutines -- they send
-    the signal immediately and return. The `await proc.wait()` afterward is
+    the signal immediately and return. The `#!py await proc.wait()` afterward is
     what actually waits for the process to exit and collects its return
     code.
 
 ## Resource Management
 
 The single most important rule with async subprocesses: **always wait for the
-process to finish**. Every `create_subprocess_exec()` or
-`create_subprocess_shell()` call should have a corresponding `await
+process to finish**. Every `#!py create_subprocess_exec()` or
+`#!py create_subprocess_shell()` call should have a corresponding `await
 proc.wait()` or `await proc.communicate()` somewhere. If you don't, you risk
 leaving zombie processes behind, leaking file descriptors, or missing error
 output.
@@ -326,7 +326,7 @@ code:   0
 
 The pattern handles three cases:
 
-1. **Normal completion** -- `communicate()` finishes, you inspect the return
+1. **Normal completion** -- `#!py communicate()` finishes, you inspect the return
    code.
 2. **Cancellation** -- the parent task is
    [cancelled](../the-basics/cancellation-and-timeouts.md) while

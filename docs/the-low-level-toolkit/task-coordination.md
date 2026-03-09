@@ -49,7 +49,7 @@ There are three modes.
 
 ### `ALL_COMPLETED` -- wait for everything
 
-This is the default. `wait()` returns when every task in the set has finished.
+This is the default. `#!py wait()` returns when every task in the set has finished.
 It is similar to what [`TaskGroup`][taskgroup] does, but without sibling cancellation or
 exception propagation -- you get back two sets and must inspect them yourself.
 
@@ -137,7 +137,7 @@ Cancelled 2 remaining tasks
 
 `FIRST_EXCEPTION` returns as soon as a task raises an exception. If no task
 raises, it behaves like `ALL_COMPLETED`. The failed task ends up in the `done`
-set -- call `.exception()` on it to see what happened.
+set -- call `#!py .exception()` on it to see what happened.
 
 ```python title="wait_first_exception.py"
 import asyncio
@@ -185,7 +185,7 @@ flaky failed: lost connection
 2 tasks still running
 ```
 
-### The critical footgun: `wait()` does NOT cancel pending tasks
+### The critical footgun: `#!py wait()` does NOT cancel pending tasks
 
 This is worth repeating in its own callout because it is the single most
 common mistake with [`asyncio.wait()`][asyncio-wait]:
@@ -213,7 +213,7 @@ if pending:
     await asyncio.wait(pending)
 ```
 
-The second `await asyncio.wait(pending)` is not optional. Calling `t.cancel()`
+The second `#!py await asyncio.wait(pending)` is not optional. Calling `#!py t.cancel()`
 only *requests* cancellation -- the [`CancelledError`][cancellederror] is delivered at the next
 checkpoint. Without the second wait, the cancelled tasks may not have finished
 their cleanup before your code moves on.
@@ -221,9 +221,9 @@ their cleanup before your code moves on.
 ### `timeout` parameter
 
 [`asyncio.wait()`][asyncio-wait] accepts an optional `timeout` in seconds. If the timeout
-expires before the `return_when` condition is met, `wait()` returns with
+expires before the `return_when` condition is met, `#!py wait()` returns with
 whatever has completed so far in `done` and the rest in `pending`. No tasks
-are cancelled -- the timeout just controls how long `wait()` itself blocks.
+are cancelled -- the timeout just controls how long `#!py wait()` itself blocks.
 
 ```python
 done, pending = await asyncio.wait(tasks, timeout=2.0)
@@ -280,16 +280,16 @@ them.
 
 A few things to note:
 
-- `as_completed()` accepts coroutines directly -- it wraps them in tasks
+- `#!py as_completed()` accepts coroutines directly -- it wraps them in tasks
   internally. You can also pass [`Task`][task] objects.
 - The iterator yields [`Future`][future] objects, not [`Task`][task] objects. You [`await`][await] each
   one to get the result (or raise the exception).
-- Like `wait()`, there is an optional `timeout` parameter. If the timeout
-  expires, the next `await future` in the loop raises [`TimeoutError`][timeouterror].
+- Like `#!py wait()`, there is an optional `timeout` parameter. If the timeout
+  expires, the next `#!py await future` in the loop raises [`TimeoutError`][timeouterror].
 
 ### Practical use case: logging progress
 
-`as_completed()` is ideal when you want to report progress as work completes:
+`#!py as_completed()` is ideal when you want to report progress as work completes:
 
 ```python title="as_completed_progress.py"
 import asyncio
@@ -366,34 +366,34 @@ if __name__ == "__main__":
 Query timed out after 1 second
 ```
 
-### `wait_for()` vs [`asyncio.timeout()`][asyncio-timeout]
+### `#!py wait_for()` vs [`asyncio.timeout()`][asyncio-timeout]
 
 Chapter 1 covered
 [`asyncio.timeout()`][asyncio-timeout],
 the context manager that enforces a deadline on a block of code. Both
-`wait_for()` and `timeout()` cancel work that takes too long, but they have
+`#!py wait_for()` and `#!py timeout()` cancel work that takes too long, but they have
 different shapes and different trade-offs.
 
 | | [`asyncio.timeout()`][asyncio-timeout] | [`asyncio.wait_for()`][asyncio-wait-for] |
 |---|---|---|
 | **Scope** | A block of code (multiple awaits) | A single awaitable |
-| **Syntax** | `async with asyncio.timeout(n):` | `await asyncio.wait_for(coro, timeout=n)` |
+| **Syntax** | `#!py async with asyncio.timeout(n):` | `#!py await asyncio.wait_for(coro, timeout=n)` |
 | **Cancels** | The current task at the next checkpoint | The wrapped awaitable specifically |
-| **Raises** | [`TimeoutError`][timeouterror] at the `async with` boundary | [`TimeoutError`][timeouterror] at the [`await`][await] |
+| **Raises** | [`TimeoutError`][timeouterror] at the `#!py async with` boundary | [`TimeoutError`][timeouterror] at the [`await`][await] |
 | **Added** | Python 3.11 | Python 3.0+ (older API) |
 
 For application code, prefer [`asyncio.timeout()`][asyncio-timeout]. It works on blocks, composes
-with [`TaskGroup`][taskgroup], and has clear scoping. `wait_for()` is useful at API
+with [`TaskGroup`][taskgroup], and has clear scoping. `#!py wait_for()` is useful at API
 boundaries where you are wrapping a single coroutine call and want a concise
 one-liner -- particularly in library code where you do not control what the
 caller does before or after.
 
 ### The suppressed-cancellation gotcha
 
-`wait_for()` has a subtle edge case. When the timeout fires, `wait_for()`
+`#!py wait_for()` has a subtle edge case. When the timeout fires, `#!py wait_for()`
 cancels the wrapped task and waits for it to finish. If the wrapped coroutine
 catches [`CancelledError`][cancellederror] and *suppresses* it (returns a value instead of
-re-raising), `wait_for()` may return that value instead of raising
+re-raising), `#!py wait_for()` may return that value instead of raising
 [`TimeoutError`][timeouterror]. Your code thinks the operation succeeded when it actually
 timed out.
 
@@ -427,7 +427,7 @@ if __name__ == "__main__":
 Got: fallback result
 ```
 
-The coroutine swallowed [`CancelledError`][cancellederror] and returned a string. `wait_for()`
+The coroutine swallowed [`CancelledError`][cancellederror] and returned a string. `#!py wait_for()`
 saw the task complete "successfully" and returned the result. This is
 another reason to never suppress [`CancelledError`][cancellederror] -- the
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md)
@@ -438,7 +438,7 @@ section in Chapter 1 explains this rule in detail.
     [`asyncio.timeout()`][asyncio-timeout] does not have this problem. It cancels the *current
     task*, so the [`CancelledError`][cancellederror] propagates through the entire call
     chain. The context manager then converts it to [`TimeoutError`][timeouterror] at the
-    `async with` boundary. There is no intermediate task whose completion
+    `#!py async with` boundary. There is no intermediate task whose completion
     state can hide the cancellation.
 
 ### Passing `timeout=None`
@@ -462,23 +462,23 @@ Here is a quick decision guide:
 A redundant-request pattern (try multiple mirrors, use the fastest) is a
 classic example.
 
-  Use `asyncio.wait(tasks, return_when=FIRST_COMPLETED)`.
+  Use `#!py asyncio.wait(tasks, return_when=FIRST_COMPLETED)`.
 
 **Processing in completion order.** You have N tasks and want to process each
 result as it arrives, not in submission order. Progress reporting, streaming
 responses to a client, or feeding results into a pipeline all fit this pattern.
 
-  Use `asyncio.as_completed(coros)`.
+  Use `#!py asyncio.as_completed(coros)`.
 
 **Single-coroutine timeout at an API boundary.** You are writing a library
 function that wraps exactly one awaitable and needs to enforce a deadline
 without requiring the caller to set up a context manager.
 
-  Use `asyncio.wait_for(coro, timeout=n)`.
+  Use `#!py asyncio.wait_for(coro, timeout=n)`.
 
 **Dynamic task sets.** You have a long-lived loop that adds and removes tasks
 over time -- a connection pool, a task scheduler, a supervisor. [`TaskGroup`][taskgroup]
-expects a fixed scope; `wait()` with `FIRST_COMPLETED` lets you run a
+expects a fixed scope; `#!py wait()` with `FIRST_COMPLETED` lets you run a
 continuous select-loop over a changing set of tasks.
 
   Use [`asyncio.wait()`][asyncio-wait] in a loop, adding new tasks and removing done ones
@@ -489,7 +489,7 @@ the group fails? That is [`TaskGroup`][taskgroup].
 
 !!! tip
 
-    If you find yourself reaching for `wait()` or `as_completed()` in
+    If you find yourself reaching for `#!py wait()` or `#!py as_completed()` in
     application code, ask yourself: "Am I doing this because [`TaskGroup`][taskgroup]
     cannot express this pattern, or because I did not know [`TaskGroup`][taskgroup]
     could?" Nine times out of ten, [`TaskGroup`][taskgroup] is the better choice. The

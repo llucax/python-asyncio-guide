@@ -135,7 +135,7 @@ A few things to notice:
   propagates it downstream. This is the simplest shutdown protocol:
   the generator decides when work is done. (Recall the sentinel
   pattern from [Coordination](coordination.md#queue-shutdown-patterns).)
-- **[`TaskGroup`][taskgroup] owns all the actors.** The `async with` block doesn't
+- **[`TaskGroup`][taskgroup] owns all the actors.** The `#!py async with` block doesn't
   exit until every actor has returned. No task can leak. (See
   [Concurrent Tasks](concurrent-tasks.md#asynciotaskgroup) for why
   this matters.)
@@ -148,7 +148,7 @@ and the processor is slow, items pile up in memory with no limit.
 ## Step 2: Backpressure With Bounded Queues
 
 Making a queue bounded is a one-line change, but the effect is
-important: when a queue is full, `await queue.put(item)` *suspends
+important: when a queue is full, `#!py await queue.put(item)` *suspends
 the caller* until the consumer makes room. That is backpressure --
 the fast producer automatically slows down to match the slow consumer.
 (See [Coordination — Backpressure](coordination.md#backpressure) for
@@ -562,7 +562,7 @@ pipeline ever carries optional values, the sentinel collides with
 legitimate data. The `Stop` sentinel class is unambiguous: no real
 payload will ever be `Stop`.
 
-The type alias `Message = int | Stop` makes the intent explicit. The
+The type alias `#!py Message = int | Stop` makes the intent explicit. The
 queue type `asyncio.Queue[Message]` tells mypy (and the reader)
 exactly what can flow through the channel. In a real application you
 would define a separate alias per pipeline (or use a generic
@@ -598,7 +598,7 @@ cancels the generator and aggregator.
 Two levels of [`TaskGroup`][taskgroup], each responsible for its own children. No
 cleanup code required -- the structure handles it. (See
 [Resource Management](resource-management.md) for more on how
-`async with` guarantees cleanup.)
+`#!py async with` guarantees cleanup.)
 
 ## Common Failure Modes
 
@@ -619,9 +619,9 @@ cleanup code required -- the structure handles it. (See
       why memory keeps growing under load.
     - **Sentinel collisions.** Using `None` as a sentinel in queues
       that carry optional data. Use a dedicated type.
-    - **Blocking the event loop.** Calling `time.sleep()`, running
+    - **Blocking the event loop.** Calling `#!py time.sleep()`, running
       CPU-heavy computation, or doing synchronous I/O inside an
-      `async def`. The event loop can't schedule other tasks while
+      `#!py async def`. The event loop can't schedule other tasks while
       you are blocking.
 
 ## Beyond This Example

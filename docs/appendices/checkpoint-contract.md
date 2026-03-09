@@ -19,7 +19,7 @@ introduced a condensed three-row version of this table; what follows is the
 full reference.
 
 The rules below apply to **Python 3.11+** and cover the modern asyncio API
-surface. Deprecated APIs (`gather()`, `ensure_future()`, `get_event_loop()`,
+surface. Deprecated APIs (`#!py gather()`, `#!py ensure_future()`, `#!py get_event_loop()`,
 etc.) are intentionally omitted.
 
 ### How to read the tables
@@ -49,20 +49,20 @@ run.
 
 | Operation | Notes |
 |-----------|-------|
-| [`asyncio.sleep(delay)`][asyncio-sleep-delay] | Always suspends, even when `delay=0`. `sleep(0)` is the canonical way to insert an explicit checkpoint. |
+| [`asyncio.sleep(delay)`][asyncio-sleep-delay] | Always suspends, even when `delay=0`. `#!py sleep(0)` is the canonical way to insert an explicit checkpoint. |
 | [`stream.read(n)`][stream-read-n] | Waits for up to `n` bytes from the stream. |
 | [`stream.readline()`][stream-readline] | Waits for a complete line (up to the separator). |
 | [`stream.readexactly(n)`][stream-readexactly-n] | Waits until exactly `n` bytes have been received. Raises [`IncompleteReadError`][incompletereaderror] if EOF arrives first. |
 | [`stream.readuntil(separator)`][stream-readuntil-separator] | Waits until the separator is found in the buffer. |
-| [`Queue.get()`][queue-get] on an empty queue | Suspends until a producer calls `put()` or `put_nowait()`. |
+| [`Queue.get()`][queue-get] on an empty queue | Suspends until a producer calls `#!py put()` or `#!py put_nowait()`. |
 | [`Queue.put(item)`][queue-put-item] on a full queue | Suspends until a consumer calls [`get()`][get] or [`get_nowait()`][get-nowait]. |
 | [`Queue.join()`][queue-join] | Suspends until every item has been marked done via [`task_done()`][task-done]. |
-| [`Lock.acquire()`][lock-acquire] when the lock is held | Suspends until the holder calls `release()`. |
-| [`Event.wait()`][event-wait] when the event is not set | Suspends until another task calls `set()`. |
+| [`Lock.acquire()`][lock-acquire] when the lock is held | Suspends until the holder calls `#!py release()`. |
+| [`Event.wait()`][event-wait] when the event is not set | Suspends until another task calls `#!py set()`. |
 | [`Condition.wait()`][condition-wait] | Releases the underlying lock, suspends until notified, then re-acquires the lock. Always suspends at least once. |
-| [`Condition.wait_for(predicate)`][condition-wait-for-predicate] | Repeatedly calls `wait()` until `predicate()` returns `True`. Suspends at least once even if the predicate is already true on the first check. |
-| [`Semaphore.acquire()`][semaphore-acquire] when the internal counter is 0 | Suspends until another task calls `release()`. |
-| [`Barrier.wait()`][barrier-wait] | Suspends until the required number of tasks have called `wait()`. |
+| [`Condition.wait_for(predicate)`][condition-wait-for-predicate] | Repeatedly calls `#!py wait()` until `#!py predicate()` returns `True`. Suspends at least once even if the predicate is already true on the first check. |
+| [`Semaphore.acquire()`][semaphore-acquire] when the internal counter is 0 | Suspends until another task calls `#!py release()`. |
+| [`Barrier.wait()`][barrier-wait] | Suspends until the required number of tasks have called `#!py wait()`. |
 | [`asyncio.wait()`][asyncio-wait] | Suspends until at least one task matches the `return_when` condition. |
 | [`asyncio.wait_for(aw, timeout)`][asyncio-wait-for-aw-timeout] | Suspends until the awaitable completes or the timeout expires. |
 
@@ -85,22 +85,22 @@ to land.
 | [`Event.wait()`][event-wait] | The event is not set | The event is already set |
 | [`Semaphore.acquire()`][semaphore-acquire] | The internal counter is 0 | The counter is greater than 0 |
 | [`stream.drain()`][stream-drain] | The write buffer is above the high-water mark | The buffer is below the high-water mark |
-| `await task` | The task is still running | The task is already done -- returns its result (or raises) immediately |
-| `await future` | The future is not yet resolved | The future already has a result or exception |
+| `#!py await task` | The task is still running | The task is already done -- returns its result (or raises) immediately |
+| `#!py await future` | The future is not yet resolved | The future already has a result or exception |
 
 !!! warning
 
-    **`await task` on an already-finished task does not suspend.** This is
+    **`#!py await task` on an already-finished task does not suspend.** This is
     a common source of confusion. If you are counting on [`await`][await] as a
     checkpoint for cancellation delivery, and the awaitable has already
     completed, the cancellation check never happens. Insert an explicit
-    `await asyncio.sleep(0)` when you need a guaranteed checkpoint.
+    `#!py await asyncio.sleep(0)` when you need a guaranteed checkpoint.
 
 Note that [`stream.drain()`][stream-drain] is particularly subtle. A common pattern is to call
-[`stream.write(data)`][stream-write-data] followed by `await stream.drain()`. Because `write()` is
+[`stream.write(data)`][stream-write-data] followed by `#!py await stream.drain()`. Because `#!py write()` is
 synchronous and [`drain()`][drain] only suspends when the buffer is full, a sequence of
 small writes may execute entirely without yielding. If you need a checkpoint
-between writes, add an explicit `await asyncio.sleep(0)`.
+between writes, add an explicit `#!py await asyncio.sleep(0)`.
 
 ---
 
@@ -114,7 +114,7 @@ loop does not get a chance to run other tasks during their execution.
 | Operation | Notes |
 |-----------|-------|
 | [`stream.write(data)`][stream-write-data] | Buffers data for sending. Does not wait for the data to reach the peer -- follow up with [`drain()`][drain] to apply back-pressure. |
-| [`stream.write_eof()`][stream-write-eof] | Signals end-of-stream. Synchronous, like `write()`. |
+| [`stream.write_eof()`][stream-write-eof] | Signals end-of-stream. Synchronous, like `#!py write()`. |
 | [`stream.close()`][stream-close] | Initiates closing the stream. The close itself is synchronous; use [`wait_closed()`][wait-closed] to wait for it to finish. |
 
 ### Queues
@@ -165,10 +165,10 @@ long stretch of synchronous code, or only [`await`][await]s things that resolve
 immediately (the "conditionally suspends" rows in their fast-path state),
 cancellation stays pending indefinitely. This is why
 [`asyncio.timeout()`][asyncio-timeout]
-can appear to not work: the deadline fires, `cancel()` is called, but the task
+can appear to not work: the deadline fires, `#!py cancel()` is called, but the task
 never reaches a checkpoint where the [`CancelledError`][cancellederror] can be delivered. The fix
 is to ensure long-running code periodically hits a real checkpoint --
-`await asyncio.sleep(0)` is the standard idiom.
+`#!py await asyncio.sleep(0)` is the standard idiom.
 
 ### Starvation is caused by missing checkpoints
 
@@ -177,7 +177,7 @@ suspends. If a task loops over operations that never suspend (or only
 conditionally suspend and the fast path keeps winning), no other task gets a
 turn. This makes the program *appear* single-threaded and can cause timeouts
 and watchdogs to fire late or not at all. The cure is the same: sprinkle
-`await asyncio.sleep(0)` at regular intervals in CPU-bound or tight loops.
+`#!py await asyncio.sleep(0)` at regular intervals in CPU-bound or tight loops.
 Better yet, offload heavy computation to a thread with
 [`asyncio.to_thread()`][asyncio-to-thread]
 so the event loop stays responsive.

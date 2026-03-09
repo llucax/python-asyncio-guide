@@ -12,7 +12,7 @@ description: >-
 This page distills every recommendation from the guide into one place. The
 pattern is always the same: use structured concurrency to bound task lifetimes,
 respect cancellation so timeouts and teardown actually work, manage resources
-with `async with`, and never block the event loop. If you follow these twenty
+with `#!py async with`, and never block the event loop. If you follow these twenty
 rules, the vast majority of asyncio bugs simply cannot happen.
 
 Each item gets a brief explanation and a reference to the chapter where the full
@@ -30,7 +30,7 @@ operational discipline.
 1. **Always use [`TaskGroup`][taskgroup] instead of bare [`create_task()`][create-task].** A task created
    with [`asyncio.create_task()`][asyncio-create-task] can outlive its parent, silently drop
    exceptions, and leak if nobody awaits it. [`TaskGroup`][taskgroup] scopes every child
-   task's lifetime to the `async with` block, propagates exceptions via
+   task's lifetime to the `#!py async with` block, propagates exceptions via
    [`ExceptionGroup`][exceptiongroup], and cancels siblings on failure. Reach for [`create_task()`][create-task]
    only when you are building library internals that genuinely need unscoped
    tasks.
@@ -48,25 +48,25 @@ operational discipline.
 3. **Always set `maxsize` on [`Queue`][queue].** An unbounded queue hides backpressure.
    If the producer is faster than the consumer, memory grows without limit and
    you discover the problem only when the process is killed by the OS. Setting
-   `maxsize` makes `put()` suspend when the queue is full, which naturally
+   `maxsize` makes `#!py put()` suspend when the queue is full, which naturally
    throttles producers and surfaces design mismatches early.
    See [Coordination -- Backpressure](../the-basics/coordination.md#backpressure).
 
 4. **Always close `StreamWriter` and call [`wait_closed()`][wait-closed].** Calling
-   `writer.close()` initiates shutdown but does not wait for the transport to
-   finish. Without the subsequent `await writer.wait_closed()`, you can exit
+   `#!py writer.close()` initiates shutdown but does not wait for the transport to
+   finish. Without the subsequent `#!py await writer.wait_closed()`, you can exit
    the coroutine while data is still in the send buffer and the OS socket is
    still open. Do both, in sequence, every time. Better yet, wrap the stream
    in an async context manager so the cleanup cannot be skipped (see rule 5).
    See [Streams -- `StreamWriter`](../the-basics/streams.md#streamwriter)
    and [Streams -- Resource Management for Streams](../the-basics/streams.md#resource-management-for-streams).
 
-5. **Use `async with` for every resource that supports it.** Locks, task
+5. **Use `#!py async with` for every resource that supports it.** Locks, task
    groups, timeouts, streams, database connections -- anything with
    `__aenter__`/`__aexit__` should be used as an async context manager. This
    guarantees cleanup runs even when the block is interrupted by an exception
-   or a cancellation. Manual `acquire()`/`release()` and `close()` calls are
-   easy to skip under cancellation; `async with` makes skipping impossible.
+   or a cancellation. Manual `#!py acquire()`/`#!py release()` and `#!py close()` calls are
+   easy to skip under cancellation; `#!py async with` makes skipping impossible.
    See [Resource Management -- `async with`](../the-basics/resource-management.md#async-with).
 
 6. **Use [`contextlib.aclosing()`][contextlib-aclosing] for async generators.** An async generator
@@ -80,7 +80,7 @@ operational discipline.
    for [`contextlib.aclosing()`][contextlib-aclosing].
 
 7. **Don't block the event loop.** The event loop is single-threaded. A call
-   to `time.sleep()`, `requests.get()`, `open().read()`, or any CPU-heavy
+   to `#!py time.sleep()`, `#!py requests.get()`, `#!py open().read()`, or any CPU-heavy
    computation blocks *every* other task until it returns. The symptoms are
    indirect -- timeouts fire late, heartbeats miss, the UI freezes. Debug mode
    warns about calls that exceed 100 ms, but the real fix is to move the
@@ -89,14 +89,14 @@ operational discipline.
 
 8. **Use [`asyncio.to_thread()`][asyncio-to-thread] for blocking I/O.** When you must call a
    synchronous function that does I/O -- file reads, synchronous HTTP clients,
-   DNS lookups -- wrap it with `await asyncio.to_thread(func, *args)`. This
+   DNS lookups -- wrap it with `#!py await asyncio.to_thread(func, *args)`. This
    runs the function in a thread-pool worker, freeing the event loop to
    service other tasks while the blocking call completes. For CPU-bound work
    that needs to release the GIL, consider [`ProcessPoolExecutor`][processpoolexecutor] instead.
    See [Blocking Code](../beyond-the-basics/blocking-code.md#asyncioto_thread)
    for [`asyncio.to_thread()`][asyncio-to-thread].
 
-9. **Don't make sync-only functions [`async`][async].** Adding `async def` to a
+9. **Don't make sync-only functions [`async`][async].** Adding `#!py async def` to a
    function that never [`await`][await]s anything gives it a coroutine wrapper for no
    benefit. It introduces scheduling overhead, cannot be called from
    synchronous code without an event loop, and misleads readers into thinking
@@ -113,12 +113,12 @@ operational discipline.
     production.
     See [Debugging -- Debug Mode](../the-basics/debugging.md#debug-mode).
 
-11. **Use [`asyncio.timeout()`][asyncio-timeout] instead of `wait_for()`.** [`asyncio.timeout()`][asyncio-timeout]
+11. **Use [`asyncio.timeout()`][asyncio-timeout] instead of `#!py wait_for()`.** [`asyncio.timeout()`][asyncio-timeout]
     is a structured context manager -- the timeout scope is visible in the
     code, you can nest it cleanly, and you can inspect the deadline or check
-    whether it fired after the block exits. `wait_for()` is a low-level
+    whether it fired after the block exits. `#!py wait_for()` is a low-level
     function with subtle cancellation edge cases and exists primarily for
-    backward compatibility. Prefer `timeout()` in all new code.
+    backward compatibility. Prefer `#!py timeout()` in all new code.
     See [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md#asynciotimeout)
     for [`asyncio.timeout()`][asyncio-timeout] and [Task Coordination](../the-low-level-toolkit/task-coordination.md#asynciowait_for)
     for [`asyncio.wait_for()`][asyncio-wait-for].
@@ -133,39 +133,39 @@ operational discipline.
     See [Shielding -- When to Use It](../beyond-the-basics/shielding.md#when-to-use-it).
 
 13. **Use sentinel values for queue shutdown.** Cancelling consumer tasks
-    while they are blocked on `queue.get()` works, but sentinel values give
+    while they are blocked on `#!py queue.get()` works, but sentinel values give
     you a cleaner, cooperative shutdown path. Send one sentinel per consumer so
     each one receives the stop signal. If `None` is valid data, define a
-    dedicated sentinel with `_STOP = object()` and compare with `is`. The
+    dedicated sentinel with `#!py _STOP = object()` and compare with `is`. The
     sentinel pattern composes well with [`TaskGroup`][taskgroup] -- producers finish first,
     then the cleanup code sends sentinels, and consumers exit naturally.
     See [Coordination -- Queue Shutdown Patterns](../the-basics/coordination.md#queue-shutdown-patterns).
 
-14. **Use `try`/`finally` for cleanup, not `except CancelledError`.** Cleanup
+14. **Use `try`/`finally` for cleanup, not `#!py except CancelledError`.** Cleanup
     logic -- closing connections, releasing locks, flushing files -- belongs in
     a `finally` block (or an `__aexit__` method). A `finally` block runs
     regardless of whether the exit is normal, an exception, or a cancellation.
     Catching [`CancelledError`][cancellederror] specifically for cleanup is fragile: you must
     remember to re-raise, and the code wrongly suggests that cleanup only
-    matters during cancellation. Reserve `except CancelledError` for the rare
+    matters during cancellation. Reserve `#!py except CancelledError` for the rare
     case where you need cancellation-specific *logic*, not just cleanup.
     See [Cancellation and Timeouts -- Cleanup with `try`/`finally`](../the-basics/cancellation-and-timeouts.md#cleanup-with-tryfinally).
 
-15. **Avoid bare `except:` and `except BaseException:` without re-raising
+15. **Avoid bare `#!py except:` and `#!py except BaseException:` without re-raising
     [`CancelledError`][cancellederror].** Both of these catch [`CancelledError`][cancellederror] alongside
     ordinary exceptions. If your handler does not re-raise it, you silently
     break cancellation -- the same problem as rule 2, but easier to do by
     accident because the intent to catch cancellation is not visible in the
     code. If you need a broad catch, filter out [`CancelledError`][cancellederror] explicitly
-    and re-raise it, or use `except Exception:` which deliberately excludes it.
+    and re-raise it, or use `#!py except Exception:` which deliberately excludes it.
     See [Cancellation and Timeouts -- The `except BaseException:` Trap](../the-basics/cancellation-and-timeouts.md#the-except-baseexception-trap).
 
-16. **Name your tasks for debugging.** Pass `name=` to `tg.create_task()` or
+16. **Name your tasks for debugging.** Pass `name=` to `#!py tg.create_task()` or
     [`asyncio.create_task()`][asyncio-create-task]. Task names appear in tracebacks, debug-mode
     warnings, and [`asyncio.all_tasks()`][asyncio-all-tasks] output. Without names, you get
     auto-generated labels like `Task-14` that tell you nothing when you are
     staring at a log trying to figure out which task is stuck or leaking. A
-    descriptive name like `"fetch-user-42"` makes the difference between a
+    descriptive name like `#!py "fetch-user-42"` makes the difference between a
     five-second diagnosis and a thirty-minute investigation.
     See [Concurrent Tasks -- Collecting Results](../the-basics/concurrent-tasks.md#collecting-results)
     and [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
@@ -187,7 +187,7 @@ operational discipline.
     loop when it contends; using an [`asyncio.Lock`][asyncio-lock] from a thread has no
     effect because it is not thread-safe. Keep the two worlds separate:
     asyncio primitives in coroutines, threading primitives in threads, and
-    [`asyncio.to_thread()`][asyncio-to-thread] or `run_coroutine_threadsafe()` at the boundary
+    [`asyncio.to_thread()`][asyncio-to-thread] or `#!py run_coroutine_threadsafe()` at the boundary
     between them.
     See [Blocking Code -- Thread Safety](../beyond-the-basics/blocking-code.md#thread-safety).
 
@@ -196,12 +196,12 @@ operational discipline.
     connections, file descriptors, or remote rate limits. Use
     `asyncio.Semaphore` to cap the number of tasks performing a given
     operation concurrently. The semaphore acts as an async-friendly throttle:
-    tasks that exceed the limit suspend on `async with sem:` instead of
+    tasks that exceed the limit suspend on `#!py async with sem:` instead of
     blocking, and proceed as earlier tasks finish.
     See [Coordination -- `asyncio.Semaphore`](../the-basics/coordination.md#asynciosemaphore).
 
 20. **Test with debug mode and strict exception handling.** Run your test
-    suite with `asyncio.run(main(), debug=True)` or the `PYTHONASYNCIODEBUG`
+    suite with `#!py asyncio.run(main(), debug=True)` or the `PYTHONASYNCIODEBUG`
     environment variable. Treat `ResourceWarning` and "coroutine was never
     awaited" as test failures, not noise. These warnings are free bug reports
     -- they surface forgotten [`await`][await]s, leaked connections, and unclosed
@@ -218,15 +218,15 @@ operational discipline.
 |------|-----------|
 | 1 | [`TaskGroup`][taskgroup] over [`create_task()`][create-task] |
 | 2 | Never swallow [`CancelledError`][cancellederror] |
-| 3 | `Queue(maxsize=N)`, always |
-| 4 | `writer.close()` then `await writer.wait_closed()` |
-| 5 | `async with` for every resource |
-| 6 | `aclosing()` for async generators |
+| 3 | `#!py Queue(maxsize=N)`, always |
+| 4 | `#!py writer.close()` then `#!py await writer.wait_closed()` |
+| 5 | `#!py async with` for every resource |
+| 6 | `#!py aclosing()` for async generators |
 | 7 | Never call blocking functions in a coroutine |
 | 8 | [`asyncio.to_thread()`][asyncio-to-thread] for blocking I/O |
 | 9 | Don't add [`async`][async] to sync-only functions |
 | 10 | `debug=True` during development |
-| 11 | [`asyncio.timeout()`][asyncio-timeout] over `wait_for()` |
+| 11 | [`asyncio.timeout()`][asyncio-timeout] over `#!py wait_for()` |
 | 12 | Shield only short, critical work |
 | 13 | One sentinel per consumer for queue shutdown |
 | 14 | `try`/`finally` for cleanup |
