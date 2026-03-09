@@ -11,34 +11,34 @@ description: >-
 
 Your `main()` coroutine returns, and you might think the program is done. It is
 not -- at least, not yet.
-[`asyncio.run()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.run)
+[`asyncio.run()`][asyncio-run]
 has a careful shutdown sequence to run before the process can exit cleanly. It
 needs to cancel any tasks you left behind, finalize async generators that were
 never fully iterated, drain the thread pool, and close the event loop. If you
 understand this sequence, the warnings and tracebacks that appear during
 shutdown stop being mysterious.
 
-## The `asyncio.run()` Shutdown Sequence
+## The [`asyncio.run()`][asyncio-run] Shutdown Sequence
 
 When your top-level coroutine finishes -- whether it returns normally or raises
-an exception -- `asyncio.run()` does not simply close the loop. It walks
+an exception -- [`asyncio.run()`][asyncio-run] does not simply close the loop. It walks
 through a deliberate multi-step teardown:
 
 1. **Your main coroutine completes.** It returns a value or raises an
-   exception. `asyncio.run()` stores the result (or exception) for later.
+   exception. [`asyncio.run()`][asyncio-run] stores the result (or exception) for later.
 
-2. **Collect all pending tasks.** `asyncio.run()` calls
-   [`asyncio.all_tasks()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks)
+2. **Collect all pending tasks.** [`asyncio.run()`][asyncio-run] calls
+   [`asyncio.all_tasks()`][asyncio-all-tasks]
    to find every task still attached to the loop. Any task that has not
    finished -- still waiting on I/O, sleeping, or simply never awaited -- shows
    up here.
 
 3. **Cancel every pending task.** Each task in that set gets a
-   [`task.cancel()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel)
-   call. This schedules a `CancelledError` to be thrown into the coroutine at
+   [`task.cancel()`][task-cancel]
+   call. This schedules a [`CancelledError`][cancellederror] to be thrown into the coroutine at
    its next checkpoint.
 
-4. **Run the loop until all cancelled tasks are done.** `asyncio.run()` calls
+4. **Run the loop until all cancelled tasks are done.** [`asyncio.run()`][asyncio-run] calls
    `loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))`
    so that every cancelled task gets a chance to run its `finally` blocks and
    `__aexit__` methods. This is why cleanup code in cancelled tasks actually
@@ -46,24 +46,24 @@ through a deliberate multi-step teardown:
    unwind.
 
 5. **Shut down async generators.** The loop calls
-   [`loop.shutdown_asyncgens()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_asyncgens),
+   [`loop.shutdown_asyncgens()`][loop-shutdown-asyncgens],
    which finalizes any async generators that were abandoned without being
    iterated to completion or explicitly closed.
 
 6. **Shut down the default executor.** The loop calls
-   [`loop.shutdown_default_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_default_executor),
+   [`loop.shutdown_default_executor()`][loop-shutdown-default-executor],
    which waits for any threads still running from
-   [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+   [`asyncio.to_thread()`][asyncio-to-thread]
    or
-   [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
+   [`loop.run_in_executor()`][loop-run-in-executor]
    to finish.
 
 7. **Close the loop.**
-   [`loop.close()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.close)
+   [`loop.close()`][loop-close]
    releases all resources associated with the event loop. After this, the loop
    cannot be used again.
 
-Only after all seven steps complete does `asyncio.run()` return (or re-raise)
+Only after all seven steps complete does [`asyncio.run()`][asyncio-run] return (or re-raise)
 the result from step 1.
 
 !!! note
@@ -71,13 +71,13 @@ the result from step 1.
     Steps 5 and 6 were added in Python 3.9 and 3.12 respectively, but if
     you are on Python 3.11+ (which this guide assumes), both are part of
     the standard shutdown. You do not need to call them yourself --
-    `asyncio.run()` handles everything.
+    [`asyncio.run()`][asyncio-run] handles everything.
 
 ## Leaked Tasks
 
 The most common shutdown surprise comes from *leaked tasks* -- tasks you
-created with `asyncio.create_task()` but never awaited. When `main()` returns,
-those tasks are still pending. `asyncio.run()` cancels them at step 3, and
+created with [`asyncio.create_task()`][asyncio-create-task] but never awaited. When `main()` returns,
+those tasks are still pending. [`asyncio.run()`][asyncio-run] cancels them at step 3, and
 they typically get cleaned up. But you will see a warning like this in the
 logs:
 
@@ -105,7 +105,7 @@ main() is done
 ```
 
 The task runs in the background for a while, then `main()` returns and
-`asyncio.run()` cancels it during shutdown. In debug mode (or depending on
+[`asyncio.run()`][asyncio-run] cancels it during shutdown. In debug mode (or depending on
 garbage collection timing), you may see:
 
 ```text
@@ -122,13 +122,13 @@ scope.
 
     The "Task was destroyed but it is pending" warning means you have an
     ownership gap. A task was created but nobody was responsible for
-    awaiting it. Even though `asyncio.run()` cancels these tasks, the
+    awaiting it. Even though [`asyncio.run()`][asyncio-run] cancels these tasks, the
     warning is telling you that your program's concurrency structure has a
     hole.
 
-### Why `TaskGroup` Prevents This
+### Why [`TaskGroup`][taskgroup] Prevents This
 
-A [`TaskGroup`](../everyday-asyncio/concurrent-tasks.md) is the fix. Every
+A [`TaskGroup`][taskgroup] is the fix. Every
 task created with `tg.create_task()` is awaited
 before the `async with` block exits. There is no way for a task to leak out
 of the group:
@@ -141,9 +141,9 @@ async def main() -> None:
     # All tasks are done (or cancelled) before we get here
 ```
 
-When the `async with` block exits, the `TaskGroup` cancels any children that
+When the `async with` block exits, the [`TaskGroup`][taskgroup] cancels any children that
 are still running and waits for them. By the time `main()` returns, there are
-no orphan tasks for `asyncio.run()` to clean up. No warnings, no surprises.
+no orphan tasks for [`asyncio.run()`][asyncio-run] to clean up. No warnings, no surprises.
 
 ## Async Generator Finalization
 
@@ -151,9 +151,9 @@ Async generators that are abandoned -- iterated partially and then forgotten --
 pose a cleanup problem. Their `finally` blocks may hold resources that need
 async teardown, but the generator is no longer being driven by anything.
 
-At step 5 of the shutdown sequence, `asyncio.run()` calls
-`loop.shutdown_asyncgens()` to finalize any generators that are still alive.
-This triggers their `finally` blocks and `aclose()` methods, giving them a
+At step 5 of the shutdown sequence, [`asyncio.run()`][asyncio-run] calls
+[`loop.shutdown_asyncgens()`][loop-shutdown-asyncgens] to finalize any generators that are still alive.
+This triggers their `finally` blocks and [`aclose()`][aclose] methods, giving them a
 last chance to release resources.
 
 ```python title="abandoned_agen.py"
@@ -188,14 +188,14 @@ ticker: finalized after yielding 2 values
 
 The generator's `finally` block ran during shutdown, thanks to
 `shutdown_asyncgens()`. But relying on this is fragile -- it only runs during
-`asyncio.run()` teardown, so if you are using a custom loop setup or the
+[`asyncio.run()`][asyncio-run] teardown, so if you are using a custom loop setup or the
 generator holds a resource that should be released *before* shutdown, it will
 be too late.
 
 The right approach is the one covered in
-[Resource Management](../everyday-asyncio/resource-management.md): wrap
+[Resource Management](../the-basics/resource-management.md): wrap
 every async generator you consume in
-[`contextlib.aclosing()`](https://docs.python.org/3/library/contextlib.html#contextlib.aclosing)
+[`contextlib.aclosing()`][contextlib-aclosing]
 so it is closed deterministically when you are done with it, not at some
 later point during shutdown.
 
@@ -208,12 +208,12 @@ later point during shutdown.
 ## Executor Shutdown
 
 If your program used
-[`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
+[`asyncio.to_thread()`][asyncio-to-thread]
 or
-[`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
-to offload blocking work, the default `ThreadPoolExecutor` may still have
+[`loop.run_in_executor()`][loop-run-in-executor]
+to offload blocking work, the default [`ThreadPoolExecutor`][threadpoolexecutor] may still have
 threads running when `main()` returns. Step 6 of the shutdown sequence calls
-`loop.shutdown_default_executor()`, which signals the executor to stop
+[`loop.shutdown_default_executor()`][loop-shutdown-default-executor], which signals the executor to stop
 accepting new work and then waits for all in-flight threads to complete.
 
 This is usually invisible -- your blocking functions finish, the threads join,
@@ -228,7 +228,7 @@ interrupted.
 If you followed the advice from Chapter 1, clean shutdown is largely
 automatic. Here is a summary of the patterns that make it work:
 
-**Use `TaskGroup` for all concurrency.** Every task is tied to a scope and
+**Use [`TaskGroup`][taskgroup] for all concurrency.** Every task is tied to a scope and
 awaited before that scope exits. No leaked tasks, no warnings.
 
 ```python
@@ -264,7 +264,7 @@ async def main() -> None:
 ```
 
 If you combine all three, your `main()` coroutine returns with nothing left to
-clean up. `asyncio.run()` still runs its full shutdown sequence, but steps 2
+clean up. [`asyncio.run()`][asyncio-run] still runs its full shutdown sequence, but steps 2
 through 5 find nothing to do -- every task is already done, every generator
 already closed, every resource already released. That is the ideal.
 
@@ -274,14 +274,14 @@ already closed, every resource already released. That is the ideal.
     structuring your program so that lifetimes are explicit and scoped. If
     you find yourself writing manual shutdown logic -- collecting tasks,
     cancelling them one by one, catching stray exceptions -- step back and
-    ask whether the tasks should have been in a `TaskGroup` to begin with.
+    ask whether the tasks should have been in a [`TaskGroup`][taskgroup] to begin with.
 
 ## Signal Handling
 
 In long-running programs like servers, shutdown is not triggered by `main()`
 returning -- it is triggered by a signal like `SIGINT` (Ctrl+C) or `SIGTERM`.
 The event loop provides
-[`loop.add_signal_handler()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.add_signal_handler)
+[`loop.add_signal_handler()`][loop-add-signal-handler]
 for registering callbacks that respond to these signals, allowing you to
 initiate a graceful shutdown -- cancelling a sentinel event, setting a flag, or
 cancelling the main task -- instead of just crashing.
@@ -290,7 +290,23 @@ Signal handling is a lower-level topic that belongs in
 [The Low-Level Toolkit](../the-low-level-toolkit/index.md). For now, the
 important thing to know is that the shutdown *sequence* described above is the
 same regardless of what triggered it. Whether `main()` returns on its own or
-you cancel the main task in response to a signal, `asyncio.run()` still walks
+you cancel the main task in response to a signal, [`asyncio.run()`][asyncio-run] still walks
 through the same seven steps.
 
 ---
+
+[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[asyncio-all-tasks]: https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks
+[task-cancel]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[loop-shutdown-asyncgens]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_asyncgens
+[loop-shutdown-default-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_default_executor
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+[loop-close]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.close
+[asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[aclose]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.aclose
+[contextlib-aclosing]: https://docs.python.org/3/library/contextlib.html#contextlib.aclosing
+[threadpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
+[loop-add-signal-handler]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.add_signal_handler

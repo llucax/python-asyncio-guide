@@ -10,12 +10,12 @@ description: >-
 
 Chapter 1 covered *using* `async with` with context managers that asyncio
 hands you --
-[`Lock`](../everyday-asyncio/coordination.md#asynciolock),
-[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md),
-[`timeout()`](../everyday-asyncio/cancellation-and-timeouts.md). You know
+[`Lock`][lock],
+[`TaskGroup`][taskgroup],
+[`timeout()`](../the-basics/cancellation-and-timeouts.md). You know
 the contract: `__aenter__` runs on entry, `__aexit__` runs on exit, cleanup
 is guaranteed even under
-[cancellation](../everyday-asyncio/cancellation-and-timeouts.md). This
+[cancellation](../the-basics/cancellation-and-timeouts.md). This
 section covers the other side: *creating* your
 own async context managers so you can wrap setup/teardown logic into a clean
 `async with` block that callers can use the same way.
@@ -23,7 +23,7 @@ own async context managers so you can wrap setup/teardown logic into a clean
 ## `@asynccontextmanager`
 
 The
-[`@contextlib.asynccontextmanager`](https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager)
+[`@contextlib.asynccontextmanager`][contextlib-asynccontextmanager]
 decorator is the fastest way to build an async context manager. You write an
 async generator function with a single `yield`, and the decorator turns it
 into a full async context manager. Everything before the `yield` is your
@@ -156,9 +156,9 @@ async def fixed_manager() -> AsyncIterator[str]:
 ## The Class-Based Protocol
 
 Under the hood, `async with` calls two dunder methods:
-[`__aenter__()`](https://docs.python.org/3/reference/datamodel.html#object.__aenter__)
+[`__aenter__()`][aenter]
 and
-[`__aexit__()`](https://docs.python.org/3/reference/datamodel.html#object.__aexit__).
+[`__aexit__()`][aexit].
 You can implement these directly on a class when you need to carry state
 between enter and exit, or when the context manager itself *is* the resource:
 
@@ -218,7 +218,7 @@ returns `None` or `False` (the default), the exception propagates.
 Sometimes you don't know at coding time how many context managers you need.
 Maybe you're opening one connection per shard, or one file per partition, and
 the count is only known at runtime.
-[`contextlib.AsyncExitStack`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack)
+[`contextlib.AsyncExitStack`][contextlib-asyncexitstack]
 manages a dynamic collection of async context managers -- entering each one and
 guaranteeing they all exit in LIFO order:
 
@@ -270,13 +270,13 @@ All shards closed
 
 The key methods on `AsyncExitStack`:
 
-- **[`enter_async_context(cm)`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.enter_async_context)**
+- **[`enter_async_context(cm)`][enter-async-context-cm]**
   -- enters `cm` and registers its `__aexit__` for cleanup. Returns whatever
   `cm.__aenter__()` returned.
-- **[`push_async_callback(callback, /, *args, **kwds)`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.push_async_callback)**
+- **[`push_async_callback(callback, /, *args, **kwds)`][push-async-callback-callback-args-kwds]**
   -- registers an arbitrary async callback to run at cleanup time. Useful for
   resources that don't have a context manager interface.
-- **[`aclose()`](https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.aclose)**
+- **[`aclose()`][aclose]**
   -- explicitly unwinds the stack outside of an `async with` block. You rarely
   need this if you're using `async with AsyncExitStack()`.
 
@@ -405,3 +405,13 @@ a variable number of pools (say, one per tenant), it could use an
 | Composing context managers | Layering setup/teardown of multiple resources behind a single `async with`. Keep lifetimes nested and explicit. |
 
 ---
+
+[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[contextlib-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
+[aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
+[aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
+[contextlib-asyncexitstack]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack
+[enter-async-context-cm]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.enter_async_context
+[push-async-callback-callback-args-kwds]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.push_async_callback
+[aclose]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.aclose

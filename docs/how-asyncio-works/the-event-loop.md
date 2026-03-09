@@ -9,7 +9,7 @@ description: >-
 # The Event Loop
 
 You already know how to write async programs. You can spawn tasks in a
-[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md), cancel them with
+[`TaskGroup`][taskgroup], cancel them with
 timeouts, offload blocking work to threads. All
 of that sits on top of a single piece of machinery: the *event loop*. This
 section opens the hood and shows you what that machinery looks like.
@@ -65,7 +65,7 @@ A few things to notice:
   The loop snapshots the queue length (`ntodo`) so that callbacks added *during*
   this phase land in the *next* iteration, not this one.
 - **Phase 2 asks the OS for I/O events.** This is a call to
-  [`select()`](https://docs.python.org/3/library/selectors.html) (or `epoll`,
+  [`select()`][select] (or `epoll`,
   `kqueue`, etc., depending on your platform). If the ready queue is empty, the
   loop blocks here until I/O arrives or the next timer fires -- this is how
   asyncio avoids busy-spinning.
@@ -75,9 +75,9 @@ A few things to notice:
 This is the entire scheduling algorithm. There is no thread pool, no priority
 system, no preemption. One callback runs. It finishes. The next one runs.
 
-## `call_soon()`
+## [`call_soon()`][call-soon]
 
-[`loop.call_soon()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon)
+[`loop.call_soon()`][loop-call-soon]
 places a callback on the ready queue. It will execute during phase 1 of the
 next loop iteration (or the current one, if the queue hasn't been fully drained
 yet -- but conceptually, think "next iteration").
@@ -120,25 +120,25 @@ fire after `main` returned.
 
 This is a low-level API. You will rarely call it directly, but it matters
 because it is the foundation. When you call `tg.create_task(some_coro())`,
-asyncio creates a `Task` object and then calls `call_soon` to schedule the
+asyncio creates a [`Task`][task] object and then calls `call_soon` to schedule the
 first step of that task. Every task begins life as a callback on the ready
 queue.
 
 !!! note
 
     `call_soon` returns a
-    [`Handle`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Handle)
+    [`Handle`][handle]
     object. You can call `handle.cancel()` to prevent the callback from
     running, as long as it hasn't been executed yet.
 
 ## Timers: `call_later()` and `call_at()`
 
-[`loop.call_later(delay, callback, *args)`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_later)
+[`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
 schedules a callback to run after *delay* seconds.
-[`loop.call_at(when, callback, *args)`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at)
+[`loop.call_at(when, callback, *args)`][loop-call-at-when-callback-args]
 schedules a callback at an absolute time on the loop's internal clock. Both
 return a
-[`TimerHandle`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.TimerHandle)
+[`TimerHandle`][timerhandle]
 that you can cancel.
 
 ```python title="timers_demo.py"
@@ -174,12 +174,12 @@ if __name__ == "__main__":
 Even though the 0.3s timer was registered first, the 0.1s timer fires first.
 The timer heap is sorted by deadline, not by registration order.
 
-### `loop.time()`
+### [`loop.time()`][loop-time]
 
-[`loop.time()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.time)
+[`loop.time()`][loop-time]
 returns the current time as a `float`, according to the event loop's
 *monotonic clock*. This is the same kind of clock as
-[`time.monotonic()`](https://docs.python.org/3/library/time.html#time.monotonic)
+[`time.monotonic()`][time-monotonic]
 -- it never goes backwards, and it is not affected by system clock adjustments.
 All timer deadlines are expressed in terms of this clock.
 
@@ -189,8 +189,8 @@ a convenience wrapper around `call_at`.
 
 !!! info
 
-    `asyncio.sleep()` is built on `call_later()` under the hood. When you
-    write `await asyncio.sleep(1.0)`, asyncio creates a `Future`, schedules
+    [`asyncio.sleep()`][asyncio-sleep] is built on `call_later()` under the hood. When you
+    write `await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
     a `call_later` to resolve it after one second, and suspends your
     coroutine until that future completes. Now you know why it is a
     checkpoint -- your coroutine genuinely gives up control and waits for a
@@ -198,8 +198,8 @@ a convenience wrapper around `call_at`.
 
 ## Cooperative Scheduling
 
-In [Everyday Asyncio](../everyday-asyncio/getting-started.md#checkpoints)
-you learned that every `await` is a potential checkpoint -- a place where the
+In [The Basics](../the-basics/getting-started.md#checkpoints)
+you learned that every [`await`][await] is a potential checkpoint -- a place where the
 loop *may* pause your coroutine and let other tasks run. You also learned the
 `await asyncio.sleep(0)` idiom for forcing a yield. That is the user-facing
 mental model, and it is enough for most day-to-day work.
@@ -209,10 +209,10 @@ those checkpoints.
 
 ### How a checkpoint works, mechanically
 
-A coroutine is driven by a `Task` (covered fully in
+A coroutine is driven by a [`Task`][task] (covered fully in
 [Tasks and Futures](tasks-and-futures.md)). When the task calls
-`coro.send(None)` and the coroutine reaches an `await` that needs to suspend,
-the coroutine *yields* a `Future` back to the task. The task then does two
+`coro.send(None)` and the coroutine reaches an [`await`][await] that needs to suspend,
+the coroutine *yields* a [`Future`][future] back to the task. The task then does two
 things:
 
 1. It registers a callback on that future: "when this future is done, call
@@ -229,15 +229,15 @@ Next time the loop reaches phase 1, it calls `task.__step`, which calls
 That is the full round trip. No magic, no thread switching, no signals -- just
 callbacks and a queue.
 
-### When an `await` is *not* a checkpoint
+### When an [`await`][await] is *not* a checkpoint
 
-Not every `await` causes a suspension. If you `await` a coroutine that returns
+Not every [`await`][await] causes a suspension. If you [`await`][await] a coroutine that returns
 a value without itself suspending, the `Task.__step` method receives the result
 immediately and keeps driving the coroutine in the *same* callback, without
 ever returning to the loop. From the scheduler's perspective, it is as if the
-`await` never happened.
+[`await`][await] never happened.
 
-This is why a chain of `await` calls into pure-computation coroutines runs
+This is why a chain of [`await`][await] calls into pure-computation coroutines runs
 without yielding. The loop only regains control when the coroutine yields a
 *pending* future -- one that is not already resolved.
 
@@ -293,7 +293,7 @@ Here is exactly what happened inside the loop:
 1. Both tasks were created, placing two `task.__step` callbacks on the ready
    queue.
 2. Phase 1 pops `hog`'s step callback. `hog` starts running and never hits a
-   suspending `await`, so `task.__step` never returns. The loop is stuck
+   suspending [`await`][await], so `task.__step` never returns. The loop is stuck
    inside phase 1 for the full second.
 3. During that second, `polite`'s step callback is sitting in the ready queue
    doing nothing. The timer for `polite`'s first `sleep(0.2)` cannot even be
@@ -309,8 +309,8 @@ series) instead of the ~1s you would see if they overlapped.
 
     If a computation is genuinely heavy, sprinkling `await asyncio.sleep(0)`
     every N iterations is a band-aid. The better solution is
-    `asyncio.to_thread()` or `loop.run_in_executor()` with a
-    `ProcessPoolExecutor`, as covered in
+    [`asyncio.to_thread()`][asyncio-to-thread] or [`loop.run_in_executor()`][loop-run-in-executor] with a
+    [`ProcessPoolExecutor`][processpoolexecutor], as covered in
     [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
     `sleep(0)` for cases where the overhead of a thread switch is not
     justified.
@@ -327,7 +327,7 @@ callbacks are sitting in the ready queue, all 50 execute before the loop checks
 for new network data. If those callbacks are slow, I/O processing is delayed.
 
 For tasks (which are driven by callbacks under the hood), the scheduling is
-interleaved one step at a time. When a task hits an `await` that suspends, its
+interleaved one step at a time. When a task hits an [`await`][await] that suspends, its
 *continuation* -- the callback that will resume it -- goes to the back of the
 ready queue. This gives other tasks a chance to take a step before this task
 runs again.
@@ -371,8 +371,8 @@ provides -- there is no preemption, no time budgets, no automatic yielding.
 
     The output order above depends on the order in which tasks were created.
     If you need a specific execution order between tasks, use explicit
-    coordination primitives (`Event`, `Queue`, etc.) from
-    [Coordination](../everyday-asyncio/coordination.md). Relying on
+    coordination primitives ([`Event`][event], [`Queue`][queue], etc.) from
+    [Coordination](../the-basics/coordination.md). Relying on
     scheduling order is fragile.
 
 ## Why This Matters
@@ -404,3 +404,23 @@ you block it, everything stops. If you don't yield, nobody else runs. The
 machinery does exactly what the pseudocode says, nothing more.
 
 ---
+
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[select]: https://docs.python.org/3/library/selectors.html
+[call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
+[loop-call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
+[task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[handle]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Handle
+[loop-call-later-delay-callback-args]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_later
+[loop-call-at-when-callback-args]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at
+[timerhandle]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.TimerHandle
+[loop-time]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.time
+[time-monotonic]: https://docs.python.org/3/library/time.html#time.monotonic
+[asyncio-sleep]: https://docs.python.org/3/library/asyncio-task.html#asyncio.sleep
+[future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+[processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
+[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue

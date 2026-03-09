@@ -10,7 +10,7 @@ description: >-
 
 Chapter 3 covered [what futures are](../how-asyncio-works/tasks-and-futures.md):
 passive containers for a value that doesn't exist yet. You know the API --
-`.done()`, `.result()`, `.set_result()`, `await`. This section is about
+`.done()`, `.result()`, `.set_result()`, [`await`][await]. This section is about
 *using* them in practice: creating them, resolving them manually, and bridging
 them with `concurrent.futures`. These are the tools you reach for when you're
 building a library or framework that needs to glue callback-based code into the
@@ -20,16 +20,16 @@ async world.
 
     If you are writing application code, you almost certainly don't need
     bare futures. Tasks,
-    [task groups](../everyday-asyncio/concurrent-tasks.md), and
-    [streams](../everyday-asyncio/streams.md) cover the vast majority
+    [task groups](../the-basics/concurrent-tasks.md), and
+    [streams](../the-basics/streams.md) cover the vast majority
     of use cases. This material is for library authors who are building
     abstractions on top of asyncio's low-level machinery.
 
-## `loop.create_future()`
+## [`loop.create_future()`][loop-create-future]
 
 The right way to create a bare future is
-[`loop.create_future()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future).
-It returns an empty `asyncio.Future` bound to the running loop:
+[`loop.create_future()`][loop-create-future].
+It returns an empty [`asyncio.Future`][asyncio-future] bound to the running loop:
 
 ```python title="create_future_demo.py"
 import asyncio
@@ -62,7 +62,7 @@ result:  42
 awaited: 42
 ```
 
-Why `loop.create_future()` instead of `asyncio.Future()`? Two reasons. First,
+Why [`loop.create_future()`][loop-create-future] instead of `asyncio.Future()`? Two reasons. First,
 it's faster -- the loop can return an optimized C implementation. Second, it
 binds the future to the correct loop automatically, which avoids subtle bugs
 when multiple loops are involved (testing, embedded event loops). Always use
@@ -72,17 +72,17 @@ when multiple loops are involved (testing, embedded event loops). Always use
 
     A future can only be resolved once. Calling `set_result()` or
     `set_exception()` on a future that is already done raises
-    [`asyncio.InvalidStateError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.InvalidStateError).
+    [`asyncio.InvalidStateError`][asyncio-invalidstateerror].
 
 ## Wrapping Callback-Based APIs
 
 This is the classic use case. You have a library that reports results through
-callbacks, and you want to `await` it from a coroutine. The pattern is always
+callbacks, and you want to [`await`][await] it from a coroutine. The pattern is always
 the same:
 
 1. Create a future.
 2. Pass a callback that resolves the future.
-3. `await` the future.
+3. [`await`][await] the future.
 
 Here is a concrete example. Imagine a legacy sensor library that reads a value
 asynchronously and calls you back with the result:
@@ -138,15 +138,15 @@ the guard won't trigger, but it costs nothing and saves you from hard-to-debug
 This pattern works for any callback-based API: GUI event handlers, hardware
 drivers, notification systems, custom protocol libraries. The future acts as a
 one-shot bridge between "someone will call this function later" and "I want to
-`await` a result now."
+[`await`][await] a result now."
 
-## `asyncio.wrap_future()`
+## [`asyncio.wrap_future()`][asyncio-wrap-future]
 
 Sometimes you're not dealing with a raw callback -- you already have a
-[`concurrent.futures.Future`](https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future)
-from a `ThreadPoolExecutor` or `ProcessPoolExecutor`. These are *not* the same
-as `asyncio.Future` -- you can't `await` them directly. But
-[`asyncio.wrap_future()`](https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future)
+[`concurrent.futures.Future`][concurrent-futures-future]
+from a [`ThreadPoolExecutor`][threadpoolexecutor] or [`ProcessPoolExecutor`][processpoolexecutor]. These are *not* the same
+as [`asyncio.Future`][asyncio-future] -- you cannot [`await`][await] them directly. But
+[`asyncio.wrap_future()`][asyncio-wrap-future]
 converts one into the other:
 
 ```python title="wrap_future_demo.py"
@@ -183,20 +183,20 @@ if __name__ == "__main__":
 Result: 333332833333500000
 ```
 
-`wrap_future()` creates an `asyncio.Future`, wires up a done callback on the
-`concurrent.futures.Future` so that when the thread finishes, the asyncio
+`wrap_future()` creates an [`asyncio.Future`][asyncio-future], wires up a done callback on the
+[`concurrent.futures.Future`][concurrent-futures-future] so that when the thread finishes, the asyncio
 future gets resolved -- and it does this thread-safely via
-`loop.call_soon_threadsafe()`. You get a clean `await`-able handle into work
+[`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]. You get a clean [`await`][await]-able handle into work
 that is running on a completely different thread.
 
 !!! tip
 
     If you control the submission, prefer
-    [`asyncio.to_thread()`](../beyond-the-basics/blocking-code.md)
+    [`asyncio.to_thread()`][asyncio-to-thread]
     or
-    [`loop.run_in_executor()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor)
+    [`loop.run_in_executor()`][loop-run-in-executor]
     -- they handle the wrapping for you. `wrap_future()` is for when
-    someone *else* handed you a `concurrent.futures.Future` and you need to
+    someone *else* handed you a [`concurrent.futures.Future`][concurrent-futures-future] and you need to
     integrate it into your async code. A third-party job queue, a shared
     executor managed by another subsystem, a legacy API that returns
     futures -- those are the cases where `wrap_future()` shines.
@@ -204,8 +204,8 @@ that is running on a completely different thread.
 ## Error Propagation
 
 The error side mirrors the happy path. Use
-[`future.set_exception()`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_exception)
-to resolve a future with an error, and `await` will re-raise it at the call
+[`future.set_exception()`][future-set-exception]
+to resolve a future with an error, and [`await`][await] will re-raise it at the call
 site:
 
 ```python title="future_error.py"
@@ -253,7 +253,7 @@ Read failed: sensor disconnected
 ```
 
 The `set_exception()` call stores the exception inside the future. When you
-`await` it, the exception is re-raised as if it happened at the `await` line.
+[`await`][await] it, the exception is re-raised as if it happened at the [`await`][await] line.
 This means normal `try`/`except` works exactly as you'd expect -- the error
 propagates through the same channels as any other async exception.
 
@@ -263,7 +263,7 @@ guard ensures only the first one resolves the future.
 
 !!! danger
 
-    Never pass a `BaseException` subclass (like `KeyboardInterrupt` or
+    Never pass a [`BaseException`][baseexception] subclass (like `KeyboardInterrupt` or
     `SystemExit`) to `set_exception()`. It raises a `TypeError`. These are
     not meant to flow through futures -- they are process-level signals
     that bypass normal exception handling.
@@ -277,12 +277,26 @@ transports, protocols -- are built on top of.
 In practice, you need them in exactly two situations:
 
 - **Bridging callbacks.** You have a callback-based API and want an
-  `await`-able interface. Create a future, resolve it from the callback, return
+  [`await`][await]-able interface. Create a future, resolve it from the callback, return
   it to the caller.
-- **Bridging threads.** You have a `concurrent.futures.Future` from a thread
-  pool and want to `await` it. Call `asyncio.wrap_future()`.
+- **Bridging threads.** You have a [`concurrent.futures.Future`][concurrent-futures-future] from a thread
+  pool and want to [`await`][await] it. Call [`asyncio.wrap_future()`][asyncio-wrap-future].
 
 For everything else -- running coroutines concurrently, collecting results,
 handling cancellation -- use tasks and task groups. They are futures under the
 hood, but they handle the lifecycle management that you would otherwise have to
 do yourself.
+
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[asyncio-invalidstateerror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.InvalidStateError
+[asyncio-wrap-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future
+[concurrent-futures-future]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future
+[threadpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
+[processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+[loop-call-soon-threadsafe]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+[future-set-exception]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_exception
+[baseexception]: https://docs.python.org/3/library/exceptions.html#BaseException

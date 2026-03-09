@@ -11,7 +11,7 @@ description: >-
 Async code opens connections, acquires locks, and allocates resources that need
 cleanup -- just like synchronous code. The difference is that concurrency and
 cancellation make it much easier for cleanup to be skipped by accident. A task
-can be cancelled at any `await`, and if the resource's teardown never runs,
+can be cancelled at any [`await`][await], and if the resource's teardown never runs,
 you get leaked connections, stuck locks, and file descriptors that pile up
 until the OS complains. The good news: the tools for handling this are
 straightforward, and if you follow a few rules you will never leak a resource.
@@ -19,19 +19,19 @@ straightforward, and if you follow a few rules you will never leak a resource.
 ## `async with`
 
 The
-[`async with` statement](https://docs.python.org/3/reference/compound_stmts.html#async-with)
+[`async with` statement][async-with-statement]
 is the async equivalent of the regular `with` statement. It calls
-[`__aenter__()`](https://docs.python.org/3/reference/datamodel.html#object.__aenter__)
+[`__aenter__()`][aenter]
 when the block is entered and
-[`__aexit__()`](https://docs.python.org/3/reference/datamodel.html#object.__aexit__)
+[`__aexit__()`][aexit]
 when it exits -- regardless of whether the exit is normal, an exception, or a
 cancellation. Both methods are coroutines, so they can do async work like
 sending a "close" message over the network or releasing a resource that
-requires an `await`.
+requires an [`await`][await].
 
 The canonical example is
-[`asyncio.Lock`](https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock).
-Acquiring it requires an `await` (another task might be holding it), and
+[`asyncio.Lock`][asyncio-lock].
+Acquiring it requires an [`await`][await] (another task might be holding it), and
 releasing it must happen exactly once:
 
 ```python title="lock_demo.py"
@@ -69,19 +69,19 @@ Final count: 3
 
 The `async with lock:` line acquires the lock (`__aenter__`), and when the
 block exits -- for any reason -- it is released (`__aexit__`). If a
-cancellation arrives while the body is running, the `CancelledError` unwinds
+cancellation arrives while the body is running, the [`CancelledError`][cancellederror] unwinds
 through the block, `__aexit__` runs, and the lock is freed. No task is left
 waiting forever for a lock that will never be released.
 
 You have already been using `async with` throughout this chapter:
-`asyncio.TaskGroup()`, `asyncio.timeout()`, and `asyncio.timeout_at()` are all
+`asyncio.TaskGroup()`, [`asyncio.timeout()`][asyncio-timeout], and [`asyncio.timeout_at()`][asyncio-timeout-at] are all
 async context managers. The pattern is always the same -- enter with
 `async with`, and the cleanup is guaranteed.
 
 !!! warning
 
     If an API gives you an async context manager, **always** use it with
-    `async with`. Calling `__aenter__()` and `__aexit__()` by hand is fragile
+    `async with`. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
     and error-prone. The whole point of the protocol is that the `async with`
     statement guarantees `__aexit__` runs even when things go wrong.
 
@@ -137,7 +137,7 @@ Timed out, but connection was still closed
 ```
 
 The timeout fires after one second, cancelling the `await conn.query()` call.
-The `CancelledError` unwinds the `try` block, the `finally` block runs, and
+The [`CancelledError`][cancellederror] unwinds the `try` block, the `finally` block runs, and
 the connection is closed properly. This is exactly the behaviour you want.
 
 !!! warning
@@ -146,14 +146,14 @@ the connection is closed properly. This is exactly the behaviour you want.
     Keep it fast and simple -- closing a socket, releasing a lock, writing a
     short log message. Do **not** start a 30-second retry loop or a complex
     multi-step protocol in a `finally` block. If your cleanup itself needs to
-    `await` something slow, the outer timeout or cancellation scope may not
+    [`await`][await] something slow, the outer timeout or cancellation scope may not
     account for that extra time, and the program's shutdown behaviour becomes
     unpredictable.
 
 !!! tip "Trio users"
 
-    The same rule applies in Trio. Trio enforces it more
-    strictly with *cancel shielding* semantics -- by default, cancelled tasks
+    The same rule applies in [Trio][trio-docs]. [Trio][trio-docs] enforces it more
+    strictly with [cancel scope][trio-cancel-scope] semantics -- by default, cancelled tasks
     cannot start new I/O in their cleanup path. asyncio is more lenient, but
     the principle is the same: cleanup should be quick.
 
@@ -169,9 +169,9 @@ that is the caller's job. A function that creates a connection must ensure it
 is closed before returning, whether that return is normal, an exception, or a
 cancellation.
 
-This is why `TaskGroup` and `async with` compose so well. The `async with`
+This is why [`TaskGroup`][taskgroup] and `async with` compose so well. The `async with`
 block is the owner scope: everything created inside it is cleaned up when the
-block exits. A `TaskGroup` guarantees all its children finish before
+block exits. A [`TaskGroup`][taskgroup] guarantees all its children finish before
 `__aexit__` runs, so resources opened inside the group are still valid for the
 entire lifetime of the children.
 
@@ -192,7 +192,7 @@ that scope.
 
 An *async generator* is an async function that uses `yield` instead of (or in
 addition to) `return`. Just as regular generators produce values lazily, async
-generators produce values lazily with `await` between yields:
+generators produce values lazily with [`await`][await] between yields:
 
 ```python title="async_gen_basic.py"
 import asyncio
@@ -272,11 +272,11 @@ server, this means leaked connections and file descriptors.
     operations inside it may fail or be silently skipped. Always close async
     generators explicitly.
 
-## `contextlib.aclosing()`
+## [`contextlib.aclosing()`][contextlib-aclosing]
 
-[`contextlib.aclosing()`](https://docs.python.org/3/library/contextlib.html#contextlib.aclosing)
-is the fix. It wraps an async generator (or any object with an `aclose()`
-method) in an async context manager that guarantees `aclose()` is called when
+[`contextlib.aclosing()`][contextlib-aclosing]
+is the fix. It wraps an async generator (or any object with an [`aclose()`][aclose]
+method) in an async context manager that guarantees [`aclose()`][aclose] is called when
 the block exits:
 
 ```python title="async_gen_safe.py" hl_lines="14"
@@ -318,7 +318,7 @@ Done
 ```
 
 The output looks the same, but the behaviour is fundamentally different.
-With `aclosing()`, the generator's `aclose()` method is called *immediately*
+With `aclosing()`, the generator's [`aclose()`][aclose] method is called *immediately*
 when the `async with` block exits -- not at some unpredictable later time by
 the garbage collector. The `finally` block inside the generator runs promptly,
 and any async cleanup it needs to do happens in the right context.
@@ -332,31 +332,31 @@ and any async cleanup it needs to do happens in the right context.
 
 !!! tip "Trio users"
 
-    Trio requires `aclosing()` for every async generator
+    [Trio][trio-docs] requires [`trio.aclosing()`][trio-aclosing] for every async generator
     iteration and will warn you loudly if you forget. asyncio is more lenient at
     runtime, but the same discipline applies.
 
 ## `async for`
 
 The
-[`async for` statement](https://docs.python.org/3/reference/compound_stmts.html#async-for)
+[`async for` statement][async-for-statement]
 iterates over an *asynchronous iterable* -- any object that implements
-[`__aiter__()`](https://docs.python.org/3/reference/datamodel.html#object.__aiter__)
+[`__aiter__()`][aiter]
 and
-[`__anext__()`](https://docs.python.org/3/reference/datamodel.html#object.__anext__).
+[`__anext__()`][anext].
 Async generators are the most common source of async iterables, but you will
 encounter them elsewhere too: network streams, database cursors, message
 queues, and any API that delivers items one at a time over I/O.
 
 There is not much ceremony -- `async for` works just like regular `for`, but
-each iteration step can `await`:
+each iteration step can [`await`][await]:
 
 ```python
 async for item in some_async_source:
     process(item)
 ```
 
-The loop calls `__anext__()` before each iteration, which is a coroutine that
+The loop calls [`__anext__()`][anext] before each iteration, which is a coroutine that
 may suspend while waiting for the next item. When the iterable is exhausted,
 it raises `StopAsyncIteration` and the loop ends.
 
@@ -371,7 +371,7 @@ it raises `StopAsyncIteration` and the loop ends.
 
 Here is a small example that combines everything from this section: an async
 generator that produces items from a simulated resource, proper cleanup with
-`aclosing()`, and concurrent consumers managed by a `TaskGroup`.
+`aclosing()`, and concurrent consumers managed by a [`TaskGroup`][taskgroup].
 
 ```python title="resource_pipeline.py"
 import asyncio
@@ -431,9 +431,27 @@ slow collected: ['B/event-0', 'B/event-1', 'B/event-2']
 ```
 
 Both consumers stop early (before the stream is exhausted), but `aclosing()`
-ensures each stream's `finally` block runs immediately. The `TaskGroup`
+ensures each stream's `finally` block runs immediately. The [`TaskGroup`][taskgroup]
 guarantees both consumers finish before `main()` continues. Every resource has
 a clear owner, every cleanup path is covered, and cancellation would not change
 any of that -- the `async with` blocks and `finally` blocks would still run.
 
 ---
+
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[async-with-statement]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
+[aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
+[asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[asyncio-timeout-at]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout_at
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[contextlib-aclosing]: https://docs.python.org/3/library/contextlib.html#contextlib.aclosing
+[aclose]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.aclose
+[async-for-statement]: https://docs.python.org/3/reference/compound_stmts.html#async-for
+[aiter]: https://docs.python.org/3/reference/datamodel.html#object.__aiter__
+[anext]: https://docs.python.org/3/reference/datamodel.html#object.__anext__
+[trio-docs]: https://trio.readthedocs.io/en/stable/
+[trio-cancel-scope]: https://trio.readthedocs.io/en/stable/reference-core.html#cancellation-and-timeouts
+[trio-aclosing]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.aclosing

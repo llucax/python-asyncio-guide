@@ -23,18 +23,27 @@ these APIs correctly requires understanding the material in Chapter 3.
 ## Sections
 
 1. [Loop Access and Inspection](loop-access-and-inspection.md) —
-   `asyncio.get_running_loop()`, loop introspection, and when you need the
+   [`asyncio.get_running_loop()`][asyncio-get-running-loop], loop introspection, and when you need the
    loop object directly.
 
-2. [Task Coordination](task-coordination.md) — `asyncio.wait()`,
-   `asyncio.as_completed()`, `asyncio.wait_for()`, and manual task management.
+2. [Task Coordination](task-coordination.md) — [`asyncio.wait()`][asyncio-wait],
+   [`asyncio.as_completed()`][asyncio-as-completed], [`asyncio.wait_for()`][asyncio-wait-for], and manual task management.
 
-3. [Futures](futures.md) — `loop.create_future()`, `asyncio.wrap_future()`,
+3. [Futures](futures.md) — [`loop.create_future()`][loop-create-future], [`asyncio.wrap_future()`][asyncio-wrap-future],
    manual result resolution, and bridging `concurrent.futures`.
 
 4. [Callbacks and Threading](callbacks-and-threading.md) —
-   `add_done_callback()`, `loop.call_soon_threadsafe()`,
-   `asyncio.run_coroutine_threadsafe()`, signal handling.
+   `add_done_callback()`, [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe],
+   [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe], signal handling.
 
 5. [Transports and Protocols](transports-and-protocols.md) — the callback-based
    networking layer underneath streams, and when to use it.
+
+[asyncio-get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop
+[asyncio-wait]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait
+[asyncio-as-completed]: https://docs.python.org/3/library/asyncio-task.html#asyncio.as_completed
+[asyncio-wait-for]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
+[loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[asyncio-wrap-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future
+[loop-call-soon-threadsafe]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe
+[asyncio-run-coroutine-threadsafe]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run_coroutine_threadsafe

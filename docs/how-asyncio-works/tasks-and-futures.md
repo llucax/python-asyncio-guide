@@ -12,14 +12,14 @@ description: >-
 The event loop is the scheduler, but it doesn't do much by itself. It needs
 *objects* it can schedule -- things that represent "work in progress" and can
 report back when they're done. Those objects are
-[`asyncio.Future`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future)
+[`asyncio.Future`][asyncio-future]
 and its subclass
-[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task).
+[`asyncio.Task`][asyncio-task].
 Together, they are the concrete machinery that makes concurrency work. The
 event loop spins, futures hold eventual results, and tasks drive coroutines
-forward one `await` at a time.
+forward one [`await`][await] at a time.
 
-## `asyncio.Future`
+## [`asyncio.Future`][asyncio-future]
 
 A *future* is a container for a value that doesn't exist yet. You can think of
 it as an empty box with a label that says "result goes here." Someone will put
@@ -39,13 +39,13 @@ The API is small:
 - **`.set_exception(exc)`** -- fills the box with an exception. Can only be
   called once.
 - **`.add_done_callback(fn)`** -- registers a function that will be called
-  (via `call_soon()`) when the future completes. You can add multiple
+  (via [`call_soon()`][call-soon]) when the future completes. You can add multiple
   callbacks; they fire in the order they were added.
 - **`.cancel()`** -- marks the future as cancelled. Any callbacks are still
   called.
 
-You can also `await` a future. When you do, the current coroutine suspends
-until the future is done, then the `await` expression returns the future's
+You can also [`await`][await] a future. When you do, the current coroutine suspends
+until the future is done, then the [`await`][await] expression returns the future's
 result (or raises its exception).
 
 !!! note
@@ -54,7 +54,7 @@ result (or raises its exception).
     plumbing that asyncio's internals -- transports, protocols, and the loop
     itself -- use to communicate results between components. You will see
     them when you work with the low-level APIs in Chapter 4 (callbacks,
-    transports, `loop.create_future()`). For now, understanding what they
+    transports, [`loop.create_future()`][loop-create-future]). For now, understanding what they
     *are* is enough.
 
 Here is a minimal example that shows the lifecycle. You would not write this in
@@ -97,7 +97,7 @@ for it, and the code that awaits doesn't need to know who will provide it.
 This decoupling is what allows the event loop to wire together callbacks,
 I/O completions, and coroutines into a single coherent system.
 
-## `asyncio.Task`
+## [`asyncio.Task`][asyncio-task]
 
 A *task* is a future that wraps a coroutine and drives it on the event loop.
 Where a plain future is a passive container (someone else must call
@@ -105,7 +105,7 @@ Where a plain future is a passive container (someone else must call
 handles whatever it yields, and eventually sets its own result when the
 coroutine returns.
 
-`asyncio.Task` is a subclass of `asyncio.Future`, so everything you just
+[`asyncio.Task`][asyncio-task] is a subclass of [`asyncio.Future`][asyncio-future], so everything you just
 learned about futures applies to tasks too: `.done()`, `.result()`,
 `.exception()`, `.cancelled()`, `await task`, and done callbacks all work the
 same way. The difference is that nobody calls `task.set_result()` from the
@@ -114,20 +114,20 @@ outside -- the task does it itself when the coroutine finishes.
 When you create a task, two things happen immediately:
 
 1. The coroutine object is stored inside the task.
-2. The task schedules its first *step* via `call_soon()` on the event loop.
+2. The task schedules its first *step* via [`call_soon()`][call-soon] on the event loop.
 
 That second point is important: the coroutine does not start running the
 instant you create the task. It starts on the *next iteration* of the event
-loop, when the loop processes the `call_soon()` callback. This is why
-`create_task()` returns immediately -- it just puts work on the queue.
+loop, when the loop processes the [`call_soon()`][call-soon] callback. This is why
+[`create_task()`][create-task] returns immediately -- it just puts work on the queue.
 
-## `asyncio.create_task()`
+## [`asyncio.create_task()`][asyncio-create-task]
 
-[`asyncio.create_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task)
-is the function that wraps a coroutine in a `Task` and schedules it on the
-running loop. In Chapter 1 you saw `tg.create_task()` -- the `TaskGroup`
+[`asyncio.create_task()`][asyncio-create-task]
+is the function that wraps a coroutine in a [`Task`][task] and schedules it on the
+running loop. In Chapter 1 you saw `tg.create_task()` -- the [`TaskGroup`][taskgroup]
 method that gives tasks an owner. Under the hood, `TaskGroup.create_task()`
-calls `asyncio.create_task()` and then tracks the resulting task so it can
+calls [`asyncio.create_task()`][asyncio-create-task] and then tracks the resulting task so it can
 enforce structured concurrency. This section is about the raw function
 underneath.
 
@@ -176,12 +176,12 @@ something goes wrong.
 
 !!! info
 
-    **Prefer `TaskGroup.create_task()` over bare `asyncio.create_task()`.**
-    A `TaskGroup` gives every task an owner, ensures exceptions propagate,
-    and prevents orphaned tasks. Bare `create_task()` is a building block
-    -- it is what `TaskGroup` calls internally -- but in application code
+    **Prefer `TaskGroup.create_task()` over bare [`asyncio.create_task()`][asyncio-create-task].**
+    A [`TaskGroup`][taskgroup] gives every task an owner, ensures exceptions propagate,
+    and prevents orphaned tasks. Bare [`create_task()`][create-task] is a building block
+    -- it is what [`TaskGroup`][taskgroup] calls internally -- but in application code
     the unowned version is almost always a mistake. See the
-    [Concurrent Tasks](../everyday-asyncio/concurrent-tasks.md) section in
+    [Concurrent Tasks](../the-basics/concurrent-tasks.md) section in
     Chapter 1 for the full argument.
 
 ## Task Lifecycle
@@ -192,7 +192,7 @@ are exactly three ways a task can become done:
 1. **Result** -- the coroutine returned a value. The task stores it. Success.
 2. **Exception** -- the coroutine raised an exception. The task stores it.
    Failure.
-3. **Cancelled** -- someone called `task.cancel()` and the cancellation was
+3. **Cancelled** -- someone called [`task.cancel()`][task-cancel] and the cancellation was
    not suppressed. The task is marked cancelled.
 
 Once a task is done, it stays done -- there is no going back to pending. The
@@ -202,8 +202,8 @@ inspection methods tell you which state you're in:
 |-----------------|---------|--------|-----------|-----------|
 | `.done()`       | `False` | `True` | `True`    | `True`    |
 | `.cancelled()`  | `False` | `False`| `False`   | `True`    |
-| `.result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises `CancelledError` |
-| `.exception()`  | raises `InvalidStateError` | returns `None` | returns exception | raises `CancelledError` |
+| `.result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
+| `.exception()`  | raises `InvalidStateError` | returns `None` | returns exception | raises [`CancelledError`][cancellederror] |
 
 The following example walks through all three outcomes:
 
@@ -260,15 +260,15 @@ t3 done=True, cancelled=True
 ```
 
 Notice the pattern: `await task` either returns the result or re-raises
-whatever ended the task (the stored exception, or `CancelledError`). Calling
+whatever ended the task (the stored exception, or [`CancelledError`][cancellederror]). Calling
 `.result()` on a done task does the same thing without suspending -- but if
 you call it on a task that isn't done yet, you get `InvalidStateError`.
 
 !!! tip
 
-    After a `TaskGroup` block exits normally, every task in the group is
+    After a [`TaskGroup`][taskgroup] block exits normally, every task in the group is
     guaranteed done. That is why the
-    [Collecting Results](../everyday-asyncio/concurrent-tasks.md) pattern
+    [Collecting Results](../the-basics/concurrent-tasks.md) pattern
     calls `.result()` *after* the `async with` block -- it is always safe
     there.
 
@@ -306,7 +306,7 @@ Task was destroyed but it is pending!
 ```
 
 The task was created, scheduled, and then -- because nothing in your code held
-a reference to the `Task` object -- it became eligible for collection. The
+a reference to the [`Task`][task] object -- it became eligible for collection. The
 event loop holds a *weak reference* to running tasks, which is not enough to
 keep them alive.
 
@@ -321,10 +321,10 @@ async def main() -> None:
 
 !!! warning
 
-    This is one more reason to prefer `TaskGroup`. When you call
+    This is one more reason to prefer [`TaskGroup`][taskgroup]. When you call
     `tg.create_task()`, the group stores a strong reference to the task
     internally. You never have to worry about lost references inside a
-    `TaskGroup` scope.
+    [`TaskGroup`][taskgroup] scope.
 
 ## How Tasks Drive Coroutines
 
@@ -366,10 +366,10 @@ Here is what happens, step by step:
 
 2. **First step.** On the next loop iteration, `__step` runs. It calls
    `coro.send(None)`, which resumes the coroutine from the beginning. The
-   coroutine runs until it hits an `await` on something that isn't ready yet
+   coroutine runs until it hits an [`await`][await] on something that isn't ready yet
    -- typically a future representing an I/O completion or a timer.
 
-3. **Suspension.** The `await` causes the coroutine to yield that future back
+3. **Suspension.** The [`await`][await] causes the coroutine to yield that future back
    to the task. The task registers `__step` as a done callback on the yielded
    future. Now the task is suspended -- nothing else happens until that
    future completes.
@@ -377,7 +377,7 @@ Here is what happens, step by step:
 4. **Resumption.** When the awaited future completes (because I/O finished, a
    timer expired, etc.), its done callbacks fire. That calls `__step` again,
    which calls `coro.send(None)` again, resuming the coroutine right after
-   the `await` that suspended it. This cycle repeats.
+   the [`await`][await] that suspended it. This cycle repeats.
 
 5. **Completion.** Eventually the coroutine either returns a value (raising
    `StopIteration` -- that's how Python generators and coroutines signal
@@ -386,7 +386,7 @@ Here is what happens, step by step:
    callbacks.
 
 This send-yield-callback loop is the heartbeat of asyncio concurrency. Every
-`await` in your code is a point where the coroutine can suspend and the loop
+[`await`][await] in your code is a point where the coroutine can suspend and the loop
 can go service other tasks. When the thing being awaited finishes, the loop
 comes back and picks up where it left off.
 
@@ -402,3 +402,15 @@ comes back and picks up where it left off.
     want the full picture.
 
 ---
+
+[asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
+[loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[task-cancel]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError

@@ -8,27 +8,27 @@ description: >-
 
 # Task Coordination
 
-[`TaskGroup`](../everyday-asyncio/concurrent-tasks.md) is the right default
+[`TaskGroup`][taskgroup] is the right default
 for concurrent work -- it owns every child,
 cancels siblings on failure, and guarantees that nothing outlives the scope.
 But its contract is strict: *all* tasks must complete (or fail) before the
 group exits. Sometimes that is not what you need. You might want to act on
 whichever task finishes first, process results in completion order, or enforce
 a timeout on a single awaitable at an API boundary. That is what
-`asyncio.wait()`, `asyncio.as_completed()`, and `asyncio.wait_for()` are for.
+[`asyncio.wait()`][asyncio-wait], [`asyncio.as_completed()`][asyncio-as-completed], and [`asyncio.wait_for()`][asyncio-wait-for] are for.
 
 !!! danger
 
     Everything in this section bypasses structured concurrency. These APIs
     do not own the tasks they operate on -- they do not cancel stragglers,
     propagate exceptions, or guarantee cleanup. You are responsible for all
-    of that. Prefer `TaskGroup` for application code. Reach for these tools
+    of that. Prefer [`TaskGroup`][taskgroup] for application code. Reach for these tools
     in library code, protocol implementations, and the specific situations
     described at the end of this section.
 
-## `asyncio.wait()`
+## [`asyncio.wait()`][asyncio-wait]
 
-[`asyncio.wait()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.wait)
+[`asyncio.wait()`][asyncio-wait]
 takes an iterable of tasks (or other awaitables wrapped in tasks) and returns
 two sets: `done` and `pending`. The `return_when` parameter controls when it
 returns.
@@ -50,7 +50,7 @@ There are three modes.
 ### `ALL_COMPLETED` -- wait for everything
 
 This is the default. `wait()` returns when every task in the set has finished.
-It is similar to what `TaskGroup` does, but without sibling cancellation or
+It is similar to what [`TaskGroup`][taskgroup] does, but without sibling cancellation or
 exception propagation -- you get back two sets and must inspect them yourself.
 
 ```python title="wait_all_completed.py"
@@ -188,14 +188,14 @@ flaky failed: lost connection
 ### The critical footgun: `wait()` does NOT cancel pending tasks
 
 This is worth repeating in its own callout because it is the single most
-common mistake with `asyncio.wait()`:
+common mistake with [`asyncio.wait()`][asyncio-wait]:
 
 !!! warning
 
-    **`asyncio.wait()` never cancels anything.** When it returns, the tasks
+    **[`asyncio.wait()`][asyncio-wait] never cancels anything.** When it returns, the tasks
     in the `pending` set are still running. If you do not cancel them
     yourself, they will keep running in the background with no owner --
-    exactly the fire-and-forget problem that `TaskGroup` was designed to
+    exactly the fire-and-forget problem that [`TaskGroup`][taskgroup] was designed to
     prevent.
 
 The safe pattern is always the same: wait, cancel pending, wait again.
@@ -214,13 +214,13 @@ if pending:
 ```
 
 The second `await asyncio.wait(pending)` is not optional. Calling `t.cancel()`
-only *requests* cancellation -- the `CancelledError` is delivered at the next
+only *requests* cancellation -- the [`CancelledError`][cancellederror] is delivered at the next
 checkpoint. Without the second wait, the cancelled tasks may not have finished
 their cleanup before your code moves on.
 
 ### `timeout` parameter
 
-`asyncio.wait()` accepts an optional `timeout` in seconds. If the timeout
+[`asyncio.wait()`][asyncio-wait] accepts an optional `timeout` in seconds. If the timeout
 expires before the `return_when` condition is met, `wait()` returns with
 whatever has completed so far in `done` and the rest in `pending`. No tasks
 are cancelled -- the timeout just controls how long `wait()` itself blocks.
@@ -230,9 +230,9 @@ done, pending = await asyncio.wait(tasks, timeout=2.0)
 # If 2s passed before all tasks finished, pending is non-empty
 ```
 
-## `asyncio.as_completed()`
+## [`asyncio.as_completed()`][asyncio-as-completed]
 
-[`asyncio.as_completed()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.as_completed)
+[`asyncio.as_completed()`][asyncio-as-completed]
 is for when you want to process results in the order they arrive, not the
 order you submitted them. It takes an iterable of awaitables and returns an
 *asynchronous iterator* of futures that yield results in completion order.
@@ -281,11 +281,11 @@ them.
 A few things to note:
 
 - `as_completed()` accepts coroutines directly -- it wraps them in tasks
-  internally. You can also pass `Task` objects.
-- The iterator yields `Future` objects, not `Task` objects. You `await` each
+  internally. You can also pass [`Task`][task] objects.
+- The iterator yields [`Future`][future] objects, not [`Task`][task] objects. You [`await`][await] each
   one to get the result (or raise the exception).
 - Like `wait()`, there is an optional `timeout` parameter. If the timeout
-  expires, the next `await future` in the loop raises `TimeoutError`.
+  expires, the next `await future` in the loop raises [`TimeoutError`][timeouterror].
 
 ### Practical use case: logging progress
 
@@ -334,12 +334,12 @@ if __name__ == "__main__":
 All done: 2966 bytes from 6 files
 ```
 
-## `asyncio.wait_for()`
+## [`asyncio.wait_for()`][asyncio-wait-for]
 
-[`asyncio.wait_for()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for)
+[`asyncio.wait_for()`][asyncio-wait-for]
 wraps a single awaitable with a timeout. If the timeout expires, it *cancels*
 the awaitable and raises
-[`TimeoutError`](https://docs.python.org/3/library/exceptions.html#TimeoutError).
+[`TimeoutError`][timeouterror].
 
 ```python title="wait_for_demo.py"
 import asyncio
@@ -366,24 +366,24 @@ if __name__ == "__main__":
 Query timed out after 1 second
 ```
 
-### `wait_for()` vs `asyncio.timeout()`
+### `wait_for()` vs [`asyncio.timeout()`][asyncio-timeout]
 
 Chapter 1 covered
-[`asyncio.timeout()`](../everyday-asyncio/cancellation-and-timeouts.md),
+[`asyncio.timeout()`][asyncio-timeout],
 the context manager that enforces a deadline on a block of code. Both
 `wait_for()` and `timeout()` cancel work that takes too long, but they have
 different shapes and different trade-offs.
 
-| | `asyncio.timeout()` | `asyncio.wait_for()` |
+| | [`asyncio.timeout()`][asyncio-timeout] | [`asyncio.wait_for()`][asyncio-wait-for] |
 |---|---|---|
 | **Scope** | A block of code (multiple awaits) | A single awaitable |
 | **Syntax** | `async with asyncio.timeout(n):` | `await asyncio.wait_for(coro, timeout=n)` |
 | **Cancels** | The current task at the next checkpoint | The wrapped awaitable specifically |
-| **Raises** | `TimeoutError` at the `async with` boundary | `TimeoutError` at the `await` |
+| **Raises** | [`TimeoutError`][timeouterror] at the `async with` boundary | [`TimeoutError`][timeouterror] at the [`await`][await] |
 | **Added** | Python 3.11 | Python 3.0+ (older API) |
 
-For application code, prefer `asyncio.timeout()`. It works on blocks, composes
-with `TaskGroup`, and has clear scoping. `wait_for()` is useful at API
+For application code, prefer [`asyncio.timeout()`][asyncio-timeout]. It works on blocks, composes
+with [`TaskGroup`][taskgroup], and has clear scoping. `wait_for()` is useful at API
 boundaries where you are wrapping a single coroutine call and want a concise
 one-liner -- particularly in library code where you do not control what the
 caller does before or after.
@@ -392,9 +392,9 @@ caller does before or after.
 
 `wait_for()` has a subtle edge case. When the timeout fires, `wait_for()`
 cancels the wrapped task and waits for it to finish. If the wrapped coroutine
-catches `CancelledError` and *suppresses* it (returns a value instead of
+catches [`CancelledError`][cancellederror] and *suppresses* it (returns a value instead of
 re-raising), `wait_for()` may return that value instead of raising
-`TimeoutError`. Your code thinks the operation succeeded when it actually
+[`TimeoutError`][timeouterror]. Your code thinks the operation succeeded when it actually
 timed out.
 
 ```python title="wait_for_gotcha.py"
@@ -427,23 +427,23 @@ if __name__ == "__main__":
 Got: fallback result
 ```
 
-The coroutine swallowed `CancelledError` and returned a string. `wait_for()`
+The coroutine swallowed [`CancelledError`][cancellederror] and returned a string. `wait_for()`
 saw the task complete "successfully" and returned the result. This is
-another reason to never suppress `CancelledError` -- the
-[Cancellation and Timeouts](../everyday-asyncio/cancellation-and-timeouts.md)
+another reason to never suppress [`CancelledError`][cancellederror] -- the
+[Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md)
 section in Chapter 1 explains this rule in detail.
 
 !!! note
 
-    `asyncio.timeout()` does not have this problem. It cancels the *current
-    task*, so the `CancelledError` propagates through the entire call
-    chain. The context manager then converts it to `TimeoutError` at the
+    [`asyncio.timeout()`][asyncio-timeout] does not have this problem. It cancels the *current
+    task*, so the [`CancelledError`][cancellederror] propagates through the entire call
+    chain. The context manager then converts it to [`TimeoutError`][timeouterror] at the
     `async with` boundary. There is no intermediate task whose completion
     state can hide the cancellation.
 
 ### Passing `timeout=None`
 
-Like `asyncio.timeout()`, passing `None` as the timeout disables it entirely.
+Like [`asyncio.timeout()`][asyncio-timeout], passing `None` as the timeout disables it entirely.
 This is useful when the timeout value comes from configuration:
 
 ```python
@@ -451,10 +451,10 @@ deadline: float | None = config.get("query_timeout")  # might be None
 result = await asyncio.wait_for(slow_query("SELECT *"), timeout=deadline)
 ```
 
-## When to Use These Instead of `TaskGroup`
+## When to Use These Instead of [`TaskGroup`][taskgroup]
 
-Use `TaskGroup` by default. Reach for the tools in this section only when
-`TaskGroup`'s all-or-nothing contract does not fit your problem.
+Use [`TaskGroup`][taskgroup] by default. Reach for the tools in this section only when
+[`TaskGroup`][taskgroup]'s all-or-nothing contract does not fit your problem.
 
 Here is a quick decision guide:
 
@@ -477,22 +477,33 @@ without requiring the caller to set up a context manager.
   Use `asyncio.wait_for(coro, timeout=n)`.
 
 **Dynamic task sets.** You have a long-lived loop that adds and removes tasks
-over time -- a connection pool, a task scheduler, a supervisor. `TaskGroup`
+over time -- a connection pool, a task scheduler, a supervisor. [`TaskGroup`][taskgroup]
 expects a fixed scope; `wait()` with `FIRST_COMPLETED` lets you run a
 continuous select-loop over a changing set of tasks.
 
-  Use `asyncio.wait()` in a loop, adding new tasks and removing done ones
+  Use [`asyncio.wait()`][asyncio-wait] in a loop, adding new tasks and removing done ones
   each iteration.
 
 **Everything else.** Bounded concurrent work where all tasks must succeed or
-the group fails? That is `TaskGroup`.
+the group fails? That is [`TaskGroup`][taskgroup].
 
 !!! tip
 
     If you find yourself reaching for `wait()` or `as_completed()` in
-    application code, ask yourself: "Am I doing this because `TaskGroup`
-    cannot express this pattern, or because I did not know `TaskGroup`
-    could?" Nine times out of ten, `TaskGroup` is the better choice. The
+    application code, ask yourself: "Am I doing this because [`TaskGroup`][taskgroup]
+    cannot express this pattern, or because I did not know [`TaskGroup`][taskgroup]
+    could?" Nine times out of ten, [`TaskGroup`][taskgroup] is the better choice. The
     tenth time, these tools are indispensable.
 
 ---
+
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-wait]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait
+[asyncio-as-completed]: https://docs.python.org/3/library/asyncio-task.html#asyncio.as_completed
+[asyncio-wait-for]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
+[asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[await]: https://docs.python.org/3/reference/expressions.html#await

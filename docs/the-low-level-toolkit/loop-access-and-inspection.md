@@ -8,20 +8,20 @@ description: >-
 
 # Loop Access and Inspection
 
-Most async code never touches the event loop directly. You `await` coroutines,
-create tasks through a `TaskGroup`, and let `asyncio.run()` manage the loop's
+Most async code never touches the event loop directly. You [`await`][await] coroutines,
+create tasks through a [`TaskGroup`][taskgroup], and let [`asyncio.run()`][asyncio-run] manage the loop's
 lifecycle. But if you are writing a library, a framework, or a bridge to
 non-async code, there are times you need the loop object itself -- to schedule
 a callback, create a bare future, or run something in an executor. This
 section covers how to get the loop, how to inspect it, and how to see what
 tasks are currently alive.
 
-## `asyncio.get_running_loop()`
+## [`asyncio.get_running_loop()`][asyncio-get-running-loop]
 
-[`asyncio.get_running_loop()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop)
+[`asyncio.get_running_loop()`][asyncio-get-running-loop]
 is the only way you should obtain the event loop. Call it from inside a
 running coroutine and it returns the loop that is currently executing. Call it
-from outside -- before `asyncio.run()` starts, or from a plain thread with no
+from outside -- before [`asyncio.run()`][asyncio-run] starts, or from a plain thread with no
 loop -- and it raises `RuntimeError`.
 
 ```python title="get_loop.py"
@@ -51,16 +51,16 @@ you ask for the running loop and you get it, or you get an exception.
 In day-to-day application code, you rarely need the loop object. The cases
 where you do are almost all low-level:
 
-- **`loop.run_in_executor()`** -- to run blocking code in a custom
-  `ProcessPoolExecutor` (for a plain `ThreadPoolExecutor`,
-  [`asyncio.to_thread()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread)
+- **[`loop.run_in_executor()`][loop-run-in-executor]** -- to run blocking code in a custom
+  [`ProcessPoolExecutor`][processpoolexecutor] (for a plain [`ThreadPoolExecutor`][threadpoolexecutor],
+  [`asyncio.to_thread()`][asyncio-to-thread]
   is simpler).
-- **`loop.create_future()`** -- to create a bare
-  [`Future`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future)
+- **[`loop.create_future()`][loop-create-future]** -- to create a bare
+  [`Future`][future]
   for manual result resolution in protocol or callback-style code.
-- **`loop.call_soon()` / `loop.call_later()` / `loop.call_at()`** -- to
+- **[`loop.call_soon()`][loop-call-soon] / `loop.call_later()` / `loop.call_at()`** -- to
   schedule plain callbacks instead of coroutines.
-- **`loop.call_soon_threadsafe()`** -- to push work onto the event loop from
+- **[`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe]** -- to push work onto the event loop from
   another thread.
 
 If none of these apply, you do not need the loop.
@@ -72,9 +72,9 @@ programming in library code:
 
 - **`loop.is_running()`** -- returns `True` if the loop is currently executing
   callbacks. Inside a coroutine this is always `True`; it is mainly useful in
-  library teardown code that might run after `asyncio.run()` returns.
+  library teardown code that might run after [`asyncio.run()`][asyncio-run] returns.
 - **`loop.is_closed()`** -- returns `True` after someone has called
-  `loop.close()`. A closed loop cannot be restarted. Calling any scheduling
+  [`loop.close()`][loop-close]. A closed loop cannot be restarted. Calling any scheduling
   method on a closed loop raises `RuntimeError`.
 
 A practical use case: a library that holds a reference to the loop (for
@@ -107,10 +107,10 @@ class ConnectionPool:
 
 Two module-level functions let you see what tasks exist at any point in time:
 
-- [`asyncio.current_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.current_task)
-  -- returns the `Task` that is currently executing, or `None` if called from
+- [`asyncio.current_task()`][asyncio-current-task]
+  -- returns the [`Task`][task] that is currently executing, or `None` if called from
   a callback or from outside a task.
-- [`asyncio.all_tasks()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks)
+- [`asyncio.all_tasks()`][asyncio-all-tasks]
   -- returns a `set` of all tasks that are not yet done on the running loop.
   The set includes the current task.
 
@@ -166,7 +166,7 @@ application is doing.
 
 !!! tip
 
-    `asyncio.all_tasks()` is what `asyncio.run()` calls during
+    [`asyncio.all_tasks()`][asyncio-all-tasks] is what [`asyncio.run()`][asyncio-run] calls during
     [shutdown](../how-asyncio-works/shutdown-sequence.md) to find and cancel
     leftover tasks. If you ever need to implement a similar
     graceful-shutdown routine yourself, this is the function to reach for.
@@ -180,12 +180,12 @@ these functions:
 - `asyncio.set_event_loop()`
 - `asyncio.set_event_loop_policy()` / custom event loop policies
 
-Forget they exist. They date from a time before `asyncio.run()`, when you
+Forget they exist. They date from a time before [`asyncio.run()`][asyncio-run], when you
 had to create and manage the loop manually. In modern Python (3.10+),
 `get_event_loop()` emits a `DeprecationWarning` when no loop is running, and
 the entire policy system is a relic of an era when swapping event loop
 implementations (uvloop, Proactor on Windows) required global mutation at
-startup. Today, `asyncio.run()` accepts a `loop_factory` parameter if you
+startup. Today, [`asyncio.run()`][asyncio-run] accepts a `loop_factory` parameter if you
 need a custom loop:
 
 ```python
@@ -199,3 +199,20 @@ That single keyword argument replaces the entire policy machinery. Inside
 your running program, `get_running_loop()` is the only accessor you need.
 
 ---
+
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[asyncio-get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop
+[loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+[processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+[threadpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[loop-call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
+[loop-call-soon-threadsafe]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe
+[loop-close]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.close
+[asyncio-current-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.current_task
+[task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[asyncio-all-tasks]: https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks

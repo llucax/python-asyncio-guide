@@ -8,28 +8,28 @@ description: >-
 
 # Asyncio: A Concept-First Learning Guide
 
-This is a general-purpose learning guide for Python's built-in `asyncio`.
+This is a general-purpose learning guide for Python's built-in [`asyncio`][asyncio].
 
 The structure and teaching style are inspired by
-[Trio's excellent documentation](https://trio.readthedocs.io/en/stable/).
-Trio deliberately designs for structured concurrency and cancellation
-ergonomics. If you can adopt Trio, it is often a great choice. But many
-codebases cannot switch away from the standard library. `asyncio` is widely
+[Trio's excellent documentation][trio-docs].
+[Trio][trio-docs] deliberately designs for structured concurrency and cancellation
+ergonomics. If you can adopt [Trio][trio-docs], it is often a great choice. But many
+codebases cannot switch away from the standard library. [`asyncio`][asyncio] is widely
 deployed, and this guide aims to fill the gap in high-quality learning
 resources for it.
 
 This guide complements the
-[official asyncio documentation](https://docs.python.org/3/library/asyncio.html);
-it does not replace it. When this guide mentions a concrete `asyncio` API, it
+[official asyncio documentation][official-asyncio-documentation];
+it does not replace it. When this guide mentions a concrete [`asyncio`][asyncio] API, it
 links to the corresponding page in the Python docs.
 
 ## Who This Is For
 
-- You know Python, but `async`/`await` still feels slippery.
-- You've written small `asyncio` snippets, or just simple async functions
+- You know Python, but [`async`][async]/[`await`][await] still feels slippery.
+- You've written small [`asyncio`][asyncio] snippets, or just simple async functions
   filling the gaps when using a framework (like a web framework), and now need
   full, robust, maintainable async programs.
-- You want modern, structured patterns (`TaskGroup`, timeouts, explicit
+- You want modern, structured patterns ([`TaskGroup`][taskgroup], timeouts, explicit
   lifetimes).
 
 ## Prerequisites
@@ -41,8 +41,8 @@ threads or event loops -- we build up the mental model from scratch.
 
 ### Python Version
 
-This guide assumes **Python 3.11 or newer**. It uses `asyncio.TaskGroup`,
-`asyncio.timeout()`, and other modern APIs throughout without version guards.
+This guide assumes **Python 3.11 or newer**. It uses [`asyncio.TaskGroup`][asyncio-taskgroup],
+[`asyncio.timeout()`][asyncio-timeout], and other modern APIs throughout without version guards.
 
 ## How To Read This Guide
 
@@ -63,16 +63,16 @@ consolidated best practices, and a debugging guide.
 
 ## Chapters
 
-1. [Everyday Asyncio](everyday-asyncio/index.md) — `asyncio.run()`,
-   coroutines, `TaskGroup`, `asyncio.timeout()`, `Event`, `Queue`, and
+1. [The Basics](the-basics/index.md) — [`asyncio.run()`][asyncio-run],
+   coroutines, [`TaskGroup`][taskgroup], [`asyncio.timeout()`][asyncio-timeout], [`Event`][event], [`Queue`][queue], and
    everything you need for day-to-day async programming.
 
-2. [Beyond the Basics](beyond-the-basics/index.md) — `asyncio.to_thread()`,
+2. [Beyond the Basics](beyond-the-basics/index.md) — [`asyncio.to_thread()`][asyncio-to-thread],
    `shield()`, subprocesses, async context managers, advanced synchronization,
-   and `asyncio.Runner`.
+   and [`asyncio.Runner`][asyncio-runner].
 
 3. [How Asyncio Works](how-asyncio-works/index.md) — the event loop model,
-   `asyncio.Future`, `asyncio.Task`, task lifecycle, and the full cancellation
+   [`asyncio.Future`][asyncio-future], [`asyncio.Task`][asyncio-task], task lifecycle, and the full cancellation
    mechanics.
 
 4. [The Low-Level Toolkit](the-low-level-toolkit/index.md) —
@@ -92,3 +92,19 @@ consolidated best practices, and a debugging guide.
 
 - [Debugging Guide](appendices/debugging.md) — practical techniques for
   diagnosing blocked loops, task leaks, timeout failures, and more.
+
+[asyncio]: https://docs.python.org/3/library/asyncio.html
+[official-asyncio-documentation]: https://docs.python.org/3/library/asyncio.html
+[async]: https://docs.python.org/3/reference/compound_stmts.html#async-def
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
+[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
+[asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[trio-docs]: https://trio.readthedocs.io/en/stable/

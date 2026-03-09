@@ -56,10 +56,49 @@ edit_uri = "edit/v0.x.x/docs/"
 # can be defined using TOML syntax.
 #
 # Read more: https://zensical.org/docs/setup/navigation/
-# nav = [
-#   { "Get started" = "index.md" },
-#   { "Markdown in 5min" = "markdown.md" },
-# ]
+nav = [
+  { "Home" = "index.md" },
+  { "The Basics" = [
+    "the-basics/index.md",
+    "the-basics/getting-started.md",
+    "the-basics/concurrent-tasks.md",
+    "the-basics/cancellation-and-timeouts.md",
+    "the-basics/resource-management.md",
+    "the-basics/streams.md",
+    "the-basics/coordination.md",
+    "the-basics/building-a-pipeline.md",
+    "the-basics/debugging.md",
+  ]},
+  { "Beyond the Basics" = [
+    "beyond-the-basics/index.md",
+    "beyond-the-basics/blocking-code.md",
+    "beyond-the-basics/shielding.md",
+    "beyond-the-basics/custom-context-managers.md",
+    "beyond-the-basics/advanced-coordination.md",
+    "beyond-the-basics/subprocesses.md",
+    "beyond-the-basics/runner.md",
+  ]},
+  { "How Asyncio Works" = [
+    "how-asyncio-works/index.md",
+    "how-asyncio-works/the-event-loop.md",
+    "how-asyncio-works/tasks-and-futures.md",
+    "how-asyncio-works/cancellation-internals.md",
+    "how-asyncio-works/shutdown-sequence.md",
+  ]},
+  { "The Low-Level Toolkit" = [
+    "the-low-level-toolkit/index.md",
+    "the-low-level-toolkit/loop-access-and-inspection.md",
+    "the-low-level-toolkit/task-coordination.md",
+    "the-low-level-toolkit/futures.md",
+    "the-low-level-toolkit/callbacks-and-threading.md",
+    "the-low-level-toolkit/transports-and-protocols.md",
+  ]},
+  { "Appendices" = [
+    "appendices/checkpoint-contract.md",
+    "appendices/best-practices.md",
+    "appendices/debugging.md",
+  ]},
+]
 
 # With the "extra_css" option you can add your own CSS styling to customize
 # your Zensical project according to your needs. You can add any number of
@@ -345,13 +384,46 @@ toggle.name = "Switch to light mode"
 # [project.markdown_extensions.pymdownx.tilde]
 #
 # See https://zensical.org/docs/setup/extensions/
+#
+# IMPORTANT: Defining ANY extension here overrides ALL defaults.  We must
+# therefore explicitly list every extension we need, including those that
+# would otherwise be included by default.
 # ----------------------------------------------------------------------------
+
+# --- Standard Markdown extensions ---
+[project.markdown_extensions.abbr]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.def_list]
+[project.markdown_extensions.footnotes]
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+# --- PyMdownx extensions ---
+[project.markdown_extensions.pymdownx.betterem]
+smart_enable = "all"
+
 [project.markdown_extensions.pymdownx.blocks.caption]
+
+[project.markdown_extensions.pymdownx.caret]
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.emoji]
+emoji_generator = "zensical.extensions.emoji.to_svg"
+emoji_index = "zensical.extensions.emoji.twemoji"
+
 [project.markdown_extensions.pymdownx.highlight]
 anchor_linenums = true
 line_spans = "__span"
 linenums = true
 pygments_lang_class = true
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+[project.markdown_extensions.pymdownx.keys]
+[project.markdown_extensions.pymdownx.mark]
+[project.markdown_extensions.pymdownx.smartsymbols]
 
 [project.markdown_extensions.pymdownx.snippets]
 check_paths = true
@@ -361,9 +433,17 @@ custom_fences = [
   { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
 ]
 
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
 [project.markdown_extensions.pymdownx.tabbed.slugify]
 object = "pymdownx.slugs.slugify"
 kwds = { case = "lower" }
+
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
+
+[project.markdown_extensions.pymdownx.tilde]
 
 # ----------------------------------------------------------------------------
 # The "extra" section contains miscellaneous settings.

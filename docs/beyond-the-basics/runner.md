@@ -9,7 +9,7 @@ description: >-
 # Runner
 
 Every example in this guide ends the same way:
-[`asyncio.run(main())`](../everyday-asyncio/getting-started.md#coroutines-and-asynciorun).
+[`asyncio.run(main())`](../the-basics/getting-started.md#coroutines-and-asynciorun).
 That call creates a fresh event loop, runs your coroutine to completion, and
 tears the loop down. One shot, one loop. Most of the time that is exactly
 what you want.
@@ -17,11 +17,11 @@ what you want.
 But sometimes you need to run *several* top-level coroutines on the *same*
 loop -- without building them all into a single `main()`. Maybe you are
 driving async code from a synchronous test harness, experimenting in a REPL,
-or orchestrating setup/work/teardown steps that each need `await`. For this,
+or orchestrating setup/work/teardown steps that each need [`await`][await]. For this,
 Python 3.11 added
-[`asyncio.Runner`](https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner).
+[`asyncio.Runner`][asyncio-runner].
 
-## Using `asyncio.Runner`
+## Using [`asyncio.Runner`][asyncio-runner]
 
 `Runner` is a context manager that holds an event loop open for as long as you
 need it. Inside the `with` block you call `runner.run()` as many times as you
@@ -56,7 +56,7 @@ Both coroutines ran on the same event loop. Any state tied to that loop --
 cached connections, background tasks, async generators -- survives between
 calls.
 
-Compare this to calling `asyncio.run()` twice:
+Compare this to calling [`asyncio.run()`][asyncio-run] twice:
 
 ```python
 # two_runs.py  (works, but creates two separate loops)
@@ -79,11 +79,11 @@ This creates two loops. Any loop-bound state from the first call is gone by
 the second. For trivial examples that is fine, but it matters when you have
 resources that live on the loop.
 
-## When Runner Beats `asyncio.run()`
+## When Runner Beats [`asyncio.run()`][asyncio-run]
 
 **Shared state across coroutines.** If you initialize a connection pool in
 your first coroutine, a `Runner` keeps that pool alive for subsequent calls.
-With separate `asyncio.run()` calls the pool would be created and destroyed
+With separate [`asyncio.run()`][asyncio-run] calls the pool would be created and destroyed
 each time.
 
 ```python title="runner_shared_state.py"
@@ -188,15 +188,15 @@ def test_fetch_double(runner: asyncio.Runner) -> None:
 ## `Runner.close()`
 
 When the `with` block exits, `Runner.close()` is called automatically. It
-does the same cleanup that `asyncio.run()` does at the end of its single
+does the same cleanup that [`asyncio.run()`][asyncio-run] does at the end of its single
 call (see [Shutdown Sequence](../how-asyncio-works/shutdown-sequence.md)
 for the full details):
 
 1. Cancels all remaining tasks.
 2. Shuts down all async generators
-   ([`shutdown_asyncgens`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_asyncgens)).
+   ([`shutdown_asyncgens`][shutdown-asyncgens]).
 3. Shuts down the default executor
-   ([`shutdown_default_executor`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_default_executor)).
+   ([`shutdown_default_executor`][shutdown-default-executor]).
 4. Closes the event loop.
 
 You can also call `runner.close()` manually if you are not using the context
@@ -210,3 +210,9 @@ cleanup even if an exception is raised.
     `Runner`.
 
 ---
+
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
+[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[shutdown-asyncgens]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_asyncgens
+[shutdown-default-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_default_executor

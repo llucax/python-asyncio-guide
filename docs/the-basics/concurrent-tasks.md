@@ -9,16 +9,24 @@ description: >-
 # Concurrent Tasks
 
 This is where asyncio gets interesting. Everything in the previous section was
-sequential -- one coroutine, one `await` at a time, no overlap. The whole
-reason you reached for asyncio is to do multiple things at once. This section
-introduces *structured concurrency* with
-[`asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup),
-the safe, modern way to run concurrent tasks.
+sequential -- one coroutine, one [`await`][await] at a time, no overlap. The
+whole reason you reached for asyncio is to do multiple things at once. This
+section introduces *structured concurrency* with
+[`asyncio.TaskGroup`][asyncio-taskgroup], the safe, modern way to run
+concurrent tasks.
+
+## What is a Task?
+
+As seen in the [previous section](getting-started.md), a
+[loop](getting-started.md#the-event-loop) is needed to *drive* coroutines. Each
+corouting running independently needs some state to keep track of it --
+whether it's done, its return value when it's done, if it ended with an
+uncaught exception, etc. A *task* is a coroutine with its associated state.
 
 ## The Problem with Fire-and-Forget
 
-Before `TaskGroup` existed, the way to launch concurrent work was
-[`asyncio.create_task()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task).
+Before [`TaskGroup`][taskgroup] existed, the way to launch concurrent work was
+[`asyncio.create_task()`][asyncio-create-task].
 It still exists, and you will see it in older code:
 
 ```python title="fire_and_forget.py"
@@ -50,19 +58,20 @@ ValueError: Failed to fetch https://example.com/bad
 `main()` finished after half a second, abandoning both tasks. The `ValueError`
 went uncaught -- just a warning in the logs. This pattern has three problems:
 
-1. **Lost references.** Without storing the `Task` object you cannot await it,
+1. **Lost references.** Without storing the [`Task`][task] object you cannot await it,
    check its result, or cancel it.
 2. **Swallowed exceptions.** An orphaned task that raises produces a log
    warning, but your program keeps running as if nothing happened.
 3. **Unclear lifetime.** When does the task finish? What happens when `main()`
    returns? The answer is "it depends."
 
-!!! danger
+!!! tip
 
-    **Forget that `asyncio.create_task()` exists.** For the rest of this guide,
-    you will never use it directly. Every task will be created inside a
-    `TaskGroup`, which solves all three problems above. If you see bare
-    `create_task()` in a code review, treat it as a red flag.
+    **Forget that [`asyncio.create_task()`][asyncio-create-task] exists.** For
+    the rest of this guide, you will never use it directly. Every task will be
+    created inside a [`TaskGroup`][taskgroup], which solves all three problems
+    above. If you see bare [`create_task()`][create-task] in a code review,
+    treat it as a red flag.
 
 ## Structured Concurrency
 
@@ -71,22 +80,23 @@ an owner, and the owner cannot move on until all its tasks are done.** Just as
 you don't use `goto` to jump out of a function, you don't launch tasks that
 outlive their scope.
 
-When you open a `TaskGroup`, you create a scope. Tasks spawned inside it are
-*children* of the group. The `async with` block will not exit until every
-child has finished -- whether successfully, by raising, or by being cancelled.
-No orphans, no forgotten work, no swallowed errors.
+When you open a [`TaskGroup`][taskgroup], you create a scope. Tasks spawned
+inside it are *children* of the group. The `async with` block will not exit
+until every child has finished -- whether successfully, by raising, or by being
+cancelled. No orphans, no forgotten work, no swallowed errors.
 
 !!! tip "Trio users"
 
-    `TaskGroup` is asyncio's nursery. `tg.create_task(coro)` is
-    equivalent to `nursery.start_soon(async_fn, *args)`, except it takes a
+    [`TaskGroup`][taskgroup] is asyncio's [nursery][trio-open-nursery].
+    [`tg.create_task(coro)`][tg-create-task] is equivalent to
+    [`nursery.start_soon(async_fn, *args)`][trio-start-soon], except it takes a
     coroutine object rather than a callable plus arguments.
 
-## `asyncio.TaskGroup`
+## [`asyncio.TaskGroup`][asyncio-taskgroup]
 
-Here is the basic pattern. Create a `TaskGroup` with `async with`, spawn
-tasks with `tg.create_task()`, and when the block ends all tasks are
-guaranteed complete:
+Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with `async with`,
+spawn tasks with [`tg.create_task()`][tg-create-task], and when the block ends
+all tasks are guaranteed complete:
 
 ```python title="taskgroup_basic.py"
 import asyncio
@@ -122,58 +132,57 @@ All greetings done.
 ```
 
 Notice that Bob greets first because his delay is shorter -- both tasks ran
-concurrently. The line after the `async with` block only executes once *both*
+concurrently. The line after the `#!py async with` block only executes once *both*
 tasks have completed. No orphans.
 
 ## Execution Trace
 
 Here is exactly what happens inside the event loop, step by step:
 
-1. `asyncio.run(main())` creates the event loop and schedules `main()`.
-2. `main()` runs. It enters the `async with asyncio.TaskGroup() as tg:`
+1. `#!py asyncio.run(main())` creates the event loop and schedules `main()`.
+2. `#!py main()` runs. It enters the `async with asyncio.TaskGroup() as tg:`
    block, creating a new task group.
-3. `tg.create_task(greet("Alice", 1.0))` puts Alice's coroutine on the
-   ready queue as a task. `tg.create_task(greet("Bob", 0.5))` does the
+3. `#!py tg.create_task(greet("Alice", 1.0))` puts Alice's coroutine on the
+   ready queue as a task. `#!py tg.create_task(greet("Bob", 0.5))` does the
    same for Bob. Neither has started yet.
-4. `print("Tasks are running...")` executes -- this is synchronous code
+4. `#!py print("Tasks are running...")` executes -- this is synchronous code
    inside the `async with` block, so it runs immediately.
-5. Execution reaches the end of the `async with` block. The `TaskGroup`
+5. Execution reaches the end of the `#!py async with` block. The [`TaskGroup`][taskgroup]
    now waits for all its children to complete. `main()` suspends.
 6. The loop picks Alice's task (first scheduled). Alice hits
    `await asyncio.sleep(1.0)` and suspends -- the loop sets a 1-second
    timer.
-7. The loop picks Bob's task. Bob hits `await asyncio.sleep(0.5)` and
+7. The loop picks Bob's task. Bob hits `#!py await asyncio.sleep(0.5)` and
    suspends -- the loop sets a 0.5-second timer.
 8. Both tasks are now waiting. The loop calls the OS to wait for the
    next timer.
 9. After 0.5 seconds, Bob's timer fires. Bob resumes, prints
-   `"Hello, Bob!"`, returns, and his task is marked done.
+   `#!py "Hello, Bob!"`, returns, and his task is marked done.
 10. After another 0.5 seconds (1.0 s total), Alice's timer fires. Alice
-    resumes, prints `"Hello, Alice!"`, returns, and her task is marked
+    resumes, prints `#!py "Hello, Alice!"`, returns, and her task is marked
     done.
-11. All children are done, so the `TaskGroup` unblocks. `main()` resumes
-    and prints `"All greetings done."`.
-12. `main()` returns and `asyncio.run()` tears down the loop.
+11. All children are done, so the [`TaskGroup`][taskgroup] unblocks. `main()` resumes
+    and prints `#!py "All greetings done."`.
+12. `#!py main()` returns and [`asyncio.run()`][asyncio-run] tears down the loop.
 
-Nothing happens "at the same time." Tasks take turns at `await` points
+Nothing happens *at the same time*. Tasks take turns at [`await`][await] points
 on a single thread. Bob finishes first because his timer is shorter, but
 both tasks were on the loop's schedule simultaneously -- that is the
 concurrency.
 
-`tg.create_task()` returns an
-[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)
+[`tg.create_task()`][tg-create-task] returns an [`asyncio.Task`][asyncio-task]
 object. Store it if you need the return value (you will get to that shortly),
 or ignore it if you only care about the side effects.
 
 !!! info
 
-    You can only call `tg.create_task()` inside the `async with` block. Once the
-    block is exiting (either normally or due to an exception), the group stops
-    accepting new tasks.
+    You can only call [`tg.create_task()`][tg-create-task] inside the `async
+    with` block. Once the block is exiting (either normally or due to an
+    exception), the group stops accepting new tasks.
 
 ## Sibling Cancellation
 
-What happens when one child task fails? The `TaskGroup` cancels all surviving
+What happens when one child task fails? The [`TaskGroup`][taskgroup] cancels all surviving
 siblings and raises the exception. This is *sibling cancellation*.
 
 ```python title="sibling_cancel.py" hl_lines="9"
@@ -210,26 +219,26 @@ slow_worker: I was cancelled!
 Caught errors: (RuntimeError('Something went wrong'),)
 ```
 
-The `fast_failure` task raised after 0.1 seconds. The `TaskGroup` cancelled
-`slow_worker`, which caught `CancelledError` and re-raised (as it should --
-never swallow `CancelledError`). Then the group wrapped the `RuntimeError` in
-an `ExceptionGroup` and raised it.
+The `fast_failure` task raised after 0.1 seconds. The [`TaskGroup`][taskgroup] cancelled
+`slow_worker`, which caught [`CancelledError`][cancellederror] and re-raised (as it should --
+never swallow [`CancelledError`][cancellederror]). Then the group wrapped the `RuntimeError` in
+an [`ExceptionGroup`][exceptiongroup] and raised it.
 
-The deep mechanics of cancellation -- `CancelledError` propagation, shielding,
+The deep mechanics of cancellation -- [`CancelledError`][cancellederror] propagation, shielding,
 timeouts -- belong in the [next section](cancellation-and-timeouts.md). For
 now, remember: **if one child fails, the others don't keep running in the
 dark.**
 
-## `ExceptionGroup` and `except*`
+## [`ExceptionGroup`][exceptiongroup] and [`except*`][except]
 
-You might have noticed the `except*` syntax above. When a `TaskGroup` has
+You might have noticed the [`except*`][except] syntax above. When a [`TaskGroup`][taskgroup] has
 failures, it raises an
-[`ExceptionGroup`](https://docs.python.org/3/library/exceptions.html#ExceptionGroup)
+[`ExceptionGroup`][exceptiongroup]
 -- a container holding one or more exceptions from the failed children. This
 is necessary because multiple children can fail simultaneously.
 
 The
-[`except*` syntax](https://docs.python.org/3/reference/compound_stmts.html#the-try-statement)
+[`except*`][except] syntax
 (introduced in [PEP 654](https://peps.python.org/pep-0654/)) lets you handle
 specific exception types inside the group:
 
@@ -271,28 +280,28 @@ Handled TypeError|RuntimeError: wrong type
 Handled TypeError|RuntimeError: runtime problem
 ```
 
-A few things to note: multiple `except*` clauses can each match a *subset* of
+A few things to note: multiple [`except*`][except] clauses can each match a *subset* of
 the exceptions. Every exception gets routed to exactly one matching clause. If
 any exceptions are *not* matched, they propagate upward as a new
-`ExceptionGroup`.
+[`ExceptionGroup`][exceptiongroup].
 
 !!! warning
 
-    You cannot mix `except` and `except*` in the same `try` block. If you use
-    `except*`, all handlers in that block must use the starred form. This is a
-    syntax rule enforced by the compiler.
+    You cannot mix `except` and [`except*`][except] in the same `try` block. If you use
+    [`except*`][except], all handlers in that block must use the starred form. This is a
+    syntax rule enforced by the Python interpreter.
 
 !!! note
 
-    If only a single child fails, the `TaskGroup` still wraps the exception in
-    an `ExceptionGroup`. You always get a group, even if it contains just one
+    If only a single child fails, the [`TaskGroup`][taskgroup] still wraps the exception in
+    an [`ExceptionGroup`][exceptiongroup]. You always get a group, even if it contains just one
     item. This keeps the handling uniform.
 
 ## Collecting Results
 
 In many cases you want return values from your concurrent tasks, not just side
-effects. The pattern is straightforward: store the `Task` handles from
-`tg.create_task()`, then call `.result()` after the `async with` block:
+effects. The pattern is straightforward: store the [`Task`][task] handles from
+[`tg.create_task()`][tg-create-task], then call `.result()` after the `async with` block:
 
 ```python title="collect_results.py"
 import asyncio
@@ -334,8 +343,8 @@ https://example.com/page3 -> 40 chars
 
 All three fetches ran concurrently (total wall time ~0.5s, not ~1.5s). After
 the `async with` block, every task is guaranteed complete, so `.result()`
-returns immediately. If any task had failed, the `TaskGroup` would have raised
-an `ExceptionGroup` before you ever reach the `.result()` calls.
+returns immediately. If any task had failed, the [`TaskGroup`][taskgroup] would have raised
+an [`ExceptionGroup`][exceptiongroup] before you ever reach the `.result()` calls.
 
 !!! tip
 
@@ -345,7 +354,7 @@ an `ExceptionGroup` before you ever reach the `.result()` calls.
 
 ## Nested TaskGroups
 
-`TaskGroup`s can be nested, and each group is an independent scope. This is
+[`TaskGroup`][taskgroup]s can be nested, and each group is an independent scope. This is
 useful when a piece of work is itself composed of concurrent sub-steps but
 should be treated as a single unit from the parent's perspective.
 
@@ -379,7 +388,7 @@ Batch 2: ['x-data', 'y-data', 'z-data']
 All batches complete.
 ```
 
-The outer group owns two batch tasks. Each batch creates its own `TaskGroup`
+The outer group owns two batch tasks. Each batch creates its own [`TaskGroup`][taskgroup]
 for concurrent downloads. If a download in batch 1 fails, it cancels the
 other downloads *in batch 1*. The failure then propagates to the outer group,
 which cancels batch 2 -- sibling cancellation applies at every level.
@@ -387,7 +396,7 @@ which cancels batch 2 -- sibling cancellation applies at every level.
 ## Practical Example: Fan-Out Workers
 
 Let's put everything together. You have a list of jobs and you want to
-spread them across several concurrent workers using a `TaskGroup`. The
+spread them across several concurrent workers using a [`TaskGroup`][taskgroup]. The
 simplest approach: slice the work up front and hand each worker its own
 batch.
 
@@ -440,7 +449,7 @@ All results: ['alpha-done', 'delta-done', 'beta-done', 'epsilon-done', 'gamma-do
 ```
 
 Each worker runs its batch concurrently with the others inside the
-`TaskGroup`. If any worker raises, sibling cancellation kicks in -- the
+[`TaskGroup`][taskgroup]. If any worker raises, sibling cancellation kicks in -- the
 group cancels the rest and propagates the error, exactly as you saw earlier.
 
 !!! tip
@@ -459,19 +468,19 @@ become obvious:
 
 1. **Who owns the lifetime of this work?** Every task should have a
    clear owner -- something that will await it, cancel it, or handle
-   its exceptions. With `TaskGroup`, the answer is always "the group,"
+   its exceptions. With [`TaskGroup`][taskgroup], the answer is always "the group,"
    and the `async with` block is the boundary.
 
-2. **Where are the suspension points?** Every `await` is a place where
+2. **Where are the suspension points?** Every [`await`][await] is a place where
    your coroutine can pause and other tasks can run. Between two
-   `await`s, you have exclusive access to your local state -- no other
+   [`await`][await]s, you have exclusive access to your local state -- no other
    task can interleave.
 
 Try applying them to code you have already seen. Look at
-`tg.create_task(fetch_page(url))`: who owns that task? The `TaskGroup`.
-Where can it suspend? At every `await` inside `fetch_page` -- in this
+`tg.create_task(fetch_page(url))`: who owns that task? The [`TaskGroup`][taskgroup].
+Where can it suspend? At every [`await`][await] inside `fetch_page` -- in this
 case, `await asyncio.sleep(0.5)`. Between creating the task and the
-next `await`, no other task touches your variables.
+next [`await`][await], no other task touches your variables.
 
 Or look at the `worker` coroutine in the fan-out example: the code
 between `await asyncio.sleep(0.3)` and the next iteration of the loop
@@ -479,7 +488,7 @@ runs without interruption. You can safely append to `results` without
 worrying about another worker modifying it -- each worker has its own
 local list.
 
-With `TaskGroup`, the first question is always easy to answer. That is
+With [`TaskGroup`][taskgroup], the first question is always easy to answer. That is
 the whole point of structured concurrency: ownership is visible in the
 source code, not hidden in some global task registry.
 
@@ -488,3 +497,18 @@ of the guide. They apply everywhere -- cancellation, timeouts, queues,
 locks -- and they will save you from the most common async bugs.
 
 ---
+
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[exceptiongroup]: https://docs.python.org/3/library/builtins.html#ExceptionGroup
+[except]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
+[trio-open-nursery]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_nursery
+[trio-start-soon]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.Nursery.start_soon
+[tg-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup.create_task

@@ -19,11 +19,11 @@ finish, all without blocking.
 
 ## `create_subprocess_exec()`
 
-[`asyncio.create_subprocess_exec()`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_exec)
+[`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec]
 is the primary way to run an external command. You pass the program and its
 arguments as separate strings -- just like `subprocess.Popen` with a list --
 and get back a
-[`Process`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process)
+[`Process`][process]
 object:
 
 ```python title="subprocess_exec.py"
@@ -69,7 +69,7 @@ call returns both streams as `(stdout_bytes, stderr_bytes)`.
 
 ## `create_subprocess_shell()`
 
-[`asyncio.create_subprocess_shell()`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_shell)
+[`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell]
 runs a command through the system shell (`/bin/sh` on Unix, `cmd.exe` on
 Windows). You pass the entire command as a single string:
 
@@ -111,9 +111,9 @@ Prefer `create_subprocess_exec()` as your default. Reach for
 `create_subprocess_shell()` only when you genuinely need shell features like
 pipelines or glob expansion, and only with command strings you fully control.
 
-## `Process.communicate()`
+## [`Process.communicate()`][process-communicate]
 
-[`Process.communicate()`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.communicate)
+[`Process.communicate()`][process-communicate]
 is the workhorse method for subprocess interaction. It sends data to stdin (if
 provided), closes stdin so the child knows input is complete, reads all of
 stdout and stderr into memory, and waits for the process to exit. It returns
@@ -164,7 +164,7 @@ and writes can deadlock, `communicate()` cannot.
 Sometimes the child process runs for a long time and you want to process its
 output as it arrives rather than waiting for it to finish.
 `Process.stdout` and `Process.stderr` are
-[`StreamReader`](../everyday-asyncio/streams.md)
+[`StreamReader`](../the-basics/streams.md)
 objects when you open them with `PIPE`, so you can read line by line:
 
 ```python title="subprocess_streaming.py"
@@ -224,7 +224,7 @@ chunks instead of one at a time.
 Subprocesses can hang. A downstream service might stall, a command might wait
 for input you never send, or a bug might cause an infinite loop. Wrap
 subprocess operations in
-[`asyncio.timeout()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout)
+[`asyncio.timeout()`][asyncio-timeout]
 to enforce a deadline:
 
 ```python title="subprocess_timeout.py"
@@ -254,18 +254,18 @@ Timed out — killing process (pid 12345)
 Process killed, return code: -9
 ```
 
-When the timeout fires, `asyncio.timeout()` raises `TimeoutError`. At that
+When the timeout fires, [`asyncio.timeout()`][asyncio-timeout] raises [`TimeoutError`][timeouterror]. At that
 point the child process is still running -- the timeout cancelled your *await*,
 not the subprocess itself. You need to explicitly kill it with
-[`proc.kill()`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.kill)
+[`proc.kill()`][proc-kill]
 (sends `SIGKILL` on Unix) or
-[`proc.terminate()`](https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.terminate)
+[`proc.terminate()`][proc-terminate]
 (sends `SIGTERM` on Unix, giving the process a chance to clean up). After
 killing, you still need `await proc.wait()` to reap the process.
 
 !!! note
 
-    `proc.kill()` and `proc.terminate()` are *not* coroutines -- they send
+    [`proc.kill()`][proc-kill] and [`proc.terminate()`][proc-terminate] are *not* coroutines -- they send
     the signal immediately and return. The `await proc.wait()` afterward is
     what actually waits for the process to exit and collects its return
     code.
@@ -329,10 +329,10 @@ The pattern handles three cases:
 1. **Normal completion** -- `communicate()` finishes, you inspect the return
    code.
 2. **Cancellation** -- the parent task is
-   [cancelled](../everyday-asyncio/cancellation-and-timeouts.md) while
+   [cancelled](../the-basics/cancellation-and-timeouts.md) while
    waiting. You kill the
    child process, wait for it to actually exit, and re-raise.
-3. **Timeout** -- the `asyncio.timeout()` fires, and `TimeoutError` follows
+3. **Timeout** -- the [`asyncio.timeout()`][asyncio-timeout] fires, and [`TimeoutError`][timeouterror] follows
    the same cleanup path as cancellation.
 
 This `run_with_timeout` helper is a solid building block. Adapt it to your
@@ -342,8 +342,17 @@ needs -- add logging, check return codes, decode output -- but keep the
 !!! warning
 
     Do not rely on the garbage collector to clean up processes. On CPython,
-    a `Process` object going out of scope may eventually close its pipes,
+    a [`Process`][process] object going out of scope may eventually close its pipes,
     but the child process itself keeps running until explicitly waited on or
     killed. Explicit cleanup makes the behaviour deterministic.
 
 ---
+
+[asyncio-create-subprocess-exec]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_exec
+[process]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process
+[asyncio-create-subprocess-shell]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_shell
+[process-communicate]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.communicate
+[asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
+[proc-kill]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.kill
+[proc-terminate]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.subprocess.Process.terminate

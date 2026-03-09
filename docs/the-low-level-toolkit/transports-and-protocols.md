@@ -9,10 +9,10 @@ description: >-
 # Transports and Protocols
 
 In Chapter 1 you learned the
-[Streams API](../everyday-asyncio/streams.md) --
-`asyncio.open_connection()` and
-`asyncio.start_server()` give you a `StreamReader` and `StreamWriter` that you
-`await` like any other coroutine. That API is comfortable, familiar, and the
+[Streams API](../the-basics/streams.md) --
+[`asyncio.open_connection()`][asyncio-open-connection] and
+[`asyncio.start_server()`][asyncio-start-server] give you a `StreamReader` and `StreamWriter` that you
+[`await`][await] like any other coroutine. That API is comfortable, familiar, and the
 right choice for most networking code. But it is not the bottom of the stack.
 
 Underneath every `StreamReader` and `StreamWriter` sits a *transport* and a
@@ -23,8 +23,8 @@ convenience layer that wraps this pair into an async/await-friendly interface.
 
 This section gives you enough to understand the model and write a simple
 protocol. The full API surface is large -- for the complete reference, see the
-[official documentation on transports](https://docs.python.org/3/library/asyncio-transport.html)
-and [protocols](https://docs.python.org/3/library/asyncio-protocol.html).
+[official documentation on transports][official-documentation-on-transports]
+and [protocols][protocols].
 
 ## The Model
 
@@ -45,10 +45,10 @@ flowchart TB
 When a connection is established, asyncio creates a transport and a protocol,
 wires them together, and calls `protocol.connection_made(transport)`. From that
 point on, the protocol receives callbacks as data arrives, and uses the
-transport to send data back. There is no `await` in sight -- this is a purely
+transport to send data back. There is no [`await`][await] in sight -- this is a purely
 callback-driven model.
 
-The Streams API sits on top of this. When you call `asyncio.open_connection()`,
+The Streams API sits on top of this. When you call [`asyncio.open_connection()`][asyncio-open-connection],
 asyncio creates a transport/protocol pair internally, wraps them in a
 `StreamReader` and `StreamWriter`, and hands you the async/await interface.
 The protocol is still there -- you just never see it.
@@ -59,15 +59,15 @@ A transport is an object provided by asyncio -- you do not subclass it. It
 represents the I/O channel and exposes methods for writing data and controlling
 the connection. The hierarchy looks like this:
 
-- [`BaseTransport`](https://docs.python.org/3/library/asyncio-transport.html#asyncio.BaseTransport)
+- [`BaseTransport`][basetransport]
   -- common base. Methods: `close()`, `is_closing()`, `get_extra_info()`.
-- [`ReadTransport`](https://docs.python.org/3/library/asyncio-transport.html#asyncio.ReadTransport)
+- [`ReadTransport`][readtransport]
   -- adds `pause_reading()`, `resume_reading()`.
-- [`WriteTransport`](https://docs.python.org/3/library/asyncio-transport.html#asyncio.WriteTransport)
+- [`WriteTransport`][writetransport]
   -- adds `write()`, `writelines()`, `write_eof()`, `can_write_eof()`,
   `abort()`, `set_write_buffer_limits()`, `get_write_buffer_size()`.
-- [`Transport`](https://docs.python.org/3/library/asyncio-transport.html#asyncio.Transport)
-  -- combines `ReadTransport` and `WriteTransport`. This is the one you will
+- [`Transport`][transport]
+  -- combines [`ReadTransport`][readtransport] and [`WriteTransport`][writetransport]. This is the one you will
   interact with for TCP connections.
 
 The key methods you use day-to-day:
@@ -94,14 +94,14 @@ A protocol is the object *you* write. You subclass one of the protocol base
 classes and override the callbacks you care about. Asyncio provides several
 protocol bases:
 
-- [`asyncio.Protocol`](https://docs.python.org/3/library/asyncio-protocol.html#asyncio.Protocol)
+- [`asyncio.Protocol`][asyncio-protocol]
   -- for stream-oriented connections (TCP).
-- [`asyncio.DatagramProtocol`](https://docs.python.org/3/library/asyncio-protocol.html#asyncio.DatagramProtocol)
+- [`asyncio.DatagramProtocol`][asyncio-datagramprotocol]
   -- for connectionless transports (UDP).
-- [`asyncio.SubprocessProtocol`](https://docs.python.org/3/library/asyncio-protocol.html#asyncio.SubprocessProtocol)
+- [`asyncio.SubprocessProtocol`][asyncio-subprocessprotocol]
   -- for communicating with child processes via pipes.
 
-For TCP work, you subclass `asyncio.Protocol` and override three callbacks:
+For TCP work, you subclass [`asyncio.Protocol`][asyncio-protocol] and override three callbacks:
 
 - **`connection_made(transport)`** -- called once when the connection is
   established. Save the transport reference -- you will need it to send data.
@@ -168,21 +168,21 @@ hello
 ```
 
 Compare this with the echo server from
-[Streams](../everyday-asyncio/streams.md). The Streams version is a
+[Streams](../the-basics/streams.md). The Streams version is a
 coroutine with `await reader.readline()` and `await writer.drain()`. The
-protocol version is a class with callbacks -- no coroutines, no `await`. The
+protocol version is a class with callbacks -- no coroutines, no [`await`][await]. The
 protocol version is slightly more verbose, but it has zero per-message
 coroutine overhead.
 
-## `loop.create_connection()` and `loop.create_server()`
+## [`loop.create_connection()`][loop-create-connection] and `loop.create_server()`
 
 You have already seen `loop.create_server()` above. Both it and
-[`loop.create_connection()`](https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_connection)
+[`loop.create_connection()`][loop-create-connection]
 take a *protocol factory* -- a callable that returns a new protocol instance.
 Typically this is a `lambda` or a class reference.
 
 `loop.create_server()` creates a listening socket and calls the factory once
-per incoming connection. `loop.create_connection()` opens a client connection
+per incoming connection. [`loop.create_connection()`][loop-create-connection] opens a client connection
 and calls the factory once for the outgoing connection. Both return the
 transport and protocol:
 
@@ -227,10 +227,10 @@ if __name__ == "__main__":
 Received: 'Hello, protocol!\n'
 ```
 
-Notice the pattern: the client protocol uses a `Future` to signal completion
+Notice the pattern: the client protocol uses a [`Future`][future] to signal completion
 back to the coroutine world. This is the standard bridge between callback-based
 protocols and async/await code -- create a future, pass it into the protocol,
-and `await` it from your coroutine.
+and [`await`][await] it from your coroutine.
 
 !!! warning
 
@@ -274,10 +274,10 @@ stateDiagram-v2
 ```
 
 This is the same backpressure mechanism that drives `StreamWriter.drain()`.
-When you call `drain()` on a stream writer, it is checking whether the
+When you call [`drain()`][drain] on a stream writer, it is checking whether the
 underlying transport has asked the protocol to pause, and suspending your
 coroutine until `resume_writing()` fires. The streams API hides the callbacks
-behind an `await` -- but the machinery is the same.
+behind an [`await`][await] -- but the machinery is the same.
 
 !!! tip
 
@@ -382,7 +382,7 @@ the streams layer do it for you.
 ## When to Use Transports and Protocols
 
 For most networking code, the Streams API is the right choice. It gives you
-`await`-based reads and writes, automatic backpressure through `drain()`, and
+[`await`][await]-based reads and writes, automatic backpressure through [`drain()`][drain], and
 a simpler mental model. Use protocols and transports when:
 
 - **You are implementing a custom wire protocol** -- binary framing, WebSocket
@@ -391,7 +391,7 @@ a simpler mental model. Use protocols and transports when:
   message.
 - **You need maximum throughput** -- protocols have less overhead than streams.
   There is no `StreamReader` buffer copy, no coroutine creation per read, no
-  future allocation for `drain()`. For high-throughput proxies or message
+  future allocation for [`drain()`][drain]. For high-throughput proxies or message
   brokers, this can matter.
 - **You are building a proxy or relay** -- the transport-level flow control
   (`pause_reading` / `resume_reading`) gives you direct control over
@@ -415,3 +415,19 @@ classes for routine networking.
     cause lost data or deadlocks.
 
 ---
+
+[asyncio-open-connection]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.open_connection
+[asyncio-start-server]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.start_server
+[await]: https://docs.python.org/3/reference/expressions.html#await
+[official-documentation-on-transports]: https://docs.python.org/3/library/asyncio-transport.html
+[protocols]: https://docs.python.org/3/library/asyncio-protocol.html
+[basetransport]: https://docs.python.org/3/library/asyncio-transport.html#asyncio.BaseTransport
+[readtransport]: https://docs.python.org/3/library/asyncio-transport.html#asyncio.ReadTransport
+[writetransport]: https://docs.python.org/3/library/asyncio-transport.html#asyncio.WriteTransport
+[transport]: https://docs.python.org/3/library/asyncio-transport.html#asyncio.Transport
+[asyncio-protocol]: https://docs.python.org/3/library/asyncio-protocol.html#asyncio.Protocol
+[asyncio-datagramprotocol]: https://docs.python.org/3/library/asyncio-protocol.html#asyncio.DatagramProtocol
+[asyncio-subprocessprotocol]: https://docs.python.org/3/library/asyncio-protocol.html#asyncio.SubprocessProtocol
+[loop-create-connection]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_connection
+[future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
+[drain]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamWriter.drain

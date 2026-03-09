@@ -9,7 +9,7 @@ description: >-
 # Building a Pipeline
 
 This section ties together everything from this chapter --
-[`TaskGroup`](concurrent-tasks.md#asynciotaskgroup),
+[`TaskGroup`][taskgroup],
 [queues](coordination.md#asyncioqueue), backpressure, cancellation,
 and [resource management](resource-management.md) -- into a single,
 realistic application. We will build an **actor-based pipeline** where
@@ -56,8 +56,8 @@ error handling, one actor of each type.
 
 Key APIs:
 
-- [`asyncio.Queue`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue)
-- [`asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup)
+- [`asyncio.Queue`][asyncio-queue]
+- [`asyncio.TaskGroup`][asyncio-taskgroup]
 
 ```python title="pipeline_v1.py"
 import asyncio
@@ -135,11 +135,11 @@ A few things to notice:
   propagates it downstream. This is the simplest shutdown protocol:
   the generator decides when work is done. (Recall the sentinel
   pattern from [Coordination](coordination.md#queue-shutdown-patterns).)
-- **`TaskGroup` owns all the actors.** The `async with` block doesn't
+- **[`TaskGroup`][taskgroup] owns all the actors.** The `async with` block doesn't
   exit until every actor has returned. No task can leak. (See
   [Concurrent Tasks](concurrent-tasks.md#asynciotaskgroup) for why
   this matters.)
-- **The aggregator's return value** is available via `task.result()`
+- **The aggregator's return value** is available via [`task.result()`][task-result]
   after the group finishes.
 
 This works, but the queues are unbounded. If the generator is fast
@@ -256,17 +256,17 @@ more buffering but fewer suspensions.
 
 !!! tip "Trio users"
 
-    Trio's `trio.open_memory_channel()` requires a max
+    [Trio][trio-docs]'s [`trio.open_memory_channel()`][trio-open-memory-channel] requires a max
     buffer size at creation time -- there is no "unbounded" default.
-    asyncio's `Queue` defaults to unbounded (`maxsize=0`), which is why
+    asyncio's [`Queue`][queue] defaults to unbounded (`maxsize=0`), which is why
     you must be disciplined about always passing `maxsize`.
 
 ## Step 3: Error Handling
 
-What happens when an actor crashes? With `TaskGroup`, the answer is
+What happens when an actor crashes? With [`TaskGroup`][taskgroup], the answer is
 clean and predictable: the group cancels all sibling tasks and raises
 an
-[`ExceptionGroup`](https://docs.python.org/3/library/builtins.html#ExceptionGroup)
+[`ExceptionGroup`][exceptiongroup]
 containing the failure. (See
 [Cancellation and Timeouts](cancellation-and-timeouts.md) for why
 this works.)
@@ -344,9 +344,9 @@ caught: processor cannot handle 3
 Here is what happened:
 
 1. The processor raised `ValueError` when it saw `3`.
-2. `TaskGroup` cancelled the generator and the aggregator.
-3. The `except*` clause caught the `ValueError` wrapped in an
-   `ExceptionGroup`.
+2. [`TaskGroup`][taskgroup] cancelled the generator and the aggregator.
+3. The [`except*`][except] clause caught the `ValueError` wrapped in an
+   [`ExceptionGroup`][exceptiongroup].
 
 No task leaked. No error was silently swallowed. The generator didn't
 keep pumping items into a queue that nobody was reading. This is
@@ -573,7 +573,7 @@ follow.
 
 The generator puts items into a shared input queue. Three processor
 tasks pull from that same queue. Because
-[`asyncio.Queue.get()`](https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get)
+[`asyncio.Queue.get()`][asyncio-queue-get]
 is atomic from the perspective of the event loop (only one awaiting
 task gets each item), there is no duplication -- items are distributed
 across workers automatically.
@@ -581,21 +581,21 @@ across workers automatically.
 The shutdown protocol for fan-out needs care. When a processor sees
 `Stop`, it puts the sentinel *back* into the input queue so that
 sibling processors also see it and shut down in turn. The
-supervisor's `TaskGroup` waits for all processors to finish, then
+supervisor's [`TaskGroup`][taskgroup] waits for all processors to finish, then
 sends a single `Stop` to the output queue for the aggregator.
 
-### Nested `TaskGroup` for the supervisor
+### Nested [`TaskGroup`][taskgroup] for the supervisor
 
 The `processor_supervisor` function uses its own
-[`TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup)
+[`TaskGroup`][taskgroup]
 to manage the processor pool. This is structured concurrency in
 action: the supervisor is itself a task in the outer group, and it
 owns the lifetimes of its processors. If any processor crashes, the
-supervisor's `TaskGroup` cancels the other processors, and then the
+supervisor's [`TaskGroup`][taskgroup] cancels the other processors, and then the
 supervisor itself propagates the error to the outer group, which
 cancels the generator and aggregator.
 
-Two levels of `TaskGroup`, each responsible for its own children. No
+Two levels of [`TaskGroup`][taskgroup], each responsible for its own children. No
 cleanup code required -- the structure handles it. (See
 [Resource Management](resource-management.md) for more on how
 `async with` guarantees cleanup.)
@@ -607,11 +607,11 @@ cleanup code required -- the structure handles it. (See
     Watch out for these common failure modes -- each one can cause
     subtle, hard-to-debug problems in production:
 
-    - **Task leaks.** Creating tasks with `asyncio.create_task()`
-      outside a `TaskGroup` and losing the reference. Prefer `TaskGroup`
+    - **Task leaks.** Creating tasks with [`asyncio.create_task()`][asyncio-create-task]
+      outside a [`TaskGroup`][taskgroup] and losing the reference. Prefer [`TaskGroup`][taskgroup]
       for anything with a defined lifetime.
     - **Swallowed cancellation.** Catching
-      [`CancelledError`](https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError)
+      [`CancelledError`][cancellederror]
       and continuing work instead of letting it propagate. See
       [Cancellation and Timeouts](cancellation-and-timeouts.md) for the
       details.
@@ -643,8 +643,21 @@ apply directly to real-world systems:
   fit for workflow engines where each stage has different resource
   requirements or failure modes.
 
-The core ideas -- actors as tasks, queues as channels, `TaskGroup`
+The core ideas -- actors as tasks, queues as channels, [`TaskGroup`][taskgroup]
 as the lifetime manager, sentinels for shutdown -- scale from toy
 examples to production systems without changing shape.
 
 ---
+
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
+[asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[task-result]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.result
+[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
+[exceptiongroup]: https://docs.python.org/3/library/builtins.html#ExceptionGroup
+[except]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
+[asyncio-queue-get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
+[asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[trio-docs]: https://trio.readthedocs.io/en/stable/
+[trio-open-memory-channel]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_memory_channel
