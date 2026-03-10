@@ -8,25 +8,25 @@ description: >-
 
 # Custom Context Managers
 
-Chapter 1 covered *using* `#!py async with` with context managers that asyncio
+Chapter 1 covered *using* [`async with`][async-with] with context managers that asyncio
 hands you --
 [`Lock`][lock],
 [`TaskGroup`][taskgroup],
 [`timeout()`](../the-basics/cancellation-and-timeouts.md). You know
-the contract: `__aenter__` runs on entry, `__aexit__` runs on exit, cleanup
+the contract: [`__aenter__`][aenter] runs on entry, [`__aexit__`][aexit] runs on exit, cleanup
 is guaranteed even under
 [cancellation](../the-basics/cancellation-and-timeouts.md). This
 section covers the other side: *creating* your
 own async context managers so you can wrap setup/teardown logic into a clean
-`#!py async with` block that callers can use the same way.
+[`async with`][async-with] block that callers can use the same way.
 
-## `@asynccontextmanager`
+## [`@asynccontextmanager`][at-asynccontextmanager]
 
 The
 [`@contextlib.asynccontextmanager`][contextlib-asynccontextmanager]
 decorator is the fastest way to build an async context manager. You write an
-async generator function with a single `yield`, and the decorator turns it
-into a full async context manager. Everything before the `yield` is your
+async generator function with a single `#!py yield`, and the decorator turns it
+into a full async context manager. Everything before the `#!py yield` is your
 setup; everything after is your teardown.
 
 Here is a practical example -- a reusable wrapper around a database-style
@@ -83,9 +83,9 @@ Result of: SELECT 1
 [postgres://localhost/mydb] Closed
 ```
 
-The `#!py yield conn` line is where the body of the caller's `#!py async with` block
+The `#!py yield conn` line is where the body of the caller's [`async with`][async-with] block
 runs. When that block exits -- whether normally, via exception, or via
-cancellation -- execution resumes after the `yield`, inside the `finally`
+cancellation -- execution resumes after the `#!py yield`, inside the `#!py finally`
 block, and `#!py conn.close()` runs.
 
 !!! note
@@ -95,9 +95,9 @@ block, and `#!py conn.close()` runs.
     callers see a regular async context manager, but the annotation reflects
     the function's actual signature.
 
-## Error Handling in `@asynccontextmanager`
+## Error Handling in [`@asynccontextmanager`][at-asynccontextmanager]
 
-The `try`/`finally` around the `yield` is not optional decoration -- it is
+The `#!py try`/`#!py finally` around the `#!py yield` is not optional decoration -- it is
 *required* if you want cleanup to run when the body raises. Without it, an
 exception in the caller's block kills the generator and your teardown code
 never executes:
@@ -133,8 +133,8 @@ Caught the error
 ```
 
 Notice that `#!py "Teardown -- this may never run!"` never printed. The exception
-terminated the generator before it reached the cleanup line. Wrap the `yield`
-in `try`/`finally` and the problem disappears:
+terminated the generator before it reached the cleanup line. Wrap the `#!py yield`
+in `#!py try`/`#!py finally` and the problem disappears:
 
 ```python
 @asynccontextmanager
@@ -148,14 +148,14 @@ async def fixed_manager() -> AsyncIterator[str]:
 
 !!! info
 
-    **Always** wrap the `yield` in `try`/`finally` if your context manager
+    **Always** wrap the `#!py yield` in `#!py try`/`#!py finally` if your context manager
     acquires a resource that needs cleanup. There are no exceptions to this
     rule. If cleanup is not needed (e.g. the context manager only sets a
-    flag), you can skip it -- but when in doubt, add the `try`/`finally`.
+    flag), you can skip it -- but when in doubt, add the `#!py try`/`#!py finally`.
 
 ## The Class-Based Protocol
 
-Under the hood, `#!py async with` calls two dunder methods:
+Under the hood, [`async with`][async-with] calls two dunder methods:
 [`__aenter__()`][aenter]
 and
 [`__aexit__()`][aexit].
@@ -201,19 +201,19 @@ if __name__ == "__main__":
 Elapsed was 0.250s
 ```
 
-The `__aenter__` method returns whatever the `as` target should be -- usually
-`self`. The `__aexit__` method receives exception information (all `None` for a
-clean exit). If `__aexit__` returns `True`, the exception is suppressed; if it
-returns `None` or `False` (the default), the exception propagates.
+The [`__aenter__`][aenter] method returns whatever the `as` target should be -- usually
+`self`. The [`__aexit__`][aexit] method receives exception information (all `#!py None` for a
+clean exit). If [`__aexit__`][aexit] returns `#!py True`, the exception is suppressed; if it
+returns `#!py None` or `#!py False` (the default), the exception propagates.
 
 !!! tip
 
-    For most resource wrappers, `@asynccontextmanager` is shorter and easier
+    For most resource wrappers, [`@asynccontextmanager`][at-asynccontextmanager] is shorter and easier
     to read. Reach for the class-based protocol when you need the context
     manager to be a reusable object with its own methods and attributes --
     like the `Timer` above, where callers access `.elapsed` after the block.
 
-## `AsyncExitStack`
+## [`AsyncExitStack`][asyncexitstack]
 
 Sometimes you don't know at coding time how many context managers you need.
 Maybe you're opening one connection per shard, or one file per partition, and
@@ -268,16 +268,16 @@ All shards open: ['shard-1', 'shard-2', 'shard-3', 'shard-4']
 All shards closed
 ```
 
-The key methods on `AsyncExitStack`:
+The key methods on [`AsyncExitStack`][asyncexitstack]:
 
 - **[`enter_async_context(cm)`][enter-async-context-cm]**
-  -- enters `cm` and registers its `__aexit__` for cleanup. Returns whatever
+  -- enters `cm` and registers its [`__aexit__`][aexit] for cleanup. Returns whatever
   `#!py cm.__aenter__()` returned.
 - **[`push_async_callback(callback, /, *args, **kwds)`][push-async-callback-callback-args-kwds]**
   -- registers an arbitrary async callback to run at cleanup time. Useful for
   resources that don't have a context manager interface.
 - **[`aclose()`][aclose]**
-  -- explicitly unwinds the stack outside of an `#!py async with` block. You rarely
+  -- explicitly unwinds the stack outside of an [`async with`][async-with] block. You rarely
   need this if you're using `#!py async with AsyncExitStack()`.
 
 The `push_async_callback` method is handy when you need to clean up something
@@ -292,7 +292,7 @@ async with AsyncExitStack() as stack:
 
 !!! warning
 
-    If a context manager's `__aexit__` raises, the `AsyncExitStack` still
+    If a context manager's [`__aexit__`][aexit] raises, the [`AsyncExitStack`][asyncexitstack] still
     proceeds to close the remaining managers. Exceptions are collected and
     re-raised as part of the standard exception handling. This is the right
     behaviour -- you don't want one failed cleanup to prevent the others
@@ -384,33 +384,36 @@ Pool closed: all connections released
 ```
 
 The layering is clean: `app_context` delegates resource management to
-`managed_pool` via `#!py async with`. The teardown sequence is natural --
+`managed_pool` via [`async with`][async-with]. The teardown sequence is natural --
 `app_context`'s "App shutting down" message runs first, then `managed_pool`
 drains and closes. If you later add a cache layer or a metrics reporter, you
 wrap another context manager around the existing ones, and the lifetime nesting
 stays correct.
 
-This pattern composes well with `AsyncExitStack` too. If `app_context` needed
+This pattern composes well with [`AsyncExitStack`][asyncexitstack] too. If `app_context` needed
 a variable number of pools (say, one per tenant), it could use an
-`AsyncExitStack` internally to manage them and still expose a single
-`#!py async with` interface to callers.
+[`AsyncExitStack`][asyncexitstack] internally to manage them and still expose a single
+[`async with`][async-with] interface to callers.
 
 ## When to Use Each Approach
 
 | Approach | Best for |
 |---|---|
-| `@asynccontextmanager` | Most resource wrappers. Quick to write, easy to read. Use this by default. |
-| Class with `__aenter__`/`__aexit__` | When the context manager is itself a stateful object with methods callers need after the block (e.g. a timer, a session tracker). |
-| `AsyncExitStack` | Managing a dynamic number of context managers, or bridging resources that don't have a context manager interface via `push_async_callback`. |
-| Composing context managers | Layering setup/teardown of multiple resources behind a single `#!py async with`. Keep lifetimes nested and explicit. |
+| [`@asynccontextmanager`][at-asynccontextmanager] | Most resource wrappers. Quick to write, easy to read. Use this by default. |
+| Class with [`__aenter__`][aenter]/[`__aexit__`][aexit] | When the context manager is itself a stateful object with methods callers need after the block (e.g. a timer, a session tracker). |
+| [`AsyncExitStack`][asyncexitstack] | Managing a dynamic number of context managers, or bridging resources that don't have a context manager interface via `push_async_callback`. |
+| Composing context managers | Layering setup/teardown of multiple resources behind a single [`async with`][async-with]. Keep lifetimes nested and explicit. |
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
-[contextlib-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
 [aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
 [aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
+[at-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
+[contextlib-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
+[asyncexitstack]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack
 [contextlib-asyncexitstack]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack
 [enter-async-context-cm]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.enter_async_context
 [push-async-callback-callback-args-kwds]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.push_async_callback

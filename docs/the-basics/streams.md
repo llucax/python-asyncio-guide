@@ -14,6 +14,12 @@ clean async/await syntax. The streams API gives you a high-level interface for
 reading and writing bytes over the network -- no callbacks, no protocol
 classes, just a reader and a writer that you [`await`][await] like anything else.
 
+!!! info
+
+    This page focuses on the stream lifecycle, backpressure, and cleanup.
+    Use the official [Streams][official-streams] page for the full
+    `StreamReader` and `StreamWriter` method reference.
+
 ## Opening a Client Connection
 
 [`asyncio.open_connection()`][asyncio-open-connection]
@@ -90,10 +96,10 @@ The main methods:
 - **[`.readuntil(separator)`][readuntil-separator]**
   -- read until `separator` is found in the stream (inclusive). Raises
   [`asyncio.IncompleteReadError`][asyncio-incompletereaderror] if EOF comes first, or
-  `asyncio.LimitOverrunError` if the internal buffer limit is exceeded before
+  [`asyncio.LimitOverrunError`][asyncio-limitoverrunerror] if the internal buffer limit is exceeded before
   the separator appears.
 - **[`.at_eof()`][at-eof]**
-  -- returns `True` if the read buffer is empty *and* the connection has been
+  -- returns `#!py True` if the read buffer is empty *and* the connection has been
   closed by the remote end. This is not a coroutine.
 
 The pattern for reading until the remote end disconnects:
@@ -108,7 +114,7 @@ while not reader.at_eof():
 
 !!! tip
 
-    [`.read(n)`][read-n] returning `#!py b""` and [`.at_eof()`][at-eof] returning `True` both indicate
+    [`.read(n)`][read-n] returning `#!py b""` and [`.at_eof()`][at-eof] returning `#!py True` both indicate
     EOF, but they serve different purposes. Use `#!py read()` return value checks in
     loops where you are consuming data; use `#!py at_eof()` when you need a
     non-blocking check outside of a read call.
@@ -120,7 +126,7 @@ is the write side. Writing works differently from reading: you buffer data
 synchronously, then flush asynchronously.
 
 - **[`.write(data)`][write-data]**
-  -- buffer `data` (a `bytes` object) for sending. This returns `None`
+  -- buffer `data` (a `bytes` object) for sending. This returns `#!py None`
   immediately -- it does **not** await. The data is queued in an internal
   buffer and sent by the event loop when the socket is ready.
 - **[`.writelines(data)`][writelines-data]**
@@ -160,7 +166,7 @@ Always close writers. Always call [`wait_closed()`][wait-closed] after `#!py clo
 coroutine that waits for it to complete -- including flushing any remaining
 buffered data and tearing down the TLS layer if one exists.
 
-The standard pattern is `try`/`finally`:
+The standard pattern is `#!py try`/`#!py finally`:
 
 ```python
 reader, writer = await asyncio.open_connection(host, port)
@@ -177,7 +183,7 @@ finally:
 
     `StreamWriter` is **not** an async context manager in the standard library
     (as of Python 3.13). You cannot write `#!py async with writer:`. You must call
-    [`.close()`][close] and [`.wait_closed()`][wait-closed] manually in a `try`/`finally` block. Some
+    [`.close()`][close] and [`.wait_closed()`][wait-closed] manually in a `#!py try`/`#!py finally` block. Some
     third-party libraries add this, but the stdlib does not provide it.
 
 If you want to keep things tidy, you can write a small helper:
@@ -262,7 +268,7 @@ runs until the server is stopped or cancelled.
 
 The callback `handle_client` is responsible for its own writer cleanup. Each
 connection is handled independently -- if one client disconnects, the others
-keep going. The `try`/`finally` ensures the writer is closed even if the
+keep going. The `#!py try`/`#!py finally` ensures the writer is closed even if the
 client disconnects unexpectedly or the read raises an exception.
 
 !!! note
@@ -443,3 +449,5 @@ consumers.
 [server-serve-forever]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Server.serve_forever
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[official-streams]: https://docs.python.org/3/library/asyncio-stream.html
+[asyncio-limitoverrunerror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.LimitOverrunError

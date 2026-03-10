@@ -131,7 +131,7 @@ queue.
     object. You can call `#!py handle.cancel()` to prevent the callback from
     running, as long as it hasn't been executed yet.
 
-## Timers: `#!py call_later()` and `#!py call_at()`
+## Timers: [`call_later()`][call-later] and [`call_at()`][call-at]
 
 [`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
 schedules a callback to run after *delay* seconds.
@@ -189,7 +189,7 @@ a convenience wrapper around `call_at`.
 
 !!! info
 
-    [`asyncio.sleep()`][asyncio-sleep] is built on `#!py call_later()` under the hood. When you
+    [`asyncio.sleep()`][asyncio-sleep] is built on [`call_later()`][call-later] under the hood. When you
     write `#!py await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
     a `call_later` to resolve it after one second, and suspends your
     coroutine until that future completes. Now you know why it is a
@@ -405,8 +405,10 @@ machinery does exactly what the pseudocode says, nothing more.
 
 ---
 
+[call-later]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_later
+[call-at]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
-[select]: https://docs.python.org/3/library/selectors.html
+[select]: https://docs.python.org/3/library/select.html#select.select
 [call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
 [loop-call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
 [task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task

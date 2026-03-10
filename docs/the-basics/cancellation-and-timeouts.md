@@ -11,7 +11,7 @@ description: >-
 Cancellation is what makes task lifetimes *real*. Without it, timeouts are
 wishes and [`TaskGroup`][taskgroup] has no way to shut down children when a sibling fails.
 Everything you saw in the previous section -- sibling cancellation, the clean
-`#!py async with` guarantee -- relies on the machinery covered here.
+[`async with`][async-with] guarantee -- relies on the machinery covered here.
 
 ## What is [`CancelledError`][cancellederror]?
 
@@ -21,7 +21,7 @@ When something decides your task should end -- a timeout expiring, a
 [`TaskGroup`][taskgroup] tearing down siblings -- the event loop arranges for a
 [`CancelledError`][cancellederror] to be raised at the next *checkpoint* (an [`await`][await] where the
 coroutine suspends). The exception then unwinds the call stack normally,
-running `finally` blocks and `__aexit__` methods on the way out, just like any
+running `#!py finally` blocks and [`__aexit__`][aexit] methods on the way out, just like any
 other exception.
 
 The key detail: [`CancelledError`][cancellederror] inherits from
@@ -110,20 +110,20 @@ Timed out as expected
 ```
 
 Cancellation propagates correctly now. The [`asyncio.timeout()`][asyncio-timeout] context manager
-converts it to [`TimeoutError`][timeouterror] at the `#!py async with` boundary, and the caller
+converts it to [`TimeoutError`][timeouterror] at the [`async with`][async-with] boundary, and the caller
 handles the timeout cleanly.
 
 !!! danger
 
-    If you see `#!py except asyncio.CancelledError:` without a `raise` in any code
+    If you see `#!py except asyncio.CancelledError:` without a `#!py raise` in any code
     path, that is almost always a bug. Treat it the same way you would treat
     `#!py except BaseException: pass` -- something has gone wrong.
 
-## Cleanup with `try`/`finally`
+## Cleanup with `#!py try`/`#!py finally`
 
 Most of the time you don't need to catch [`CancelledError`][cancellederror] at all. If your
 cleanup should run regardless of *how* the coroutine exits -- success,
-exception, or cancellation -- use a `finally` block:
+exception, or cancellation -- use a `#!py finally` block:
 
 ```python title="finally_cleanup.py"
 import asyncio
@@ -153,8 +153,8 @@ alpha: cleaning up
 Timed out
 ```
 
-The `finally` block ran even though the coroutine was cancelled. Reach for
-`try`/`finally` first; reserve `#!py except CancelledError` for the rare cases
+The `#!py finally` block ran even though the coroutine was cancelled. Reach for
+`#!py try`/`#!py finally` first; reserve `#!py except CancelledError` for the rare cases
 where cleanup is *specific* to cancellation (e.g., logging a different
 message).
 
@@ -165,7 +165,7 @@ is an async context manager that enforces a deadline on the code inside it. If
 the block takes longer than the specified number of seconds, asyncio cancels
 the current task and converts the resulting [`CancelledError`][cancellederror] into a
 [`TimeoutError`][timeouterror]
-at the `#!py async with` boundary.
+at the [`async with`][async-with] boundary.
 
 ```python title="timeout_basic.py"
 import asyncio
@@ -193,13 +193,13 @@ Operation timed out after 1 second
 There are two important things to understand here. First,
 [`asyncio.timeout()`][asyncio-timeout] cancels the *current task*. The [`CancelledError`][cancellederror] is raised
 at whatever [`await`][await] the task is suspended on. Second, the conversion from
-[`CancelledError`][cancellederror] to [`TimeoutError`][timeouterror] only happens at the `#!py async with` boundary.
+[`CancelledError`][cancellederror] to [`TimeoutError`][timeouterror] only happens at the [`async with`][async-with] boundary.
 If your code receives a [`CancelledError`][cancellederror] from *outside* the timeout scope
 (e.g., a parent [`TaskGroup`][taskgroup] shutting down), that cancellation passes through
 unchanged -- it does not become a [`TimeoutError`][timeouterror].
 
-You can pass `None` as the delay to create a timeout that never fires -- useful
-when the timeout value comes from configuration and `None` means "no limit":
+You can pass `#!py None` as the delay to create a timeout that never fires -- useful
+when the timeout value comes from configuration and `#!py None` means "no limit":
 
 ```python
 delay: float | None = None  # From config
@@ -253,7 +253,7 @@ Timed out after 2.0s
 
 Absolute deadlines are useful when you have a top-level time budget and want
 to pass the remaining time down through multiple operations. Like
-[`asyncio.timeout()`][asyncio-timeout], passing `None` disables the timeout.
+[`asyncio.timeout()`][asyncio-timeout], passing `#!py None` disables the timeout.
 
 ## Checking Whether a Timeout Fired
 
@@ -293,13 +293,13 @@ if __name__ == "__main__":
 Fast path timed out, using slow fallback
 ```
 
-When the timeout fires, the `#!py async with` block exits via [`TimeoutError`][timeouterror].
+When the timeout fires, the [`async with`][async-with] block exits via [`TimeoutError`][timeouterror].
 The context manager handles it internally, so execution continues after the
 block. You then check `#!py cm.expired()` to decide what to do next.
 
 !!! info
 
-    The code *after* the `#!py async with` block runs only if the timeout fired or
+    The code *after* the [`async with`][async-with] block runs only if the timeout fired or
     the block completed normally. If the task is cancelled for a reason *other*
     than this timeout, the [`CancelledError`][cancellederror] propagates out without reaching the
     code after the block.
@@ -441,15 +441,17 @@ re-raise at the end.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
 [await]: https://docs.python.org/3/reference/expressions.html#await
+[aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
 [baseexception]: https://docs.python.org/3/library/exceptions.html#BaseException
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
 [timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
+[trio-fail-after]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.fail_after
+[trio-docs]: https://trio.readthedocs.io/en/stable/
+[trio-cancel-scopes]: https://trio.readthedocs.io/en/stable/reference-core.html#cancellation-and-timeouts
 [asyncio-timeout-at]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout_at
 [asyncio-get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop
 [expired]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Timeout.expired
-[trio-docs]: https://trio.readthedocs.io/en/stable/
-[trio-fail-after]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.fail_after
-[trio-cancel-scopes]: https://trio.readthedocs.io/en/stable/reference-core.html#cancellation-and-timeouts

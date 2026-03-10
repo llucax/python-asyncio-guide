@@ -131,11 +131,11 @@ final results: [1, 4, 9, 16, 25]
 
 A few things to notice:
 
-- **`None` as a sentinel.** Each actor watches for `None` and
+- **`#!py None` as a sentinel.** Each actor watches for `#!py None` and
   propagates it downstream. This is the simplest shutdown protocol:
   the generator decides when work is done. (Recall the sentinel
   pattern from [Coordination](coordination.md#queue-shutdown-patterns).)
-- **[`TaskGroup`][taskgroup] owns all the actors.** The `#!py async with` block doesn't
+- **[`TaskGroup`][taskgroup] owns all the actors.** The [`async with`][async-with] block doesn't
   exit until every actor has returned. No task can leak. (See
   [Concurrent Tasks](concurrent-tasks.md#asynciotaskgroup) for why
   this matters.)
@@ -343,9 +343,9 @@ caught: processor cannot handle 3
 
 Here is what happened:
 
-1. The processor raised `ValueError` when it saw `3`.
+1. The processor raised [`ValueError`][valueerror] when it saw `3`.
 2. [`TaskGroup`][taskgroup] cancelled the generator and the aggregator.
-3. The [`except*`][except] clause caught the `ValueError` wrapped in an
+3. The [`except*`][except] clause caught the [`ValueError`][valueerror] wrapped in an
    [`ExceptionGroup`][exceptiongroup].
 
 No task leaked. No error was silently swallowed. The generator didn't
@@ -359,7 +359,7 @@ Now let's put it all together into a more complete version. This
 version adds:
 
 - **Type-safe sentinel handling** with a dedicated sentinel type
-  instead of `None`
+  instead of `#!py None`
 - **Logging** instead of bare `print`, so you can see timestamps and
   actor names
 - **Graceful shutdown** that drains in-flight work
@@ -554,10 +554,10 @@ Timestamps and interleaving will vary, but output looks like this:
 
 Let's walk through the design decisions.
 
-### Sentinel type instead of `None`
+### Sentinel type instead of `#!py None`
 
-In Step 1 we used `None` as the shutdown signal. That works when your
-payload type doesn't include `None`, but it is fragile -- if the
+In Step 1 we used `#!py None` as the shutdown signal. That works when your
+payload type doesn't include `#!py None`, but it is fragile -- if the
 pipeline ever carries optional values, the sentinel collides with
 legitimate data. The `Stop` sentinel class is unambiguous: no real
 payload will ever be `Stop`.
@@ -598,7 +598,7 @@ cancels the generator and aggregator.
 Two levels of [`TaskGroup`][taskgroup], each responsible for its own children. No
 cleanup code required -- the structure handles it. (See
 [Resource Management](resource-management.md) for more on how
-`#!py async with` guarantees cleanup.)
+[`async with`][async-with] guarantees cleanup.)
 
 ## Common Failure Modes
 
@@ -617,7 +617,7 @@ cleanup code required -- the structure handles it. (See
       details.
     - **Unbounded queues.** Forgetting to set `maxsize` and wondering
       why memory keeps growing under load.
-    - **Sentinel collisions.** Using `None` as a sentinel in queues
+    - **Sentinel collisions.** Using `#!py None` as a sentinel in queues
       that carry optional data. Use a dedicated type.
     - **Blocking the event loop.** Calling `#!py time.sleep()`, running
       CPU-heavy computation, or doing synchronous I/O inside an
@@ -649,15 +649,17 @@ examples to production systems without changing shape.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [task-result]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.result
+[trio-docs]: https://trio.readthedocs.io/en/stable/
+[trio-open-memory-channel]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_memory_channel
 [queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [exceptiongroup]: https://docs.python.org/3/library/builtins.html#ExceptionGroup
+[valueerror]: https://docs.python.org/3/library/exceptions.html#ValueError
 [except]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
 [asyncio-queue-get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
 [asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
-[trio-docs]: https://trio.readthedocs.io/en/stable/
-[trio-open-memory-channel]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_memory_channel

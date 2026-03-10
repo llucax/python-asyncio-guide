@@ -16,7 +16,7 @@ failures that make you question your understanding of time itself.
 
 ## Debug Mode -- the Full Picture
 
-You already know the basics: pass `debug=True` to
+You already know the basics: pass `#!py debug=True` to
 [`asyncio.run()`][asyncio-run],
 or set `PYTHONASYNCIODEBUG=1` in the environment. Here is a deeper look at
 what debug mode actually does and how to tune it.
@@ -29,7 +29,7 @@ When active, debug mode enables several runtime checks:
   more than a threshold (default: 100 ms) gets a warning with a traceback.
 - **Unawaited coroutines.** Coroutine objects created but never awaited
   produce a warning with the creation-site traceback -- louder than the
-  default `RuntimeWarning` from the garbage collector.
+  default [`RuntimeWarning`][runtimewarning] from the garbage collector.
 - **Unclosed resources.** Transports, event loops, and other asyncio objects
   garbage-collected without being closed generate resource warnings.
 - **Better task tracebacks.** Every
@@ -203,7 +203,7 @@ async def main() -> None:
 If you see the log message but [`TimeoutError`][timeouterror] is never raised, the
 [`CancelledError`][cancellederror] is being swallowed somewhere. Search for `except
 CancelledError` and `except BaseException` blocks in the call chain -- every
-one must end with `raise`.
+one must end with `#!py raise`.
 
 **Fix:** Re-raise the [`CancelledError`][cancellederror]. Always. This is the cardinal rule from
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md):
@@ -223,9 +223,9 @@ except asyncio.CancelledError:
 
 ## Diagnosing ExceptionGroup Confusion
 
-**Symptoms:** You have a `try`/`#!py except Exception` around a [`TaskGroup`][taskgroup], but
+**Symptoms:** You have a `#!py try`/`#!py except Exception` around a [`TaskGroup`][taskgroup], but
 errors from child tasks are not caught. The exception propagates as if the
-`except` clause does not exist.
+`#!py except` clause does not exist.
 
 **Cause:**
 [`TaskGroup`][taskgroup]
@@ -251,7 +251,7 @@ async def main() -> None:
 Type: ExceptionGroup  Value: ExceptionGroup('unhandled errors in a TaskGroup (1 sub-exception)', [ValueError('something broke')])
 ```
 
-You will see [`ExceptionGroup`][exceptiongroup], not `ValueError`. That is why `except
+You will see [`ExceptionGroup`][exceptiongroup], not [`ValueError`][valueerror]. That is why `except
 ValueError` didn't match.
 
 **Fix:** Use
@@ -275,7 +275,7 @@ full explanation.
 
 !!! info
 
-    You cannot mix `except` and [`except*`][except] in the same `try` block. If you
+    You cannot mix `#!py except` and [`except*`][except] in the same `#!py try` block. If you
     need [`except*`][except] for the [`TaskGroup`][taskgroup] errors, all handlers in that block
     must use the starred form.
 
@@ -320,7 +320,7 @@ find the cycle.
 - **Lock ordering.** If multiple tasks need multiple locks, acquire them in a
   consistent order. Circular waits cannot happen if every task acquires lock X
   before lock Y.
-- **Use `#!py async with` for locks.** This guarantees the lock is released even if
+- **Use [`async with`][async-with] for locks.** This guarantees the lock is released even if
   the body raises:
 
   ```python
@@ -403,26 +403,28 @@ if you need the frames as a list for programmatic inspection.
 
 The standard library covers most situations. When you need more:
 
-- **[aiomonitor](https://github.com/aio-libs/aiomonitor)** -- Attaches a
+- **[`aiomonitor`][aiomonitor-docs]** -- Attaches a
   console to your running async application. Inspect tasks, print stacks,
   cancel tasks, and run async code -- all without stopping the program.
 
-- **[py-spy](https://github.com/benfred/py-spy)** -- A sampling profiler that
+- **[`py-spy`][py-spy-docs]** -- A sampling profiler that
   attaches to a running process without modifying it. Generates flame graphs
   and works with async code.
 
-- **[viztracer](https://github.com/gaogaotiantian/viztracer)** -- A tracing
+- **[`VizTracer`][viztracer-docs]** -- A tracing
   profiler that generates timeline visualizations. It understands [`await`][await]
   boundaries, showing when tasks are running versus suspended.
 
 These tools complement debug mode rather than replacing it. Start with
-`debug=True` and [`asyncio.all_tasks()`][asyncio-all-tasks], and reach for third-party tools when
+`#!py debug=True` and [`asyncio.all_tasks()`][asyncio-all-tasks], and reach for third-party tools when
 you need to inspect a running production process or generate a performance
 profile.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
+[runtimewarning]: https://docs.python.org/3/library/exceptions.html#RuntimeWarning
 [task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [slow-callback-duration]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.slow_callback_duration
 [await]: https://docs.python.org/3/reference/expressions.html#await
@@ -434,9 +436,13 @@ profile.
 [timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
 [exceptiongroup]: https://docs.python.org/3/library/builtins.html#ExceptionGroup
 [baseexception]: https://docs.python.org/3/library/exceptions.html#BaseException
+[valueerror]: https://docs.python.org/3/library/exceptions.html#ValueError
 [except]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
 [lock-acquire]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock.acquire
 [asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [queue-get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
 [task-print-stack]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.print_stack
 [task-get-stack]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.get_stack
+[aiomonitor-docs]: https://aiomonitor.aio-libs.org/
+[py-spy-docs]: https://github.com/benfred/py-spy
+[viztracer-docs]: https://viztracer.readthedocs.io/en/stable/

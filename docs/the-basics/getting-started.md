@@ -17,7 +17,7 @@ concurrently.
 ## Hello World!
 
 An *async function* (also called a *coroutine function*) is any function
-defined with `#!py async def` instead of plain `def`. Let's start with a
+defined with `#!py async def` instead of plain `#!py def`. Let's start with a
 complete, working program:
 
 ```python title="hello_async.py"
@@ -106,7 +106,7 @@ while True:
 ```
 
 1. Run the coroutine until it yields because it is waiting for something.
-2. `None` means the coroutine finished, so the loop can stop.
+2. `#!py None` means the coroutine finished, so the loop can stop.
 3. Block until that event happens, then resume the loop.
 
 The loop *drives* the coroutine, runs it until it yields at an
@@ -159,7 +159,7 @@ The [`await`][await] keyword does two things:
 
 You can only use [`await`][await] inside an `#!py async def`. This is enforced by the
 Python interpreter, not by convention. If you try to use it in a regular
-function you will get a `SyntaxError`.
+function you will get a [`SyntaxError`][syntaxerror].
 
 Here is a small example that chains two async calls and uses the return values:
 
@@ -213,7 +213,7 @@ wrong_call.py:7: RuntimeWarning: coroutine 'greet' was never awaited
   greet("world")
 ```
 
-Nothing printed, no greeting -- just a `RuntimeWarning`. The coroutine
+Nothing printed, no greeting -- just a [`RuntimeWarning`][runtimewarning]. The coroutine
 was created and immediately garbage-collected without ever running.
 
 The same bug is more subtle when it happens *inside* an async function:
@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
 1. Without [`await`][await], this line stores a coroutine object -- not the
    integer `42`. The coroutine is never driven and gets
-   garbage-collected with a `RuntimeWarning`.
+   garbage-collected with a [`RuntimeWarning`][runtimewarning].
 
 ```text title="$ python forgot_await.py"
 The answer is <coroutine object get_answer at 0x...>
@@ -252,7 +252,7 @@ is simple -- add [`await`][await]:
 !!! tip
 
     Enable asyncio's *debug mode* during development by passing
-    `debug=True` to [`asyncio.run()`][asyncio-run]. It makes warnings about unawaited
+    `#!py debug=True` to [`asyncio.run()`][asyncio-run]. It makes warnings about unawaited
     coroutines louder and catches other common errors. See
     [Debugging](debugging.md#debug-mode)
     for the practical workflow.
@@ -261,7 +261,7 @@ is simple -- add [`await`][await]:
 
     [Trio][trio-docs] raises an error immediately when a coroutine is
     not awaited inside a [nursery][trio-open-nursery]. In asyncio the diagnostic is a
-    `RuntimeWarning` from the garbage collector, which can be delayed or
+    [`RuntimeWarning`][runtimewarning] from the garbage collector, which can be delayed or
     even silenced. Turning on debug mode helps close this gap.
 
 ## The Async Sandwich
@@ -284,7 +284,7 @@ Think of your program as a sandwich:
 
 The filling is necessarily async because it sits between a synchronous entry
 point and async I/O primitives. If you could call an I/O primitive from a
-plain `def`, the interpreter would have no way to know that the function might
+plain `#!py def`, the interpreter would have no way to know that the function might
 suspend -- and the loop would not know when it is safe to switch. The [`async`][async]
 keyword is how Python tracks that information through the call chain.
 
@@ -323,7 +323,7 @@ pause."
 
     You do *not* need to make everything async. Pure computation -- parsing a
     string, doing math, transforming a data structure -- should stay in regular
-    `def` functions. Only add [`async`][async] when the function needs to [`await`][await]
+    `#!py def` functions. Only add [`async`][async] when the function needs to [`await`][await]
     something.
 
 ## Checkpoints
@@ -340,11 +340,11 @@ loop may not actually suspend your coroutine. The rule of thumb is:
 > An [`await`][await] is a checkpoint when the underlying operation needs to wait for
 > something external -- a timer, a network read, a lock held by another task.
 
-For now, that mental model is enough. There is a full checkpoint contract table
-in the [appendices](../appendices/checkpoint-contract.md) that documents
-exactly which asyncio operations always suspend, conditionally suspend, or
-never suspend. You don't need to memorise it, but it is there when you need
-precise answers.
+For now, that mental model is enough. There is a checkpoint reference appendix
+in the [appendices](../appendices/checkpoint-contract.md) that documents the
+common asyncio operations this guide relies on and whether they always
+suspend, conditionally suspend, or never suspend. You do not need to memorise
+it, but it is there when you need precise answers.
 
 When you want to give other tasks a chance to run without actually waiting for
 anything, you can insert an explicit checkpoint:
@@ -415,32 +415,33 @@ code at this stage:
    a bug.
 
 2. **No blocking calls in async code.** [`time.sleep()`][time-sleep],
-   `#!py requests.get()`, `#!py open().read()` on large files -- anything that makes the
+   [`requests.get()`][requests-get], [`open().read()`][open-read] on large files -- anything that makes the
    thread wait -- will freeze the entire loop. If you must call blocking code,
    use [`asyncio.to_thread()`][asyncio-to-thread]
    (covered in Chapter 2).
 
 3. **Don't make sync-only functions [`async`][async].** If a function never [`await`][await]-s
-   anything, it should be a regular `def`. Adding [`async`][async] for no reason adds
+   anything, it should be a regular `#!py def`. Adding [`async`][async] for no reason adds
    overhead and confuses readers about where suspension can happen.
 
 4. **Use [`asyncio.run()`][asyncio-run] exactly once.** It is the top slice of your sandwich.
-   Nested [`asyncio.run()`][asyncio-run] calls will raise `RuntimeError`.
+   Nested [`asyncio.run()`][asyncio-run] calls will raise [`RuntimeError`][runtimeerror].
 
-5. **Turn on debug mode during development.** Pass `debug=True` to
+5. **Turn on debug mode during development.** Pass `#!py debug=True` to
    [`asyncio.run()`][asyncio-run] to catch common mistakes early.
 
+[requests-get]: https://requests.readthedocs.io/en/latest/api/#requests.get
+[open-read]: https://docs.python.org/3/library/io.html#io.IOBase.read
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
 [asyncio-sleep]: https://docs.python.org/3/library/asyncio-task.html#asyncio.sleep
-[asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
-[asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
-[asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
-[asyncio]: https://docs.python.org/3/library/asyncio.html
-[async]: https://docs.python.org/3/reference/compound_stmts.html#async-def
-[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[syntaxerror]: https://docs.python.org/3/library/exceptions.html#SyntaxError
+[runtimewarning]: https://docs.python.org/3/library/exceptions.html#RuntimeWarning
 [trio-docs]: https://trio.readthedocs.io/en/stable/
 [trio-open-nursery]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_nursery
+[async]: https://docs.python.org/3/reference/compound_stmts.html#async-def
 [trio-testing]: https://trio.readthedocs.io/en/stable/reference-testing.html
 [trio-sleep]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.sleep
 [time-sleep]: https://docs.python.org/3/library/time.html#time.sleep
+[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[runtimeerror]: https://docs.python.org/3/library/exceptions.html#RuntimeError

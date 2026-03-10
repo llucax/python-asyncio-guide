@@ -1,26 +1,36 @@
 ---
 title: Checkpoint Contract
 description: >-
-  Complete reference for which asyncio operations always suspend,
-  conditionally suspend, or never suspend. Essential for reasoning about
-  task interleaving, cancellation delivery, and starvation.
+  Guide-level reference for common asyncio operations and whether they
+  suspend in CPython 3.11. Useful for reasoning about interleaving,
+  cancellation delivery, and starvation, but not an official contract.
 ---
 
 # Checkpoint Contract
 
+!!! warning
+
+    This appendix was collected on March 2026 against **CPython 3.11**. It is
+    **not** an official asyncio contract, it is **not** guaranteed, and it may
+    change at any time. Unless a row is marked **Official**, treat it as
+    guide-level guidance only, and with care, derived from the Python docs plus
+    a read of the CPython 3.11 source.
+
 Every [`await`][await] expression is a *potential* checkpoint -- a point where the
 current task may suspend and let another task run. But "potential" is the key
-word. Some [`await`][await]s always suspend. Some only suspend when a certain condition
-holds. And many asyncio operations are not [`await`][await]able at all -- they are plain
-synchronous calls that never yield control. Knowing which category an operation
-falls into is essential for reasoning about task interleaving, cancellation
-delivery, and starvation. [Debugging](../the-basics/debugging.md)
-introduced a condensed three-row version of this table; what follows is the
-full reference.
+word. Some [`await`][await]s always suspend. Some only suspend when a certain
+condition holds. And many asyncio operations are not [`await`][await]able at
+all -- they are plain synchronous calls that never yield control.
 
-The rules below apply to **Python 3.11+** and cover the modern asyncio API
-surface. Deprecated APIs (`#!py gather()`, `#!py ensure_future()`, `#!py get_event_loop()`,
-etc.) are intentionally omitted.
+Asyncio does not publish a single official checkpoint contract for the whole
+API surface. This page is a practical reference for the common operations used
+throughout this guide. Only rows marked **Official** are explicitly documented
+by Python as always suspending the current task. Everything else here is an
+interpretation of the docs and CPython 3.11's implementation details.
+
+This appendix is intentionally not exhaustive. It omits many lower-level APIs
+and less common awaitables. Use it as a mental-model guide, not as a language
+guarantee.
 
 ### How to read the tables
 
@@ -34,11 +44,6 @@ Each operation is placed in exactly one of three categories:
 - **Never suspends** -- the operation is synchronous. No [`await`][await] is involved,
   and no other task can interleave.
 
-Operations that appear in both the "always" and "conditionally" tables (like
-[`Lock.acquire()`][lock-acquire] or [`Queue.get()`][queue-get]) are listed in both places with their
-respective conditions, so you can look up any operation and immediately see the
-full picture.
-
 ---
 
 ## Always Suspends
@@ -47,24 +52,11 @@ These operations yield to the event loop every time they are awaited,
 regardless of the current state. Another task is guaranteed an opportunity to
 run.
 
-| Operation | Notes |
-|-----------|-------|
-| [`asyncio.sleep(delay)`][asyncio-sleep-delay] | Always suspends, even when `delay=0`. `#!py sleep(0)` is the canonical way to insert an explicit checkpoint. |
-| [`stream.read(n)`][stream-read-n] | Waits for up to `n` bytes from the stream. |
-| [`stream.readline()`][stream-readline] | Waits for a complete line (up to the separator). |
-| [`stream.readexactly(n)`][stream-readexactly-n] | Waits until exactly `n` bytes have been received. Raises [`IncompleteReadError`][incompletereaderror] if EOF arrives first. |
-| [`stream.readuntil(separator)`][stream-readuntil-separator] | Waits until the separator is found in the buffer. |
-| [`Queue.get()`][queue-get] on an empty queue | Suspends until a producer calls `#!py put()` or `#!py put_nowait()`. |
-| [`Queue.put(item)`][queue-put-item] on a full queue | Suspends until a consumer calls [`get()`][get] or [`get_nowait()`][get-nowait]. |
-| [`Queue.join()`][queue-join] | Suspends until every item has been marked done via [`task_done()`][task-done]. |
-| [`Lock.acquire()`][lock-acquire] when the lock is held | Suspends until the holder calls `#!py release()`. |
-| [`Event.wait()`][event-wait] when the event is not set | Suspends until another task calls `#!py set()`. |
-| [`Condition.wait()`][condition-wait] | Releases the underlying lock, suspends until notified, then re-acquires the lock. Always suspends at least once. |
-| [`Condition.wait_for(predicate)`][condition-wait-for-predicate] | Repeatedly calls `#!py wait()` until `#!py predicate()` returns `True`. Suspends at least once even if the predicate is already true on the first check. |
-| [`Semaphore.acquire()`][semaphore-acquire] when the internal counter is 0 | Suspends until another task calls `#!py release()`. |
-| [`Barrier.wait()`][barrier-wait] | Suspends until the required number of tasks have called `#!py wait()`. |
-| [`asyncio.wait()`][asyncio-wait] | Suspends until at least one task matches the `return_when` condition. |
-| [`asyncio.wait_for(aw, timeout)`][asyncio-wait-for-aw-timeout] | Suspends until the awaitable completes or the timeout expires. |
+| Operation | Basis | Notes |
+|-----------|-------|-------|
+| [`asyncio.sleep(delay)`][asyncio-sleep-delay] | **Official** | The docs explicitly say `#!py sleep()` always suspends the current task, even when `delay=0`. `#!py sleep(0)` is the canonical explicit checkpoint. |
+| [`Condition.wait()`][condition-wait] | Docs + source | It always releases the lock, waits to be notified, then re-acquires the lock. There is no fast path. |
+| [`asyncio.wait()`][asyncio-wait] | CPython 3.11 source | In CPython 3.11, `#!py wait()` always awaits an internal waiter future before returning, even if every input future is already done. This is not an explicit docs guarantee. |
 
 ---
 
@@ -77,16 +69,24 @@ them unreliable as cancellation checkpoints -- you cannot assume that an
 [`await`][await] on one of these operations will give pending [`CancelledError`][cancellederror]s a chance
 to land.
 
-| Operation | Suspends when... | Returns immediately when... |
-|-----------|------------------|-----------------------------|
-| [`Lock.acquire()`][lock-acquire] | The lock is held by another task | The lock is free |
-| [`Queue.get()`][queue-get] | The queue is empty | The queue has at least one item |
-| [`Queue.put(item)`][queue-put-item] | The queue is full | The queue has space (or is unbounded) |
-| [`Event.wait()`][event-wait] | The event is not set | The event is already set |
-| [`Semaphore.acquire()`][semaphore-acquire] | The internal counter is 0 | The counter is greater than 0 |
-| [`stream.drain()`][stream-drain] | The write buffer is above the high-water mark | The buffer is below the high-water mark |
-| `#!py await task` | The task is still running | The task is already done -- returns its result (or raises) immediately |
-| `#!py await future` | The future is not yet resolved | The future already has a result or exception |
+| Operation | Suspends when... | Returns immediately when... | Basis |
+|-----------|------------------|-----------------------------|-------|
+| [`stream.read(n)`][stream-read-n] | The buffer does not yet have the data needed to produce a result, and EOF has not been reached | `#!py n == 0`, or buffered data already determines the result, or EOF already determines the result | Docs + source |
+| [`stream.readline()`][stream-readline] | A full line is not yet buffered, and EOF has not been reached | A full line is already buffered, or EOF already determines the result | Docs + source |
+| [`stream.readexactly(n)`][stream-readexactly-n] | Fewer than `n` bytes are buffered, and EOF has not been reached | `#!py n == 0`, or at least `n` bytes are already buffered | Docs + source |
+| [`stream.readuntil(separator)`][stream-readuntil-separator] | The separator is not yet buffered, and EOF has not been reached | The separator is already buffered | Docs + source |
+| [`Queue.get()`][queue-get] | The queue is empty | The queue has at least one item | Docs |
+| [`Queue.put(item)`][queue-put-item] | The queue is full | The queue has space, or the queue is unbounded | Docs |
+| [`Queue.join()`][queue-join] | The unfinished-task count is greater than 0 | The unfinished-task count is already 0 | Source |
+| [`Lock.acquire()`][lock-acquire] | The lock is held by another task | The lock is free | Docs + source |
+| [`Event.wait()`][event-wait] | The event is not set | The event is already set | Docs |
+| [`Condition.wait_for(predicate)`][condition-wait-for-predicate] | `#!py predicate()` is false, so one or more `#!py wait()` calls are needed | `#!py predicate()` is already true on entry | Source |
+| [`Semaphore.acquire()`][semaphore-acquire] | The internal counter is 0 | The counter is greater than 0 | Docs |
+| [`Barrier.wait()`][barrier-wait] | The barrier still needs more parties, or a previous cycle is draining or resetting | In CPython 3.11, this call is the final required party and the barrier is already in the normal filling state | Docs + source |
+| [`stream.drain()`][stream-drain] | The write buffer is above the high-water mark, or the closing path needs a loop turn to surface an error | The buffer is below the high-water mark and there is nothing else to wait for | Docs + source |
+| `#!py await task` | The task is still running | The task is already done -- it returns its result (or raises) immediately | Language + asyncio semantics |
+| `#!py await future` | The future is not yet resolved | The future already has a result or exception | Language + asyncio semantics |
+| [`asyncio.wait_for(aw, timeout)`][asyncio-wait-for-aw-timeout] | `#!py timeout > 0`, or `#!py timeout <= 0` and the awaitable is not already done | `#!py timeout is None` and the awaitable is already done, or `#!py timeout <= 0` and it is already done | CPython 3.11 source |
 
 !!! warning
 
@@ -97,58 +97,30 @@ to land.
     `#!py await asyncio.sleep(0)` when you need a guaranteed checkpoint.
 
 Note that [`stream.drain()`][stream-drain] is particularly subtle. A common pattern is to call
-[`stream.write(data)`][stream-write-data] followed by `#!py await stream.drain()`. Because `#!py write()` is
-synchronous and [`drain()`][drain] only suspends when the buffer is full, a sequence of
-small writes may execute entirely without yielding. If you need a checkpoint
-between writes, add an explicit `#!py await asyncio.sleep(0)`.
+[`stream.write(data)`][stream-write-data] followed by `#!py await stream.drain()`. Because
+`#!py write()` is synchronous and [`drain()`][drain] often returns immediately,
+a sequence of small writes may execute entirely without yielding. If you need
+a checkpoint between writes, add an explicit `#!py await asyncio.sleep(0)`.
 
 ---
 
 ## Never Suspends
 
-These are plain synchronous calls. They do not involve [`await`][await], and the event
-loop does not get a chance to run other tasks during their execution.
+As a general rule, plain synchronous calls do not suspend. If there is no
+[`await`][await], there is no checkpoint, and no other task can interleave during
+that call.
 
-### Streams
+For most synchronous asyncio methods, that rule is enough. The only ones worth
+calling out here are the methods people often *mistake* for checkpoints, or
+that trigger asynchronous consequences later without yielding themselves.
 
-| Operation | Notes |
-|-----------|-------|
-| [`stream.write(data)`][stream-write-data] | Buffers data for sending. Does not wait for the data to reach the peer -- follow up with [`drain()`][drain] to apply back-pressure. |
-| [`stream.write_eof()`][stream-write-eof] | Signals end-of-stream. Synchronous, like `#!py write()`. |
-| [`stream.close()`][stream-close] | Initiates closing the stream. The close itself is synchronous; use [`wait_closed()`][wait-closed] to wait for it to finish. |
-
-### Queues
-
-| Operation | Notes |
-|-----------|-------|
-| [`Queue.put_nowait(item)`][queue-put-nowait-item] | Raises [`QueueFull`][queuefull] if no space is available. |
-| [`Queue.get_nowait()`][queue-get-nowait] | Raises [`QueueEmpty`][queueempty] if nothing is available. |
-| [`Queue.qsize()`][queue-qsize] / [`Queue.empty()`][queue-empty] / [`Queue.full()`][queue-full] | Queue size inspection. These are snapshots -- the value may be stale by the time you act on it. |
-| [`Queue.task_done()`][queue-task-done] | Marks a previously retrieved item as processed. |
-
-### Synchronization primitives
-
-| Operation | Notes |
-|-----------|-------|
-| [`Event.set()`][event-set] | Wakes all waiters, but does not yield. |
-| [`Event.clear()`][event-clear] | Resets the event's internal flag. |
-| [`Event.is_set()`][event-is-set] | Returns the current flag value. |
-| [`Lock.release()`][lock-release] | Releases the lock. Wakes the next waiter, but does not yield. |
-| [`Lock.locked()`][lock-locked] | Returns whether the lock is currently held. |
-| [`Condition.notify()`][condition-notify] / [`notify_all()`][notify-all] | Wakes waiters but does not yield. |
-| [`Semaphore.release()`][semaphore-release] | Increments the counter and wakes a waiter if one is waiting. |
-
-### Tasks and futures
-
-| Operation | Notes |
-|-----------|-------|
-| [`task.cancel(msg=...)`][task-cancel-msg] | *Requests* cancellation but returns immediately. The [`CancelledError`][cancellederror] is raised inside the target task at its next checkpoint. |
-| [`task.done()`][task-done-2] | Returns `True` if the task has finished (successfully, with an exception, or by cancellation). |
-| [`task.result()`][task-result] | Returns the result synchronously. Raises `InvalidStateError` if the task is not done. |
-| [`task.exception()`][task-exception] | Returns the exception synchronously. Raises `InvalidStateError` if the task is not done. |
-| [`task.cancelled()`][task-cancelled] | Returns whether the task was cancelled. |
-| [`task.get_name()`][task-get-name] / [`task.set_name()`][task-set-name] | Name accessors. |
-| [`future.set_result()`][future-set-result] / [`future.set_exception()`][future-set-exception] | Resolves a future. Wakes awaiters at the next loop iteration, but the call itself is synchronous. |
+| Operation | Why it is easy to misread |
+|-----------|---------------------------|
+| [`stream.write(data)`][stream-write-data] / [`write_eof()`][stream-write-eof] / [`close()`][stream-close] | They start network-related work, but the call itself only buffers data or initiates closing. Use [`drain()`][drain] or [`wait_closed()`][wait-closed] to actually wait for progress. |
+| [`Event.set()`][event-set], [`Lock.release()`][lock-release], [`Condition.notify()`][condition-notify] / [`notify_all()`][notify-all], [`Semaphore.release()`][semaphore-release] | They can wake waiting tasks, but the current task keeps running until its next real suspension point. |
+| [`task.cancel(msg=...)`][task-cancel-msg] | It requests cancellation, but the [`CancelledError`][cancellederror] is delivered later when the target task next truly suspends. |
+| [`future.set_result()`][future-set-result] / [`future.set_exception()`][future-set-exception] | They resolve a future and schedule awaiters to resume later, but the call itself does not yield. |
+| [`Queue.put_nowait(item)`][queue-put-nowait-item], [`Queue.get_nowait()`][queue-get-nowait], [`Queue.task_done()`][queue-task-done] | These are immediate queue operations with no suspension path. |
 
 ---
 
@@ -159,11 +131,13 @@ Three practical consequences follow from this table.
 ### Cancellation delivery requires a real checkpoint
 
 [`task.cancel()`][task-cancel]
-does not raise [`CancelledError`][cancellederror] immediately -- it schedules the exception for
-the next time the target task suspends at a checkpoint. If the task enters a
-long stretch of synchronous code, or only [`await`][await]s things that resolve
-immediately (the "conditionally suspends" rows in their fast-path state),
-cancellation stays pending indefinitely. This is why
+does not raise [`CancelledError`][cancellederror] immediately. The official docs say it is
+thrown into the coroutine on the next cycle of the event loop. In the mental
+model used by this guide, that means the task has to hit a real suspension
+point so the loop can run it again. If the task enters a long stretch of
+synchronous code, or only [`await`][await]s things that resolve immediately
+(the "conditionally suspends" rows in their fast-path state), cancellation
+stays pending indefinitely. This is why
 [`asyncio.timeout()`][asyncio-timeout]
 can appear to not work: the deadline fires, `#!py cancel()` is called, but the task
 never reaches a checkpoint where the [`CancelledError`][cancellederror] can be delivered. The fix
@@ -184,12 +158,13 @@ so the event loop stays responsive.
 
 ### Shared state is safe between checkpoints
 
-On the flip side, the checkpoint contract gives you a strong guarantee:
-between two consecutive checkpoints, no other task can run. This means you do
-not need a lock to protect a read-modify-write sequence *as long as there is no
-[`await`][await] (or only non-suspending [`await`][await]s) between the read and the write*.
-Understanding exactly which operations suspend is what lets you distinguish the
-safe cases from the unsafe ones -- and that is the purpose of this table.
+On the flip side, cooperative scheduling gives you a strong guarantee: between
+two consecutive real suspension points, no other task can run. This means you
+do not need a lock to protect a read-modify-write sequence *as long as there
+is no [`await`][await] (or only non-suspending [`await`][await]s) between the read and
+the write*. Understanding exactly which operations suspend is what lets you
+distinguish the safe cases from the unsafe ones -- and that is the purpose of
+this table.
 
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [lock-acquire]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock.acquire

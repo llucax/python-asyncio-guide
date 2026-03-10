@@ -12,7 +12,7 @@ description: >-
 This page distills every recommendation from the guide into one place. The
 pattern is always the same: use structured concurrency to bound task lifetimes,
 respect cancellation so timeouts and teardown actually work, manage resources
-with `#!py async with`, and never block the event loop. If you follow these twenty
+with [`async with`][async-with], and never block the event loop. If you follow these twenty
 rules, the vast majority of asyncio bugs simply cannot happen.
 
 Each item gets a brief explanation and a reference to the chapter where the full
@@ -30,7 +30,7 @@ operational discipline.
 1. **Always use [`TaskGroup`][taskgroup] instead of bare [`create_task()`][create-task].** A task created
    with [`asyncio.create_task()`][asyncio-create-task] can outlive its parent, silently drop
    exceptions, and leak if nobody awaits it. [`TaskGroup`][taskgroup] scopes every child
-   task's lifetime to the `#!py async with` block, propagates exceptions via
+   task's lifetime to the [`async with`][async-with] block, propagates exceptions via
    [`ExceptionGroup`][exceptiongroup], and cancels siblings on failure. Reach for [`create_task()`][create-task]
    only when you are building library internals that genuinely need unscoped
    tasks.
@@ -40,7 +40,7 @@ operational discipline.
 2. **Never swallow [`CancelledError`][cancellederror].** Catching [`CancelledError`][cancellederror] and not
    re-raising it defeats timeouts, [`TaskGroup`][taskgroup] teardown, and graceful
    shutdown -- the caller that requested cancellation will never know it
-   happened. If you catch it for logging or cleanup, always `raise` at the
+   happened. If you catch it for logging or cleanup, always `#!py raise` at the
    end. This is the single most important cancellation rule in the entire
    guide.
    See [Cancellation and Timeouts -- The Cardinal Rule: Never Swallow Cancellation](../the-basics/cancellation-and-timeouts.md#the-cardinal-rule-never-swallow-cancellation).
@@ -61,16 +61,16 @@ operational discipline.
    See [Streams -- `StreamWriter`](../the-basics/streams.md#streamwriter)
    and [Streams -- Resource Management for Streams](../the-basics/streams.md#resource-management-for-streams).
 
-5. **Use `#!py async with` for every resource that supports it.** Locks, task
+5. **Use [`async with`][async-with] for every resource that supports it.** Locks, task
    groups, timeouts, streams, database connections -- anything with
-   `__aenter__`/`__aexit__` should be used as an async context manager. This
+   [`__aenter__`][aenter]/[`__aexit__`][aexit] should be used as an async context manager. This
    guarantees cleanup runs even when the block is interrupted by an exception
    or a cancellation. Manual `#!py acquire()`/`#!py release()` and `#!py close()` calls are
-   easy to skip under cancellation; `#!py async with` makes skipping impossible.
+   easy to skip under cancellation; [`async with`][async-with] makes skipping impossible.
    See [Resource Management -- `async with`](../the-basics/resource-management.md#async-with).
 
 6. **Use [`contextlib.aclosing()`][contextlib-aclosing] for async generators.** An async generator
-   that is abandoned mid-iteration never runs its `finally` block -- the
+   that is abandoned mid-iteration never runs its `#!py finally` block -- the
    cleanup code simply does not execute. Wrapping it with `async with
    aclosing(gen)` ensures `aclose()` is called when the block exits, so
    cleanup runs reliably even if the consumer breaks out early or gets
@@ -80,7 +80,7 @@ operational discipline.
    for [`contextlib.aclosing()`][contextlib-aclosing].
 
 7. **Don't block the event loop.** The event loop is single-threaded. A call
-   to `#!py time.sleep()`, `#!py requests.get()`, `#!py open().read()`, or any CPU-heavy
+   to `#!py time.sleep()`, [`requests.get()`][requests-get], [`open().read()`][open-read], or any CPU-heavy
    computation blocks *every* other task until it returns. The symptoms are
    indirect -- timeouts fire late, heartbeats miss, the UI freezes. Debug mode
    warns about calls that exceed 100 ms, but the real fix is to move the
@@ -102,10 +102,10 @@ operational discipline.
    synchronous code without an event loop, and misleads readers into thinking
    the function yields control. Pure computations, data transformations, and
    validation logic should stay synchronous. If a function does no async I/O,
-   keep it as a regular `def`.
+   keep it as a regular `#!py def`.
    See [Getting Started -- Coroutines](../the-basics/getting-started.md#coroutines).
 
-10. **Enable debug mode during development.** Pass `debug=True` to
+10. **Enable debug mode during development.** Pass `#!py debug=True` to
     [`asyncio.run()`][asyncio-run] or set the `PYTHONASYNCIODEBUG=1` environment variable.
     Debug mode warns about unawaited coroutines, slow callbacks that block the
     loop, and unclosed resources. The runtime overhead is negligible and the
@@ -135,15 +135,15 @@ operational discipline.
 13. **Use sentinel values for queue shutdown.** Cancelling consumer tasks
     while they are blocked on `#!py queue.get()` works, but sentinel values give
     you a cleaner, cooperative shutdown path. Send one sentinel per consumer so
-    each one receives the stop signal. If `None` is valid data, define a
-    dedicated sentinel with `#!py _STOP = object()` and compare with `is`. The
+    each one receives the stop signal. If `#!py None` is valid data, define a
+    dedicated sentinel with `#!py _STOP = object()` and compare with `#!py is`. The
     sentinel pattern composes well with [`TaskGroup`][taskgroup] -- producers finish first,
     then the cleanup code sends sentinels, and consumers exit naturally.
     See [Coordination -- Queue Shutdown Patterns](../the-basics/coordination.md#queue-shutdown-patterns).
 
-14. **Use `try`/`finally` for cleanup, not `#!py except CancelledError`.** Cleanup
+14. **Use `#!py try`/`#!py finally` for cleanup, not `#!py except CancelledError`.** Cleanup
     logic -- closing connections, releasing locks, flushing files -- belongs in
-    a `finally` block (or an `__aexit__` method). A `finally` block runs
+    a `#!py finally` block (or an [`__aexit__`][aexit] method). A `#!py finally` block runs
     regardless of whether the exit is normal, an exception, or a cancellation.
     Catching [`CancelledError`][cancellederror] specifically for cleanup is fragile: you must
     remember to re-raise, and the code wrongly suggests that cleanup only
@@ -160,7 +160,7 @@ operational discipline.
     and re-raise it, or use `#!py except Exception:` which deliberately excludes it.
     See [Cancellation and Timeouts -- The `except BaseException:` Trap](../the-basics/cancellation-and-timeouts.md#the-except-baseexception-trap).
 
-16. **Name your tasks for debugging.** Pass `name=` to `#!py tg.create_task()` or
+16. **Name your tasks for debugging.** Pass `#!py name=` to `#!py tg.create_task()` or
     [`asyncio.create_task()`][asyncio-create-task]. Task names appear in tracebacks, debug-mode
     warnings, and [`asyncio.all_tasks()`][asyncio-all-tasks] output. Without names, you get
     auto-generated labels like `Task-14` that tell you nothing when you are
@@ -194,7 +194,7 @@ operational discipline.
 19. **Prefer bounded concurrency ([`Semaphore`][semaphore]) over unlimited fan-out.**
     Launching thousands of tasks at once to hit an external API will exhaust
     connections, file descriptors, or remote rate limits. Use
-    `asyncio.Semaphore` to cap the number of tasks performing a given
+    [`asyncio.Semaphore`][asyncio-semaphore] to cap the number of tasks performing a given
     operation concurrently. The semaphore acts as an async-friendly throttle:
     tasks that exceed the limit suspend on `#!py async with sem:` instead of
     blocking, and proceed as earlier tasks finish.
@@ -220,23 +220,26 @@ operational discipline.
 | 2 | Never swallow [`CancelledError`][cancellederror] |
 | 3 | `#!py Queue(maxsize=N)`, always |
 | 4 | `#!py writer.close()` then `#!py await writer.wait_closed()` |
-| 5 | `#!py async with` for every resource |
+| 5 | [`async with`][async-with] for every resource |
 | 6 | `#!py aclosing()` for async generators |
 | 7 | Never call blocking functions in a coroutine |
 | 8 | [`asyncio.to_thread()`][asyncio-to-thread] for blocking I/O |
 | 9 | Don't add [`async`][async] to sync-only functions |
-| 10 | `debug=True` during development |
+| 10 | `#!py debug=True` during development |
 | 11 | [`asyncio.timeout()`][asyncio-timeout] over `#!py wait_for()` |
 | 12 | Shield only short, critical work |
 | 13 | One sentinel per consumer for queue shutdown |
-| 14 | `try`/`finally` for cleanup |
-| 15 | Re-raise [`CancelledError`][cancellederror] in broad `except` |
+| 14 | `#!py try`/`#!py finally` for cleanup |
+| 15 | Re-raise [`CancelledError`][cancellederror] in broad `#!py except` |
 | 16 | Name every task |
 | 17 | [`asyncio.run()`][asyncio-run] exactly once |
 | 18 | Don't mix threading and asyncio primitives |
 | 19 | [`Semaphore`][semaphore] for bounded concurrency |
 | 20 | Test under debug mode |
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[requests-get]: https://requests.readthedocs.io/en/latest/api/#requests.get
+[open-read]: https://docs.python.org/3/library/io.html#io.IOBase.read
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
 [asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
@@ -244,6 +247,8 @@ operational discipline.
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
 [queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [wait-closed]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamWriter.wait_closed
+[aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
+[aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
 [contextlib-aclosing]: https://docs.python.org/3/library/contextlib.html#contextlib.aclosing
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
 [processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
@@ -258,3 +263,4 @@ operational discipline.
 [asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [threading-lock]: https://docs.python.org/3/library/threading.html#threading.Lock
 [semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
+[asyncio-semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore

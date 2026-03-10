@@ -17,7 +17,13 @@ reach *into* the asyncio event loop to schedule work or collect results. That
 requires a different set of tools: done callbacks, thread-safe scheduling,
 coroutine submission from non-async threads, and signal handling.
 
-## `#!py add_done_callback()` and `#!py remove_done_callback()`
+!!! info
+
+    This page focuses on the boundary patterns. Use the official
+    [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
+    and [Developing with asyncio][official-dev] pages for the full reference.
+
+## [`add_done_callback()`][add-done-callback] and `#!py remove_done_callback()`
 
 Every
 [`asyncio.Future`][asyncio-future]
@@ -65,7 +71,7 @@ task succeeded: all good
 
 A few things to know:
 
-- **The callback is a plain `def`, not `#!py async def`.** It is scheduled via
+- **The callback is a plain `#!py def`, not `#!py async def`.** It is scheduled via
   [`call_soon()`][call-soon],
   so it runs on the event loop thread in the next iteration of the loop --
   *not* in a separate thread. Keep it fast. If you need to do real work in
@@ -307,8 +313,8 @@ down in a structured way, at a point where you have full context.
 
 A few notes:
 
-- **`#!py remove_signal_handler(sig)`** unregisters the handler and returns `True`
-  if one was removed, `False` otherwise. Cleaning up in `finally` is good
+- **`#!py remove_signal_handler(sig)`** unregisters the handler and returns `#!py True`
+  if one was removed, `#!py False` otherwise. Cleaning up in `#!py finally` is good
   practice, though [`asyncio.run()`][asyncio-run] will close the loop regardless.
 
 - **Unix only.** `#!py add_signal_handler()` raises `NotImplementedError` on
@@ -349,7 +355,11 @@ legacy systems, or writing a server with graceful shutdown, they are essential.
 
 ---
 
+[add-done-callback]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.add_done_callback
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
+[official-tasks]: https://docs.python.org/3/library/asyncio-task.html
+[official-event-loop]: https://docs.python.org/3/library/asyncio-eventloop.html
+[official-dev]: https://docs.python.org/3/library/asyncio-dev.html
 [asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
 [asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon

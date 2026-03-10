@@ -19,6 +19,12 @@ provides four coordination primitives for these situations:
 and
 [`Semaphore`][semaphore].
 
+!!! info
+
+    This page focuses on the patterns: bounded queues, backpressure, sentinels,
+    and throttling. Use the official [Queues][official-queues] and
+    [Synchronization Primitives][official-sync] pages for the full API details.
+
 ## [`asyncio.Queue`][asyncio-queue]
 
 The *queue* is the primary tool for inter-task communication. Instead of
@@ -139,14 +145,14 @@ consumer's pace.
 
 Eventually your producers run out of work and your consumers need to know it
 is time to stop. The simplest approach is a *sentinel value* -- a special item
-that means "no more data is coming." The most common sentinel is `None`, but
+that means "no more data is coming." The most common sentinel is `#!py None`, but
 any unique object works. The critical detail: **send one sentinel per
 consumer.** If you have three consumers but only send one sentinel, two of
 them will hang forever.
 
 !!! tip
 
-    If `None` is a valid data value, define a dedicated sentinel:
+    If `#!py None` is a valid data value, define a dedicated sentinel:
     `#!py _STOP = object()`. Then compare with `#!py is _STOP` instead of `#!py is None`.
 
 An alternative is [`task_done()`][task-done]/[`join()`][join]: the producer calls [`join()`][join] after
@@ -263,7 +269,7 @@ Consumers run inside the outer group, draining the queue the whole time.
 When you *must* share mutable state between tasks, a
 [`Lock`][lock]
 serialises access. Only one task can hold the lock at a time; others suspend
-until it is released. The idiomatic usage is `#!py async with`:
+until it is released. The idiomatic usage is [`async with`][async-with]:
 
 ```python title="lock_example.py"
 import asyncio
@@ -386,7 +392,7 @@ already set returns immediately -- no race condition.
     If you need repeated notifications, a [`Queue`][queue] or a [`Condition`][condition] (Chapter 2)
     is a better fit.
 
-## `asyncio.Semaphore`
+## [`asyncio.Semaphore`][asyncio-semaphore]
 
 A [`Semaphore`][semaphore]
 limits how many tasks can enter a section of code concurrently. Create one
@@ -458,33 +464,37 @@ and the bounded/priority queue variants, see
 
 ---
 
-[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
-[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
-[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
-[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
-[semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[asyncio-event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
+[asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [asyncio-queue-maxsize]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
-[put-item]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.put
-[get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
+[asyncio-semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
 [await]: https://docs.python.org/3/reference/expressions.html#await
-[put-nowait-item]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.put_nowait
-[queuefull]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.QueueFull
-[get-nowait]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get_nowait
-[queueempty]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.QueueEmpty
-[qsize]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.qsize
+[barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
+[condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
 [empty]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.empty
-[full]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.full
-[task-done]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.task_done
-[join]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.join
-[asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
-[asyncio-event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
-[event-set]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.set
-[event-wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.wait
+[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
 [event-clear]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.clear
 [event-is-set]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.is_set
-[condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
-[barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
-[trio-docs]: https://trio.readthedocs.io/en/stable/
-[trio-open-memory-channel]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_memory_channel
+[event-set]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.set
+[event-wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event.wait
+[full]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.full
+[get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
+[get-nowait]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get_nowait
+[join]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.join
+[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
+[official-queues]: https://docs.python.org/3/library/asyncio-queue.html
+[official-sync]: https://docs.python.org/3/library/asyncio-sync.html
+[put-item]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.put
+[put-nowait-item]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.put_nowait
+[qsize]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.qsize
+[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
+[queueempty]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.QueueEmpty
+[queuefull]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.QueueFull
+[semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
+[task-done]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.task_done
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [trio-capacity-limiter]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.CapacityLimiter
+[trio-docs]: https://trio.readthedocs.io/
+[trio-open-memory-channel]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_memory_channel

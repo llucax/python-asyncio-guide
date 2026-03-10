@@ -1,7 +1,7 @@
 ---
 title: The Basics
 description: >-
-  Everything you need to write correct, robust async programs — coroutines,
+  Everything you need to write correct, robust async programs -- coroutines,
   concurrent tasks, cancellation, timeouts, resource management, networking,
   and inter-task coordination using safe, high-level APIs.
 icon: lucide/book-open
@@ -12,38 +12,50 @@ icon: lucide/book-open
 This chapter covers everything you need to write correct, robust async
 programs. By the end, you will be comfortable with coroutines, concurrent
 tasks, cancellation, timeouts, resource management, networking, and
-inter-task coordination — all using safe, high-level APIs.
+inter-task coordination -- all using safe, high-level APIs.
 
-No low-level event loop manipulation, no [`create_task()`][create-task], no `#!py wait_for()`.
-Those exist, but you don't need them here, and reaching for them too early is
-where most asyncio bugs come from.
+No low-level event loop manipulation, no [`create_task()`][create-task], no
+[`wait_for()`][wait-for]. Those exist, but you do not need them here, and reaching for them
+too early is where most asyncio bugs come from.
+
+This is the most guide-owned chapter in the repository. The goal here is not to
+mirror the stdlib reference, but to teach you how to think about asyncio. For
+the few API-heavy areas -- especially streams and synchronization primitives --
+the individual pages link out to the official docs for full method-by-method
+reference.
 
 ## Sections
 
-1. [Getting Started](getting-started.md) — [`async`][async]/[`await`][await], coroutines,
-   [`asyncio.run()`][asyncio-run], [`asyncio.sleep()`][asyncio-sleep], the async sandwich, and checkpoints.
+1. [Getting Started](getting-started.md) -- [`async`][async]/[`await`][await],
+   coroutines, [`asyncio.run()`][asyncio-run], [`asyncio.sleep()`][asyncio-sleep],
+   the async sandwich, and checkpoints.
 
-2. [Concurrent Tasks](concurrent-tasks.md) — [`TaskGroup`][taskgroup], structured
-   concurrency, [`ExceptionGroup`][exceptiongroup], and [`except*`][except].
+2. [Concurrent Tasks](concurrent-tasks.md) -- [`TaskGroup`][taskgroup],
+   structured concurrency, [`ExceptionGroup`][exceptiongroup], and [`except*`][except].
 
-3. [Cancellation and Timeouts](cancellation-and-timeouts.md) —
-   [`CancelledError`][cancellederror], [`asyncio.timeout()`][asyncio-timeout], [`asyncio.timeout_at()`][asyncio-timeout-at], and how
-   they interact with [`TaskGroup`][taskgroup].
+3. [Cancellation and Timeouts](cancellation-and-timeouts.md) --
+   [`CancelledError`][cancellederror], [`asyncio.timeout()`][asyncio-timeout],
+   [`asyncio.timeout_at()`][asyncio-timeout-at], and how they interact with
+   [`TaskGroup`][taskgroup].
 
-4. [Resource Management](resource-management.md) — `#!py async with`,
-   `try`/`finally`, [`contextlib.aclosing()`][contextlib-aclosing], and async generators.
+4. [Resource Management](resource-management.md) -- [`async with`][async-with],
+   [`try`][try]/[`finally`][finally], [`contextlib.aclosing()`][contextlib-aclosing], and async
+   generators.
 
-5. [Streams](streams.md) — [`asyncio.open_connection()`][asyncio-open-connection],
-   [`asyncio.start_server()`][asyncio-start-server], `StreamReader`, `StreamWriter`.
+5. [Streams](streams.md) -- [`asyncio.open_connection()`][asyncio-open-connection],
+   [`asyncio.start_server()`][asyncio-start-server], backpressure, and the
+   stream cleanup rules. Use the official docs for the full API surface.
 
-6. [Coordination](coordination.md) — [`asyncio.Queue`][asyncio-queue], [`Lock`][lock], [`Event`][event],
-   [`Semaphore`][semaphore], and producer/consumer patterns.
+6. [Coordination](coordination.md) -- [`asyncio.Queue`][asyncio-queue],
+   [`Lock`][lock], [`Event`][event], [`Semaphore`][semaphore], and
+   producer/consumer patterns. Use the official docs for exhaustive primitive
+   details.
 
-7. [Building a Pipeline](building-a-pipeline.md) — an actor-based pipeline
-   combining [`TaskGroup`][taskgroup], bounded queues, sentinels, fan-out, and error
-   handling into a realistic application.
+7. [Building a Pipeline](building-a-pipeline.md) -- an actor-based pipeline
+   combining [`TaskGroup`][taskgroup], bounded queues, sentinels, fan-out, and
+   error handling into a realistic application.
 
-8. [Debugging](debugging.md) — debug mode, common mistakes, and the
+8. [Debugging](debugging.md) -- debug mode, common mistakes, and the
    checkpoint contract (condensed).
 
 [create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
@@ -64,3 +76,7 @@ where most asyncio bugs come from.
 [lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
 [semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
+[try]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
+[wait-for]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[finally]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement

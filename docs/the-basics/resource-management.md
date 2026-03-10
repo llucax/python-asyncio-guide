@@ -16,11 +16,11 @@ you get leaked connections, stuck locks, and file descriptors that pile up
 until the OS complains. The good news: the tools for handling this are
 straightforward, and if you follow a few rules you will never leak a resource.
 
-## `#!py async with`
+## [`async with`][async-with]
 
 The
 [`async with` statement][async-with-statement]
-is the async equivalent of the regular `with` statement. It calls
+is the async equivalent of the regular `#!py with` statement. It calls
 [`__aenter__()`][aenter]
 when the block is entered and
 [`__aexit__()`][aexit]
@@ -67,27 +67,27 @@ Incremented to 3
 Final count: 3
 ```
 
-The `#!py async with lock:` line acquires the lock (`__aenter__`), and when the
-block exits -- for any reason -- it is released (`__aexit__`). If a
+The `#!py async with lock:` line acquires the lock ([`__aenter__`][aenter]), and when the
+block exits -- for any reason -- it is released ([`__aexit__`][aexit]). If a
 cancellation arrives while the body is running, the [`CancelledError`][cancellederror] unwinds
-through the block, `__aexit__` runs, and the lock is freed. No task is left
+through the block, [`__aexit__`][aexit] runs, and the lock is freed. No task is left
 waiting forever for a lock that will never be released.
 
-You have already been using `#!py async with` throughout this chapter:
+You have already been using [`async with`][async-with] throughout this chapter:
 `#!py asyncio.TaskGroup()`, [`asyncio.timeout()`][asyncio-timeout], and [`asyncio.timeout_at()`][asyncio-timeout-at] are all
 async context managers. The pattern is always the same -- enter with
-`#!py async with`, and the cleanup is guaranteed.
+[`async with`][async-with], and the cleanup is guaranteed.
 
 !!! warning
 
     If an API gives you an async context manager, **always** use it with
-    `#!py async with`. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
-    and error-prone. The whole point of the protocol is that the `#!py async with`
-    statement guarantees `__aexit__` runs even when things go wrong.
+    [`async with`][async-with]. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
+    and error-prone. The whole point of the protocol is that the [`async with`][async-with]
+    statement guarantees [`__aexit__`][aexit] runs even when things go wrong.
 
 ## Cleanup Under Cancellation
 
-The previous section introduced `try`/`finally` for cleanup when a coroutine
+The previous section introduced `#!py try`/`#!py finally` for cleanup when a coroutine
 is cancelled. Let's go deeper with a resource-oriented example. Imagine an
 async connection that must be explicitly closed:
 
@@ -137,15 +137,15 @@ Timed out, but connection was still closed
 ```
 
 The timeout fires after one second, cancelling the `#!py await conn.query()` call.
-The [`CancelledError`][cancellederror] unwinds the `try` block, the `finally` block runs, and
+The [`CancelledError`][cancellederror] unwinds the `#!py try` block, the `#!py finally` block runs, and
 the connection is closed properly. This is exactly the behaviour you want.
 
 !!! warning
 
-    Cleanup code in `finally` blocks runs while the task is being cancelled.
+    Cleanup code in `#!py finally` blocks runs while the task is being cancelled.
     Keep it fast and simple -- closing a socket, releasing a lock, writing a
     short log message. Do **not** start a 30-second retry loop or a complex
-    multi-step protocol in a `finally` block. If your cleanup itself needs to
+    multi-step protocol in a `#!py finally` block. If your cleanup itself needs to
     [`await`][await] something slow, the outer timeout or cancellation scope may not
     account for that extra time, and the program's shutdown behaviour becomes
     unpredictable.
@@ -160,7 +160,7 @@ the connection is closed properly. This is exactly the behaviour you want.
 ## Ownership Boundaries
 
 A resource must have exactly one *owner* -- the scope responsible for cleaning
-it up. This is the same principle behind RAII in C++ or `with` in synchronous
+it up. This is the same principle behind RAII in C++ or `#!py with` in synchronous
 Python, extended to the async world.
 
 The rule is simple: **the code that opens a resource is the code that closes
@@ -169,10 +169,10 @@ that is the caller's job. A function that creates a connection must ensure it
 is closed before returning, whether that return is normal, an exception, or a
 cancellation.
 
-This is why [`TaskGroup`][taskgroup] and `#!py async with` compose so well. The `#!py async with`
+This is why [`TaskGroup`][taskgroup] and [`async with`][async-with] compose so well. The [`async with`][async-with]
 block is the owner scope: everything created inside it is cleaned up when the
 block exits. A [`TaskGroup`][taskgroup] guarantees all its children finish before
-`__aexit__` runs, so resources opened inside the group are still valid for the
+[`__aexit__`][aexit] runs, so resources opened inside the group are still valid for the
 entire lifetime of the children.
 
 ```python
@@ -185,13 +185,13 @@ async def process_batch(urls: list[str]) -> None:
 
 When you find yourself passing a resource across multiple scopes without a
 clear owner, stop and restructure. The resource should live in an
-`#!py async with` block, and every piece of code that uses it should be a child of
+[`async with`][async-with] block, and every piece of code that uses it should be a child of
 that scope.
 
 ## Async Generators
 
-An *async generator* is an async function that uses `yield` instead of (or in
-addition to) `return`. Just as regular generators produce values lazily, async
+An *async generator* is an async function that uses `#!py yield` instead of (or in
+addition to) `#!py return`. Just as regular generators produce values lazily, async
 generators produce values lazily with [`await`][await] between yields:
 
 ```python title="async_gen_basic.py"
@@ -259,16 +259,16 @@ Done
 ```
 
 In this simple case, Python's garbage collector eventually finalises the
-generator and the `finally` block runs. But "eventually" is not a guarantee
+generator and the `#!py finally` block runs. But "eventually" is not a guarantee
 you can rely on. If the generator is abandoned due to cancellation, or if the
-garbage collector is delayed, the `finally` block may run much later -- or in
+garbage collector is delayed, the `#!py finally` block may run much later -- or in
 a context where it can no longer do async cleanup properly. In a long-running
 server, this means leaked connections and file descriptors.
 
 !!! danger
 
     Never rely on the garbage collector to clean up async generators. The
-    `finally` block may run, but the *timing* is unpredictable and async
+    `#!py finally` block may run, but the *timing* is unpredictable and async
     operations inside it may fail or be silently skipped. Always close async
     generators explicitly.
 
@@ -319,8 +319,8 @@ Done
 
 The output looks the same, but the behaviour is fundamentally different.
 With `#!py aclosing()`, the generator's [`aclose()`][aclose] method is called *immediately*
-when the `#!py async with` block exits -- not at some unpredictable later time by
-the garbage collector. The `finally` block inside the generator runs promptly,
+when the [`async with`][async-with] block exits -- not at some unpredictable later time by
+the garbage collector. The `#!py finally` block inside the generator runs promptly,
 and any async cleanup it needs to do happens in the right context.
 
 !!! tip
@@ -363,7 +363,7 @@ it raises `StopAsyncIteration` and the loop ends.
 !!! note
 
     `#!py async for` does **not** automatically close the iterable when the loop
-    exits early (via `break` or exception). That is why `#!py aclosing()` is
+    exits early (via `#!py break` or exception). That is why `#!py aclosing()` is
     necessary for async generators -- it provides the cleanup that `#!py async for`
     does not.
 
@@ -431,13 +431,14 @@ slow collected: ['B/event-0', 'B/event-1', 'B/event-2']
 ```
 
 Both consumers stop early (before the stream is exhausted), but `#!py aclosing()`
-ensures each stream's `finally` block runs immediately. The [`TaskGroup`][taskgroup]
+ensures each stream's `#!py finally` block runs immediately. The [`TaskGroup`][taskgroup]
 guarantees both consumers finish before `#!py main()` continues. Every resource has
 a clear owner, every cleanup path is covered, and cancellation would not change
-any of that -- the `#!py async with` blocks and `finally` blocks would still run.
+any of that -- the [`async with`][async-with] blocks and `#!py finally` blocks would still run.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [async-with-statement]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
@@ -446,12 +447,12 @@ any of that -- the `#!py async with` blocks and `finally` blocks would still run
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
 [asyncio-timeout-at]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout_at
+[trio-docs]: https://trio.readthedocs.io/en/stable/
+[trio-cancel-scope]: https://trio.readthedocs.io/en/stable/reference-core.html#cancellation-and-timeouts
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [contextlib-aclosing]: https://docs.python.org/3/library/contextlib.html#contextlib.aclosing
 [aclose]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack.aclose
+[trio-aclosing]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.aclosing
 [async-for-statement]: https://docs.python.org/3/reference/compound_stmts.html#async-for
 [aiter]: https://docs.python.org/3/reference/datamodel.html#object.__aiter__
 [anext]: https://docs.python.org/3/reference/datamodel.html#object.__anext__
-[trio-docs]: https://trio.readthedocs.io/en/stable/
-[trio-cancel-scope]: https://trio.readthedocs.io/en/stable/reference-core.html#cancellation-and-timeouts
-[trio-aclosing]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.aclosing

@@ -62,14 +62,14 @@ uv.lock
 - Local preview server:
 
   ```sh
-  uv run zensical preview
+  uv run zensical serve
   ```
 
 - If `uv` is unavailable but `zensical` is already installed globally:
 
   ```sh
   zensical build --clean
-  zensical preview
+  zensical serve
   ```
 
 ## Lint / Test Commands
@@ -121,10 +121,14 @@ Validation is manual:
 
 - Internal links: use relative Markdown links such as
   `../appendices/debugging.md`.
-- Link the first meaningful mention of a concept on a page to the page that
-  explains it in depth.
+- Link guide-level concepts to the page in this guide that explains them in
+  depth.
 - For Python stdlib APIs, link to the official Python 3 docs.
 - For Trio APIs/concepts, link to the official Trio docs.
+- For other external library APIs/concepts, link to the project's official docs
+  rather than a GitHub repository when possible.
+- In prose, link all meaningful occurrences of Python, Trio, and external API
+  mentions, not just the first one on the page.
 - Prefer split reference links for readability:
 
   ```markdown
@@ -171,8 +175,7 @@ Validation is manual:
 
 ## Asyncio Content Guidelines
 
-- On each page, link the first substantial mention of an `asyncio` API to the
-  official docs.
+- Link meaningful mentions of `asyncio` APIs in prose to the official docs.
 - Keep cancellation guidance consistent: cancellation arrives at checkpoints,
   not at arbitrary points.
 - Prefer structured concurrency terminology and patterns.

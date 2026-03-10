@@ -1,7 +1,7 @@
 ---
 title: Beyond the Basics
 description: >-
-  Advanced application-level asyncio patterns — integrating blocking code,
+  Advanced application-level asyncio patterns -- integrating blocking code,
   shielding critical work from cancellation, custom context managers,
   advanced coordination primitives, subprocesses, and the Runner API.
 icon: lucide/book-open
@@ -15,27 +15,40 @@ no event loop internals, no framework plumbing. These are the recipes and
 tools that fill the gap between "I can write a TaskGroup" and "I can build a
 production async service."
 
+This chapter mixes two kinds of pages:
+
+- **Pattern pages** that stay fully guide-owned, such as blocking code,
+  shielding, and context-manager design.
+- **Reference companion pages** that stay deliberately short when the official
+  docs already explain an API well. Those pages focus on when to reach for the
+  tool, the main pitfall, and where to read the full reference next.
+
 ## Sections
 
-1. [Blocking Code](blocking-code.md) — [`asyncio.to_thread()`][asyncio-to-thread],
-   [`loop.run_in_executor()`][loop-run-in-executor] with [`ProcessPoolExecutor`][processpoolexecutor], and when to reach for
-   each.
+1. [Blocking Code](blocking-code.md) -- [`asyncio.to_thread()`][asyncio-to-thread],
+   [`loop.run_in_executor()`][loop-run-in-executor] with
+   [`ProcessPoolExecutor`][processpoolexecutor], and when to reach for each.
 
-2. [Shielding](shielding.md) — [`asyncio.shield()`][asyncio-shield], when it is actually useful,
-   and how to use it without creating orphaned tasks.
+2. [Shielding](shielding.md) -- [`asyncio.shield()`][asyncio-shield], when it is
+   actually useful, and how to use it without creating orphaned tasks.
 
-3. [Custom Context Managers](custom-context-managers.md) —
-   `@asynccontextmanager`, `AsyncExitStack`, and patterns for composing async
+3. [Custom Context Managers](custom-context-managers.md) --
+   [`@asynccontextmanager`][at-asynccontextmanager], [`AsyncExitStack`][asyncexitstack], and patterns for composing async
    resource lifetimes.
 
-4. [Advanced Coordination](advanced-coordination.md) — [`Condition`][condition], [`Barrier`][barrier],
-   [`BoundedSemaphore`][boundedsemaphore], [`PriorityQueue`][priorityqueue], [`LifoQueue`][lifoqueue].
+4. [Advanced Coordination](advanced-coordination.md) -- [`Condition`][condition],
+   [`Barrier`][barrier], [`BoundedSemaphore`][boundedsemaphore],
+   [`PriorityQueue`][priorityqueue], [`LifoQueue`][lifoqueue]. This is a
+   reference companion page.
 
-5. [Subprocesses](subprocesses.md) — [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec],
-   [`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell], and working with stdin/stdout/stderr.
+5. [Subprocesses](subprocesses.md) --
+   [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec],
+   [`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell], and
+   the key deadlock and shell-safety rules. This is a reference companion page.
 
-6. [Runner](runner.md) — [`asyncio.Runner`][asyncio-runner] for running multiple top-level
-   coroutines in sequence, testing, and REPL use.
+6. [Runner](runner.md) -- [`asyncio.Runner`][asyncio-runner] for running
+   multiple top-level coroutines in sequence, testing, and REPL use. This is a
+   reference companion page.
 
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
 [loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
@@ -49,3 +62,5 @@ production async service."
 [asyncio-create-subprocess-exec]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_exec
 [asyncio-create-subprocess-shell]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_shell
 [asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
+[at-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
+[asyncexitstack]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack

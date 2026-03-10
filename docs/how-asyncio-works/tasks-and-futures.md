@@ -28,11 +28,11 @@ future is *pending*.
 
 The API is small:
 
-- **`#!py .done()`** -- returns `True` if the future has a result, an exception, or
-  was cancelled. Returns `False` while it's still pending.
+- **`#!py .done()`** -- returns `#!py True` if the future has a result, an exception, or
+  was cancelled. Returns `#!py False` while it's still pending.
 - **`#!py .result()`** -- returns the value. Raises `InvalidStateError` if the
   future isn't done yet, or re-raises the stored exception if one was set.
-- **`#!py .exception()`** -- returns the stored exception (or `None` if the future
+- **`#!py .exception()`** -- returns the stored exception (or `#!py None` if the future
   completed successfully). Raises `InvalidStateError` if not done.
 - **`#!py .set_result(value)`** -- fills the box with a value and marks the future
   done. Can only be called once.
@@ -101,7 +101,7 @@ I/O completions, and coroutines into a single coherent system.
 
 A *task* is a future that wraps a coroutine and drives it on the event loop.
 Where a plain future is a passive container (someone else must call
-`#!py set_result()`), a task is *active* -- it repeatedly resumes the coroutine,
+[`set_result()`][set-result]), a task is *active* -- it repeatedly resumes the coroutine,
 handles whatever it yields, and eventually sets its own result when the
 coroutine returns.
 
@@ -200,10 +200,10 @@ inspection methods tell you which state you're in:
 
 | Method          | Pending | Result | Exception | Cancelled |
 |-----------------|---------|--------|-----------|-----------|
-| `#!py .done()`       | `False` | `True` | `True`    | `True`    |
-| `#!py .cancelled()`  | `False` | `False`| `False`   | `True`    |
+| `#!py .done()`       | `#!py False` | `#!py True` | `#!py True`    | `#!py True`    |
+| `#!py .cancelled()`  | `#!py False` | `#!py False`| `#!py False`   | `#!py True`    |
 | `#!py .result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
-| `#!py .exception()`  | raises `InvalidStateError` | returns `None` | returns exception | raises [`CancelledError`][cancellederror] |
+| `#!py .exception()`  | raises `InvalidStateError` | returns `#!py None` | returns exception | raises [`CancelledError`][cancellederror] |
 
 The following example walks through all three outcomes:
 
@@ -269,7 +269,7 @@ you call it on a task that isn't done yet, you get `InvalidStateError`.
     After a [`TaskGroup`][taskgroup] block exits normally, every task in the group is
     guaranteed done. That is why the
     [Collecting Results](../the-basics/concurrent-tasks.md) pattern
-    calls `#!py .result()` *after* the `#!py async with` block -- it is always safe
+    calls `#!py .result()` *after* the [`async with`][async-with] block -- it is always safe
     there.
 
 ## Task References
@@ -382,7 +382,7 @@ Here is what happens, step by step:
 5. **Completion.** Eventually the coroutine either returns a value (raising
    `StopIteration` -- that's how Python generators and coroutines signal
    completion) or raises an exception. The task catches this, calls
-   `#!py set_result()` or `#!py set_exception()` on itself, and fires its own done
+   [`set_result()`][set-result] or [`set_exception()`][set-exception] on itself, and fires its own done
    callbacks.
 
 This send-yield-callback loop is the heartbeat of asyncio concurrency. Every
@@ -403,6 +403,9 @@ comes back and picks up where it left off.
 
 ---
 
+[set-result]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_result
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[set-exception]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_exception
 [asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
 [asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [await]: https://docs.python.org/3/reference/expressions.html#await

@@ -15,6 +15,14 @@ gap. The catch is that you have to use them *deliberately*, because calling a
 blocking function directly inside a coroutine is one of the easiest ways to
 break an async program.
 
+!!! info
+
+    This page focuses on the decision-making: what blocks the loop, when to use
+    `#!py to_thread()`, and when to escalate to a process pool. Use the official
+    [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
+    and [Developing with asyncio][official-dev] pages for full executor and
+    threading details.
+
 ## The Problem: Blocking the Event Loop
 
 The event loop runs in a single thread. When you [`await`][await] something, control
@@ -140,7 +148,7 @@ Now both tasks run concurrently. `polite_task` prints its ticks while
 `blocking_work` sleeps in a background thread. Total time is 2 seconds --
 the duration of the slowest task, as you would expect.
 
-Notice that `blocking_work` is a plain `def` function, not `#!py async def`. That
+Notice that `blocking_work` is a plain `#!py def` function, not `#!py async def`. That
 is the whole point: you already have synchronous code and you need to call it
 from an async context. `to_thread` bridges the gap.
 
@@ -361,3 +369,6 @@ better performance and cleaner code.
 [processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 [picklable]: https://docs.python.org/3/library/pickle.html
 [trio-to-thread-run-sync]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.to_thread.run_sync
+[official-tasks]: https://docs.python.org/3/library/asyncio-task.html
+[official-event-loop]: https://docs.python.org/3/library/asyncio-eventloop.html
+[official-dev]: https://docs.python.org/3/library/asyncio-dev.html

@@ -55,7 +55,7 @@ Task exception was never retrieved
 ValueError: Failed to fetch https://example.com/bad
 ```
 
-`#!py main()` finished after half a second, abandoning both tasks. The `ValueError`
+`#!py main()` finished after half a second, abandoning both tasks. The [`ValueError`][valueerror]
 went uncaught -- just a warning in the logs. This pattern has three problems:
 
 1. **Lost references.** Without storing the [`Task`][task] object you cannot await it,
@@ -81,7 +81,7 @@ you don't use `goto` to jump out of a function, you don't launch tasks that
 outlive their scope.
 
 When you open a [`TaskGroup`][taskgroup], you create a scope. Tasks spawned
-inside it are *children* of the group. The `#!py async with` block will not exit
+inside it are *children* of the group. The [`async with`][async-with] block will not exit
 until every child has finished -- whether successfully, by raising, or by being
 cancelled. No orphans, no forgotten work, no swallowed errors.
 
@@ -94,7 +94,7 @@ cancelled. No orphans, no forgotten work, no swallowed errors.
 
 ## [`asyncio.TaskGroup`][asyncio-taskgroup]
 
-Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with `#!py async with`,
+Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with [`async with`][async-with],
 spawn tasks with [`tg.create_task()`][tg-create-task], and when the block ends
 all tasks are guaranteed complete:
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. The `#!py async with` block is the **ownership boundary**. Tasks spawned
+1. The [`async with`][async-with] block is the **ownership boundary**. Tasks spawned
    inside cannot outlive it -- the block will not exit until every child
    has finished, failed, or been cancelled.
 
@@ -132,7 +132,7 @@ All greetings done.
 ```
 
 Notice that Bob greets first because his delay is shorter -- both tasks ran
-concurrently. The line after the `#!py async with` block only executes once *both*
+concurrently. The line after the [`async with`][async-with] block only executes once *both*
 tasks have completed. No orphans.
 
 ## Execution Trace
@@ -146,8 +146,8 @@ Here is exactly what happens inside the event loop, step by step:
    ready queue as a task. `#!py tg.create_task(greet("Bob", 0.5))` does the
    same for Bob. Neither has started yet.
 4. `#!py print("Tasks are running...")` executes -- this is synchronous code
-   inside the `#!py async with` block, so it runs immediately.
-5. Execution reaches the end of the `#!py async with` block. The [`TaskGroup`][taskgroup]
+   inside the [`async with`][async-with] block, so it runs immediately.
+5. Execution reaches the end of the [`async with`][async-with] block. The [`TaskGroup`][taskgroup]
    now waits for all its children to complete. `#!py main()` suspends.
 6. The loop picks Alice's task (first scheduled). Alice hits
    `#!py await asyncio.sleep(1.0)` and suspends -- the loop sets a 1-second
@@ -221,7 +221,7 @@ Caught errors: (RuntimeError('Something went wrong'),)
 
 The `fast_failure` task raised after 0.1 seconds. The [`TaskGroup`][taskgroup] cancelled
 `slow_worker`, which caught [`CancelledError`][cancellederror] and re-raised (as it should --
-never swallow [`CancelledError`][cancellederror]). Then the group wrapped the `RuntimeError` in
+never swallow [`CancelledError`][cancellederror]). Then the group wrapped the [`RuntimeError`][runtimeerror] in
 an [`ExceptionGroup`][exceptiongroup] and raised it.
 
 The deep mechanics of cancellation -- [`CancelledError`][cancellederror] propagation, shielding,
@@ -287,7 +287,7 @@ any exceptions are *not* matched, they propagate upward as a new
 
 !!! warning
 
-    You cannot mix `except` and [`except*`][except] in the same `try` block. If you use
+    You cannot mix `#!py except` and [`except*`][except] in the same `#!py try` block. If you use
     [`except*`][except], all handlers in that block must use the starred form. This is a
     syntax rule enforced by the Python interpreter.
 
@@ -301,7 +301,7 @@ any exceptions are *not* matched, they propagate upward as a new
 
 In many cases you want return values from your concurrent tasks, not just side
 effects. The pattern is straightforward: store the [`Task`][task] handles from
-[`tg.create_task()`][tg-create-task], then call `#!py .result()` after the `#!py async with` block:
+[`tg.create_task()`][tg-create-task], then call `#!py .result()` after the [`async with`][async-with] block:
 
 ```python title="collect_results.py"
 import asyncio
@@ -342,7 +342,7 @@ https://example.com/page3 -> 40 chars
 ```
 
 All three fetches ran concurrently (total wall time ~0.5s, not ~1.5s). After
-the `#!py async with` block, every task is guaranteed complete, so `#!py .result()`
+the [`async with`][async-with] block, every task is guaranteed complete, so `#!py .result()`
 returns immediately. If any task had failed, the [`TaskGroup`][taskgroup] would have raised
 an [`ExceptionGroup`][exceptiongroup] before you ever reach the `#!py .result()` calls.
 
@@ -469,7 +469,7 @@ become obvious:
 1. **Who owns the lifetime of this work?** Every task should have a
    clear owner -- something that will await it, cancel it, or handle
    its exceptions. With [`TaskGroup`][taskgroup], the answer is always "the group,"
-   and the `#!py async with` block is the boundary.
+   and the [`async with`][async-with] block is the boundary.
 
 2. **Where are the suspension points?** Every [`await`][await] is a place where
    your coroutine can pause and other tasks can run. Between two
@@ -498,17 +498,20 @@ locks -- and they will save you from the most common async bugs.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[valueerror]: https://docs.python.org/3/library/exceptions.html#ValueError
 [task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+[trio-open-nursery]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_nursery
+[tg-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup.create_task
+[trio-start-soon]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.Nursery.start_soon
 [asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
 [asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[runtimeerror]: https://docs.python.org/3/library/exceptions.html#RuntimeError
 [exceptiongroup]: https://docs.python.org/3/library/builtins.html#ExceptionGroup
 [except]: https://docs.python.org/3/reference/compound_stmts.html#the-try-statement
-[trio-open-nursery]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.open_nursery
-[trio-start-soon]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.Nursery.start_soon
-[tg-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup.create_task

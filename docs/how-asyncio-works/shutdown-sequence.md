@@ -40,8 +40,8 @@ through a deliberate multi-step teardown:
 
 4. **Run the loop until all cancelled tasks are done.** [`asyncio.run()`][asyncio-run] calls
    `#!py loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))`
-   so that every cancelled task gets a chance to run its `finally` blocks and
-   `__aexit__` methods. This is why cleanup code in cancelled tasks actually
+   so that every cancelled task gets a chance to run its `#!py finally` blocks and
+   [`__aexit__`][aexit] methods. This is why cleanup code in cancelled tasks actually
    executes -- the loop keeps spinning long enough for the cancellation to
    unwind.
 
@@ -130,7 +130,7 @@ scope.
 
 A [`TaskGroup`][taskgroup] is the fix. Every
 task created with `#!py tg.create_task()` is awaited
-before the `#!py async with` block exits. There is no way for a task to leak out
+before the [`async with`][async-with] block exits. There is no way for a task to leak out
 of the group:
 
 ```python
@@ -141,19 +141,19 @@ async def main() -> None:
     # All tasks are done (or cancelled) before we get here
 ```
 
-When the `#!py async with` block exits, the [`TaskGroup`][taskgroup] cancels any children that
+When the [`async with`][async-with] block exits, the [`TaskGroup`][taskgroup] cancels any children that
 are still running and waits for them. By the time `#!py main()` returns, there are
 no orphan tasks for [`asyncio.run()`][asyncio-run] to clean up. No warnings, no surprises.
 
 ## Async Generator Finalization
 
 Async generators that are abandoned -- iterated partially and then forgotten --
-pose a cleanup problem. Their `finally` blocks may hold resources that need
+pose a cleanup problem. Their `#!py finally` blocks may hold resources that need
 async teardown, but the generator is no longer being driven by anything.
 
 At step 5 of the shutdown sequence, [`asyncio.run()`][asyncio-run] calls
 [`loop.shutdown_asyncgens()`][loop-shutdown-asyncgens] to finalize any generators that are still alive.
-This triggers their `finally` blocks and [`aclose()`][aclose] methods, giving them a
+This triggers their `#!py finally` blocks and [`aclose()`][aclose] methods, giving them a
 last chance to release resources.
 
 ```python title="abandoned_agen.py"
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 ticker: finalized after yielding 2 values
 ```
 
-The generator's `finally` block ran during shutdown, thanks to
+The generator's `#!py finally` block ran during shutdown, thanks to
 `#!py shutdown_asyncgens()`. But relying on this is fragile -- it only runs during
 [`asyncio.run()`][asyncio-run] teardown, so if you are using a custom loop setup or the
 generator holds a resource that should be released *before* shutdown, it will
@@ -239,8 +239,8 @@ async def main() -> None:
     # Both tasks guaranteed done here
 ```
 
-**Use `#!py async with` for resources.** Connections, locks, sessions -- anything
-that needs cleanup gets an `#!py async with` block. Cleanup runs on normal exit,
+**Use [`async with`][async-with] for resources.** Connections, locks, sessions -- anything
+that needs cleanup gets an [`async with`][async-with] block. Cleanup runs on normal exit,
 on exception, and on cancellation.
 
 ```python
@@ -251,7 +251,7 @@ async def main() -> None:
 ```
 
 **Use `#!py aclosing()` for async generators.** Generators are closed
-deterministically when the `#!py async with` block exits, not deferred to shutdown.
+deterministically when the [`async with`][async-with] block exits, not deferred to shutdown.
 
 ```python
 from contextlib import aclosing
@@ -295,10 +295,12 @@ through the same seven steps.
 
 ---
 
+[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
 [asyncio-all-tasks]: https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks
 [task-cancel]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
 [loop-shutdown-asyncgens]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_asyncgens
 [loop-shutdown-default-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.shutdown_default_executor
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread

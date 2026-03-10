@@ -1,364 +1,142 @@
 ---
 title: Advanced Coordination
 description: >-
-  Specialized asyncio coordination primitives — Condition, Barrier,
-  BoundedSemaphore, PriorityQueue, and LifoQueue. Solve specific
-  inter-task synchronization problems beyond Queue, Lock, Event,
-  and Semaphore.
+  A short guide to the specialized asyncio coordination primitives --
+  Condition, Barrier, BoundedSemaphore, PriorityQueue, and LifoQueue -- with
+  advice on when to use them and when to rely on the official docs.
 ---
 
 # Advanced Coordination
 
 Chapter 1 covered the four coordination primitives you will use most often --
-[Queue, Lock, Event, and Semaphore](../the-basics/coordination.md).
-Those handle the vast majority of inter-task communication. This section
-covers the *specialised* primitives -- tools you reach for less often, but
-that solve specific problems cleanly when you do need them. Each one gets a
-short explanation and a runnable example.
+[Queue, Lock, Event, and Semaphore](../the-basics/coordination.md). Those
+handle the vast majority of inter-task communication.
 
-## `asyncio.Condition`
-
-A [`Condition`][condition]
-combines a [`Lock`][lock] with the ability to *wait for a condition to become true*.
-The idea comes from threading: you acquire the lock, check whether the state
-you care about is ready, and if it isn't, you call `#!py wait()` -- which releases
-the lock and suspends you until another task calls `#!py notify()` or
-[`notify_all()`][notify-all]. When you wake up, the lock is re-acquired automatically.
-
-This is useful when a simple [`Event`][event] isn't enough -- for example, when
-multiple tasks are waiting for *different* conditions on the *same* shared
-state.
-
-The API:
-
-- **`#!py async with condition:`** -- acquires the underlying lock.
-- **`#!py await condition.wait()`** -- releases the lock, suspends until notified,
-  then re-acquires the lock. **Always call this inside a `while` loop** that
-  checks the actual condition -- spurious wakeups are possible, and another
-  task may have changed the state before you re-acquire.
-- **`#!py await condition.wait_for(predicate)`** -- convenience wrapper that loops
-  on `#!py wait()` until `#!py predicate()` returns `True`.
-- **`#!py condition.notify(n=1)`** -- wake up *n* waiting tasks.
-- **`#!py condition.notify_all()`** -- wake up *all* waiting tasks.
-
-Here is a bounded buffer where producers wait when the buffer is full and
-consumers wait when it is empty:
-
-```python title="condition_buffer.py"
-import asyncio
-
-class BoundedBuffer:
-    def __init__(self, capacity: int) -> None:
-        self.capacity = capacity
-        self.buffer: list[int] = []
-        self.condition = asyncio.Condition()
-
-    async def put(self, item: int) -> None:
-        async with self.condition:
-            await self.condition.wait_for(lambda: len(self.buffer) < self.capacity)
-            self.buffer.append(item)
-            self.condition.notify_all()
-
-    async def get(self) -> int:
-        async with self.condition:
-            await self.condition.wait_for(lambda: len(self.buffer) > 0)
-            item = self.buffer.pop(0)
-            self.condition.notify_all()
-            return item
-
-async def producer(buf: BoundedBuffer, name: str, count: int) -> None:
-    for i in range(count):
-        await buf.put(i)
-        print(f"[{name}] put {i}")
-
-async def consumer(buf: BoundedBuffer, name: str, count: int) -> None:
-    for _ in range(count):
-        item = await buf.get()
-        await asyncio.sleep(0.1)  # Simulate processing
-        print(f"[{name}] got {item}")
-
-async def main() -> None:
-    buf = BoundedBuffer(capacity=2)
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(producer(buf, "P", 5))
-        tg.create_task(consumer(buf, "C1", 3))
-        tg.create_task(consumer(buf, "C2", 2))
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-```text title="$ python condition_buffer.py"
-[P] put 0
-[P] put 1
-[C1] got 0
-[C2] got 1
-[P] put 2
-[P] put 3
-[C1] got 2
-[P] put 4
-[C2] got 3
-[C1] got 4
-```
-
-!!! note
-
-    For simple producer/consumer scenarios, a
-    [`Queue`][queue]
-    is usually the better choice -- it handles all the locking and
-    notification internally. [`Condition`][condition] shines when you need custom
-    predicates on shared state that doesn't fit the queue model.
-
-## `asyncio.Barrier`
-
-A [`Barrier`][barrier]
-is a synchronisation point where exactly *N* tasks must arrive before any of
-them can continue. You create a barrier with a *parties* count, and each task
-calls `#!py await barrier.wait()`. The first *N - 1* callers suspend; the *N*-th
-caller unblocks everyone.
+This page is about the *specialized* tools that you reach for when those four
+are not enough. It is intentionally short. The official docs already document
+these APIs well, so the goal here is to help you choose the right tool and avoid
+the main footguns.
 
 !!! info
 
-    `asyncio.Barrier` was added in **Python 3.11**. It is not available in
-    earlier versions.
+    Use this page for the decision-making. Use the official docs for the full
+    method reference. The appendix
+    [Official Docs Roadmap](../appendices/official-docs-roadmap.md) points to
+    the relevant stdlib pages.
 
-Barriers are ideal for *phased computations* -- situations where all workers
-must complete phase 1 before any of them start phase 2.
+## Start With the Simpler Primitive
 
-```python title="barrier_phases.py"
+Before you reach for anything on this page, ask yourself:
+
+- Would a bounded [`Queue`][queue] solve this more simply?
+- Would a plain [`Event`][event] or [`Semaphore`][semaphore] be enough?
+- Are you starting to rebuild a queue or a task group by hand?
+
+If the answer to any of those is "yes", stop there. These advanced primitives
+are useful, but they are easier to misuse.
+
+## Decision Table
+
+| Primitive | Reach for it when... | Main pitfall |
+|---|---|---|
+| [`Condition`][condition] | Several tasks wait for *different predicates* on the same shared state | Forgetting to re-check the predicate after wakeup |
+| [`Barrier`][barrier] | A fixed number of tasks must all finish phase N before any start phase N+1 | One missing party stalls everyone |
+| [`BoundedSemaphore`][boundedsemaphore] | You want semaphore behavior plus protection against over-release bugs | Treating it like a different concurrency primitive instead of a safety wrapper |
+| [`PriorityQueue`][priorityqueue] | Work items must be processed by priority instead of FIFO order | Forgetting that ties still need stable, comparable payloads |
+| [`LifoQueue`][lifoqueue] | Newest work should be processed first | Accidentally starving older items |
+
+## `asyncio.Condition`
+
+Use a [`Condition`][condition] when tasks share mutable state and different
+waiters care about different states of that data.
+
+You almost always want [`wait_for(predicate)`][wait-for-predicate] instead of raw [`wait()`][wait], because
+it keeps the "check predicate, sleep, check again" loop in one place.
+
+```python
 import asyncio
 
-async def worker(name: str, barrier: asyncio.Barrier) -> None:
-    for phase in range(1, 4):
-        # Simulate work that takes different time for each worker
-        work_time = 0.1 * (hash(name + str(phase)) % 3 + 1)
-        await asyncio.sleep(work_time)
-        print(f"[{name}] finished phase {phase}")
 
-        await barrier.wait()
-        # All workers have completed this phase before anyone continues
-        print(f"[{name}] starting phase {phase + 1}")
+class Buffer:
+    def __init__(self) -> None:
+        self.items: list[int] = []
+        self.cond = asyncio.Condition()
 
-async def main() -> None:
-    n_workers = 3
-    barrier = asyncio.Barrier(n_workers)
+    async def put(self, value: int) -> None:
+        async with self.cond:
+            self.items.append(value)
+            self.cond.notify_all()
 
-    async with asyncio.TaskGroup() as tg:
-        for i in range(n_workers):
-            tg.create_task(worker(f"W{i}", barrier))
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    async def get(self) -> int:
+        async with self.cond:
+            await self.cond.wait_for(lambda: bool(self.items))
+            return self.items.pop(0)
 ```
 
-```text title="$ python barrier_phases.py"
-[W1] finished phase 1
-[W0] finished phase 1
-[W2] finished phase 1
-[W2] starting phase 2
-[W1] starting phase 2
-[W0] starting phase 2
-[W0] finished phase 2
-[W2] finished phase 2
-[W1] finished phase 2
-[W1] starting phase 3
-...
-```
+If that looks like a hand-rolled queue, that is the point: prefer
+[`Queue`][queue] unless you genuinely need a custom predicate over shared state.
 
-All workers complete each phase before any of them start the next. The
-barrier resets automatically after each round, so you can reuse it across
-multiple phases.
+## `asyncio.Barrier`
 
-Other useful attributes and methods:
-[`barrier.parties`][barrier-parties] (required count),
-[`barrier.n_waiting`][barrier-n-waiting] (currently blocked),
-[`await barrier.abort()`][await-barrier-abort] (breaks the barrier -- all current and future `#!py wait()` calls raise
-[`BrokenBarrierError`][brokenbarriererror]),
-and [`await barrier.reset()`][await-barrier-reset] (returns to initial state; waiting tasks get [`BrokenBarrierError`][brokenbarriererror]).
+Use a [`Barrier`][barrier] for phased work. Each task calls [`await barrier.wait()`][await-barrier-wait].
+Nobody crosses until the required number of parties arrives.
+
+This is useful for simulations, staged pipelines, or test harnesses where all
+workers must finish one round before the next begins.
+
+The main failure mode is simple: if one task exits early, blocks forever, or is
+never started, every other waiter can hang behind the barrier.
+
+If the party count is not truly fixed, a barrier is probably the wrong tool.
 
 ## `asyncio.BoundedSemaphore`
 
-Chapter 1 covered
-[`Semaphore`][semaphore]
--- a counter that limits how many tasks can enter a section at once.
-[`BoundedSemaphore`][boundedsemaphore]
-works the same way with one extra safety check: if you `#!py release()` more times
-than you `#!py acquire()`, it raises `ValueError` instead of silently incrementing
-the counter past its initial value.
+[`BoundedSemaphore`][boundedsemaphore] is just a [`Semaphore`][semaphore] with one extra
+safety check: [`release()`][release] raises if you call it more times than you acquired.
 
-```python title="bounded_semaphore.py"
-import asyncio
+That makes it a debugging and correctness tool, not a fundamentally different
+coordination pattern. Use it when an over-release would be a serious bug and you
+want that bug to surface immediately.
 
-async def main() -> None:
-    sem = asyncio.BoundedSemaphore(2)
+## [`PriorityQueue`][priorityqueue] and [`LifoQueue`][lifoqueue]
 
-    await sem.acquire()
-    await sem.acquire()
-    print(f"Both slots acquired (value started at 2)")
+These are queue variants, so the usual queue advice still applies:
 
-    sem.release()
-    sem.release()
-    print("Released both -- back to 2")
+- keep them bounded
+- prefer sentinels for shutdown
+- keep ownership inside a [`TaskGroup`][taskgroup]
 
-    try:
-        sem.release()  # Bug: one release too many
-    except ValueError as exc:
-        print(f"Caught: {exc}")
+Use [`PriorityQueue`][priorityqueue] when ordering matters more than arrival time:
 
-if __name__ == "__main__":
-    asyncio.run(main())
+```python
+await queue.put((0, "urgent"))
+await queue.put((10, "later"))
 ```
 
-```text title="$ python bounded_semaphore.py"
-Both slots acquired (value started at 2)
-Released both -- back to 2
-Caught: BoundedSemaphore released too many times
-```
+Use [`LifoQueue`][lifoqueue] when the newest item is the one you most want to
+process next, for example when you care more about freshness than fairness.
 
-A regular [`Semaphore`][semaphore] would have silently bumped the count to 3 in that last
-`#!py release()` call, allowing one more task than intended to enter the critical
-section. With [`BoundedSemaphore`][boundedsemaphore], the bug surfaces immediately.
+Be aware that LIFO ordering can starve old items if new work keeps arriving.
 
-!!! tip
+## What to Read Next
 
-    Prefer [`BoundedSemaphore`][boundedsemaphore] over [`Semaphore`][semaphore] when the acquire/release
-    calls happen in different places or different functions -- i.e., anywhere
-    you are *not* using `#!py async with`. The `#!py async with` pattern makes extra
-    releases impossible, so a plain [`Semaphore`][semaphore] is fine there.
+- Full primitive behavior: [Synchronization Primitives][sync-primitives]
+- Queue variants: [Queues][queues]
+- The guide's first-line coordination advice:
+  [Coordination](../the-basics/coordination.md)
 
-## `asyncio.PriorityQueue`
-
-[`PriorityQueue`][priorityqueue]
-is a subclass of [`Queue`][queue] that delivers items lowest-value-first instead of
-FIFO. Under the hood it uses a heap, so `#!py put()` and [`get()`][get] are O(log n).
-
-The catch: items must be comparable with `<`. If you put in objects that don't
-support ordering, you will get a `TypeError`. The standard pattern is to use
-tuples of `#!py (priority, sequence_number, payload)` -- the sequence number
-breaks ties so that items with equal priority come out in insertion order, and
-the payload itself never needs to be compared:
-
-```python title="priority_queue.py"
-import asyncio
-from dataclasses import dataclass, field
-
-@dataclass(order=False)
-class Job:
-    name: str
-    data: str = field(repr=False, default="")
-
-async def main() -> None:
-    pq: asyncio.PriorityQueue[tuple[int, int, Job]] = (
-        asyncio.PriorityQueue(maxsize=10)
-    )
-
-    # (priority, sequence, payload) -- lower priority number = higher urgency
-    seq = 0
-    for priority, name in [(3, "low-1"), (1, "critical"), (3, "low-2"), (2, "normal")]:
-        await pq.put((priority, seq, Job(name)))
-        seq += 1
-
-    while not pq.empty():
-        pri, _, job = await pq.get()
-        print(f"  priority={pri}  job={job.name}")
-        pq.task_done()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-```text title="$ python priority_queue.py"
-  priority=1  job=critical
-  priority=2  job=normal
-  priority=3  job=low-1
-  priority=3  job=low-2
-```
-
-The `critical` job comes out first despite being inserted second. The two
-priority-3 jobs come out in insertion order thanks to the sequence number.
-
-!!! warning
-
-    Without the sequence number, two items with the same priority would be
-    compared by their payload. If the payload type doesn't implement
-    `__lt__`, you get a `TypeError`. Always include a tie-breaker.
-
-## `asyncio.LifoQueue`
-
-[`LifoQueue`][lifoqueue]
-is a stack-like queue -- last in, first out. It shares the same API as [`Queue`][queue]
-(`put`, `get`, `maxsize`, `task_done`, `join`), but [`get()`][get] returns the *most
-recently added* item.
-
-This is useful when freshness matters more than fairness -- for example,
-processing the most recent request first or implementing a work-stealing
-scheduler:
-
-```python title="lifo_queue.py"
-import asyncio
-
-async def main() -> None:
-    stack: asyncio.LifoQueue[str] = asyncio.LifoQueue(maxsize=5)
-
-    for item in ["first", "second", "third"]:
-        await stack.put(item)
-        print(f"  pushed: {item}")
-
-    print()
-    while not stack.empty():
-        item = await stack.get()
-        print(f"  popped: {item}")
-        stack.task_done()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-```text title="$ python lifo_queue.py"
-  pushed: first
-  pushed: second
-  pushed: third
-
-  popped: third
-  popped: second
-  popped: first
-```
-
-Items come out in reverse insertion order -- classic stack behaviour.
-
-## Choosing Between Queue Variants
-
-All three queue types share the same interface (`put`, `get`, `maxsize`,
-`task_done`, `join`). They differ only in the order items come out:
-
-| Class | Order | Use when... |
-|---|---|---|
-| [`Queue`][queue] | FIFO (first in, first out) | You want fair, predictable ordering. The default choice. |
-| [`LifoQueue`][lifoqueue] | LIFO (last in, first out) | Freshness matters more than fairness -- process the newest item first. |
-| [`PriorityQueue`][priorityqueue] | Lowest value first | Items have explicit priorities. Use `#!py (priority, seq, payload)` tuples. |
-
-!!! tip
-
-    Start with [`Queue`][queue]. Switch to [`PriorityQueue`][priorityqueue] or [`LifoQueue`][lifoqueue] only when
-    you have a concrete reason -- priority-based scheduling, freshness
-    requirements, or stack-like semantics. All three support `maxsize` for
-    backpressure.
-
----
-
-[condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
-[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
-[notify-all]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.notify_all
-[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
 [queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
-[barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
-[barrier-parties]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.parties
-[barrier-n-waiting]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.n_waiting
-[await-barrier-abort]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.abort
-[brokenbarriererror]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BrokenBarrierError
-[await-barrier-reset]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.reset
+[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
 [semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
+[condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
+[barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
 [boundedsemaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BoundedSemaphore
 [priorityqueue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.PriorityQueue
-[get]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.get
 [lifoqueue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.LifoQueue
+[taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[sync-primitives]: https://docs.python.org/3/library/asyncio-sync.html
+[queues]: https://docs.python.org/3/library/asyncio-queue.html
+[await-barrier-wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.wait
+[wait-for-predicate]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait_for
+[release]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore.release
+[wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait
