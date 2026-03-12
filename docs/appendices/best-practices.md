@@ -43,7 +43,7 @@ operational discipline.
    happened. If you catch it for logging or cleanup, always `#!py raise` at the
    end. This is the single most important cancellation rule in the entire
    guide.
-   See [Cancellation and Timeouts -- The Cardinal Rule: Never Swallow Cancellation](../the-basics/cancellation-and-timeouts.md#the-cardinal-rule-never-swallow-cancellation).
+   See [Cancellation and Timeouts -- Never Swallow a `CancelledError`](../the-basics/cancellation-and-timeouts.md#never-swallow-a-cancellederror).
 
 3. **Always set `maxsize` on [`Queue`][queue].** An unbounded queue hides backpressure.
    If the producer is faster than the consumer, memory grows without limit and
@@ -119,7 +119,7 @@ operational discipline.
     whether it fired after the block exits. `#!py wait_for()` is a low-level
     function with subtle cancellation edge cases and exists primarily for
     backward compatibility. Prefer `#!py timeout()` in all new code.
-    See [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md#asynciotimeout)
+    See [Cancellation and Timeouts -- Timeouts](../the-basics/cancellation-and-timeouts.md#timeouts)
     for [`asyncio.timeout()`][asyncio-timeout] and [Task Coordination](../the-low-level-toolkit/task-coordination.md#asynciowait_for)
     for [`asyncio.wait_for()`][asyncio-wait-for].
 
