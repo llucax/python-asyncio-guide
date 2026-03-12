@@ -19,13 +19,20 @@ provides four coordination primitives for these situations:
 and
 [`Semaphore`][semaphore].
 
-!!! info
+!!! Info
 
-    This page focuses on the patterns: bounded queues, backpressure, sentinels,
+    This section focuses on the patterns: bounded queues, backpressure, sentinels,
     and throttling. Use the official [Queues][official-queues] and
     [Synchronization Primitives][official-sync] pages for the full API details.
 
-## [`asyncio.Queue`][asyncio-queue]
+There are more specialized primitives too -- notably [`Condition`][condition],
+[`Barrier`][barrier], and [`BoundedSemaphore`][boundedsemaphore].
+You do not need them to get started, so this chapter stays focused on the four
+primitives you will reach for most often.
+[Advanced Coordination](../beyond-the-basics/advanced-coordination.md) in
+[Beyond the Basics](../beyond-the-basics/index.md) is the map for the rest.
+
+## `asyncio.Queue`
 
 The *queue* is the primary tool for inter-task communication. Instead of
 sharing mutable state and protecting it with locks, you pass messages through
@@ -34,39 +41,16 @@ all the synchronisation.
 
 Create a queue with
 [`asyncio.Queue(maxsize=...)`][asyncio-queue-maxsize].
-**Always set `maxsize`** -- you will see why shortly. The core methods come
-in two flavours: coroutines that wait, and synchronous variants that raise
-immediately if the operation cannot complete.
+**Always set `maxsize`** -- you will see why shortly. In beginner code, the
+operations you need most are:
 
-**Coroutine methods (these are checkpoints):**
+- [`put(item)`][put-item] -- suspend if the queue is full
+- [`get()`][get] -- suspend if the queue is empty
+- [`task_done()`][task-done] and [`join()`][join] -- optional completion tracking
 
-- [`put(item)`][put-item]
-  -- add an item. If the queue is full, suspends until space is available.
-- [`get()`][get]
-  -- remove and return an item. If the queue is empty, suspends until an item
-  is available.
-
-**Synchronous methods (no [`await`][await], raise on failure):**
-
-- [`put_nowait(item)`][put-nowait-item]
-  -- add an item immediately or raise
-  [`QueueFull`][queuefull].
-- [`get_nowait()`][get-nowait]
-  -- get an item immediately or raise
-  [`QueueEmpty`][queueempty].
-
-**Inspection:**
-[`qsize()`][qsize],
-[`empty()`][empty],
-[`full()`][full].
-These are snapshots -- by the time you act on them, another task may have
-changed the queue. Use them for monitoring, not control flow.
-
-**Completion tracking:**
-[`task_done()`][task-done]
-and [`join()`][join]
--- call [`task_done()`][task-done] after processing each item from [`get()`][get], and [`join()`][join]
-blocks until every item has been marked done.
+There are also `*_nowait()` methods plus inspection helpers such as
+[`qsize()`][qsize] and [`empty()`][empty], but those are best treated as
+secondary tools. Use the official queue docs when you need the full surface.
 
 Here is a minimal producer/consumer to see the queue in action:
 
@@ -130,12 +114,12 @@ Now the producer blocks after 50 items and can only continue as the consumer
 drains the queue. Memory stays bounded, and the system adapts to the
 consumer's pace.
 
-!!! warning
+!!! Warning
 
     Always set `maxsize`. Start with a small number (10--100) and adjust based
     on observation.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     [Trio][trio-docs]'s [`trio.open_memory_channel()`][trio-open-memory-channel] requires a max buffer
     size at creation time -- no "unbounded" default. asyncio's [`Queue`][queue] defaults
@@ -150,7 +134,7 @@ any unique object works. The critical detail: **send one sentinel per
 consumer.** If you have three consumers but only send one sentinel, two of
 them will hang forever.
 
-!!! tip
+!!! Tip
 
     If `#!py None` is a valid data value, define a dedicated sentinel:
     `#!py _STOP = object()`. Then compare with `#!py is _STOP` instead of `#!py is None`.
@@ -257,14 +241,14 @@ Total processed: 8
 The inner [`TaskGroup`][taskgroup] ensures all producers finish before sentinels are sent.
 Consumers run inside the outer group, draining the queue the whole time.
 
-!!! warning
+!!! Warning
 
     If a producer raises, the inner [`TaskGroup`][taskgroup] cancels its siblings and the
     exception propagates to the outer group, which cancels the consumers. This
     is correct -- if producers fail, consumers should not wait for data that
     will never arrive.
 
-## [`asyncio.Lock`][asyncio-lock]
+## `asyncio.Lock`
 
 When you *must* share mutable state between tasks, a
 [`Lock`][lock]
@@ -315,19 +299,19 @@ Final balances: {'alice': 50, 'bob': 60}
 Without the lock, the [`await`][await] between reading and writing would create a race
 condition -- two tasks could both see `#!py alice: 100` and each deduct 30.
 
-!!! danger
+!!! Danger
 
     asyncio locks are **not reentrant**. If a task that already holds the lock
     tries to acquire it again, it will deadlock. If you need reentrant locking,
-    see Chapter 2's advanced coordination section.
+    see [Advanced Coordination](../beyond-the-basics/advanced-coordination.md).
 
-!!! tip
+!!! Tip
 
     Prefer queues over locks whenever possible. A queue makes data flow explicit
     and avoids bugs where you forget to acquire the lock or hold two locks in
     the wrong order.
 
-## [`asyncio.Event`][asyncio-event]
+## `asyncio.Event`
 
 An [`Event`][event]
 is a simple flag that tasks can wait on. It starts unset.
@@ -385,14 +369,15 @@ All three handlers blocked on `#!py db_ready.wait()` until `#!py ready.set()` wa
 called, then woke up simultaneously. Calling `#!py wait()` *after* the event is
 already set returns immediately -- no race condition.
 
-!!! note
+!!! Note
 
     An [`Event`][event] is best suited for *one-shot* or *phase-transition* signaling: a
     resource is ready, a shutdown has been requested, initialisation is complete.
-    If you need repeated notifications, a [`Queue`][queue] or a [`Condition`][condition] (Chapter 2)
+    If you need repeated notifications, a [`Queue`][queue] or a [`Condition`][condition]
+    from [Advanced Coordination](../beyond-the-basics/advanced-coordination.md)
     is a better fit.
 
-## [`asyncio.Semaphore`][asyncio-semaphore]
+## `asyncio.Semaphore`
 
 A [`Semaphore`][semaphore]
 limits how many tasks can enter a section of code concurrently. Create one
@@ -439,13 +424,13 @@ All six tasks were created at once, but the semaphore ensured only three were
 active at any given time. This gives you the full concurrency of a [`TaskGroup`][taskgroup]
 with a hard cap on how many tasks are doing real work simultaneously.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     [Trio][trio-docs] has [`trio.CapacityLimiter`][trio-capacity-limiter], which works similarly but
     has stricter ownership semantics. asyncio's [`Semaphore`][semaphore] is simpler -- it is
     just a counter.
 
-!!! warning
+!!! Warning
 
     A [`Semaphore`][semaphore] limits concurrency, not rate. A semaphore with a value of 3
     means "at most 3 tasks at once," not "3 tasks per second." If you need rate
@@ -460,7 +445,7 @@ signal others that a condition has been met, use an **Event**. When you want
 to limit how many tasks are active at once, use a **Semaphore**. These four
 cover the vast majority of coordination needs; for [`Condition`][condition], [`Barrier`][barrier],
 and the bounded/priority queue variants, see
-[Chapter 2](../beyond-the-basics/advanced-coordination.md).
+[Advanced Coordination](../beyond-the-basics/advanced-coordination.md).
 
 ---
 
@@ -472,6 +457,7 @@ and the bounded/priority queue variants, see
 [asyncio-semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
+[boundedsemaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BoundedSemaphore
 [condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
 [empty]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.empty
 [event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event

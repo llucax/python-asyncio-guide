@@ -9,10 +9,11 @@ icon: lucide/book-open
 
 # How Asyncio Works
 
-Chapters 1 and 2 taught you how to *use* asyncio. This chapter teaches you how
-it *works*. You do not need this material to write correct async programs --
-but you do need it when something surprising happens and you want to
-understand exactly why.
+[The Basics](../the-basics/index.md) and
+[Beyond the Basics](../beyond-the-basics/index.md) taught you how to *use*
+asyncio. This chapter teaches you how it *works*. You do not need this
+material to write correct async programs -- but you do need it when something
+surprising happens and you want to understand exactly why.
 
 Everything here is about the machinery underneath: the event loop, the
 relationship between tasks and futures, how cancellation is actually
@@ -24,6 +25,12 @@ Chapters 1 and 2 are built on.
 
 This chapter is the guide's clearest differentiator from the official docs. It
 is where the guide intentionally goes deep instead of linking out.
+
+If you want the application-level rules beside the internals, keep
+[Concurrent Tasks](../the-basics/concurrent-tasks.md),
+[Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md), and
+[Blocking Code](../beyond-the-basics/blocking-code.md) open alongside this
+chapter.
 
 ## Sections
 

@@ -18,7 +18,7 @@ exist for the cases where you deliberately want something lower-level:
 Because they sit below structured concurrency, they also hand more cleanup work
 back to you.
 
-!!! warning
+!!! Warning
 
     These APIs do not own the tasks they operate on. If you leave pending tasks
     behind, they keep running.
@@ -31,7 +31,7 @@ back to you.
 | "Process results in the order they arrive" | [`asyncio.as_completed()`][as-completed] |
 | "Apply a timeout to one awaitable" | [`asyncio.wait_for()`][wait-for] |
 
-## [`asyncio.wait()`][wait]
+## `asyncio.wait()`
 
 [`asyncio.wait()`][wait] returns two sets: `done` and `pending`.
 
@@ -53,14 +53,14 @@ if pending:
     await asyncio.wait(pending)
 ```
 
-That last cleanup step is the key rule for this whole page:
+That last cleanup step is the key rule for this whole section:
 
-!!! danger
+!!! Danger
 
     [`wait()`][wait] never cancels pending tasks for you. If you do not cancel and wait
     for them yourself, you have recreated fire-and-forget tasks.
 
-## [`asyncio.as_completed()`][as-completed]
+## `asyncio.as_completed()`
 
 [`asyncio.as_completed()`][as-completed] is for streaming results in completion
 order instead of submission order.
@@ -77,14 +77,15 @@ for next_result in asyncio.as_completed(tasks):
 This is often simpler than [`wait()`][wait] when you care about *every* result but want
 them in arrival order.
 
-## [`asyncio.wait_for()`][wait-for]
+## `asyncio.wait_for()`
 
 [`asyncio.wait_for()`][wait-for] is the old low-level timeout helper.
 
 Use it mainly when you are putting a timeout around one specific awaitable at a
 boundary where introducing a surrounding timeout scope would be awkward.
 
-In new application code, prefer [`asyncio.timeout()`][timeout] from Chapter 1.
+In new application code, prefer [`asyncio.timeout()`][timeout] from
+[Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md).
 It is more visible in the control flow and composes better with structured
 concurrency.
 

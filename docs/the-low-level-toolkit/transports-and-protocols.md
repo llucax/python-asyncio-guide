@@ -11,7 +11,7 @@ description: >-
 For most application code, stop at
 [Streams](../the-basics/streams.md). That is the default.
 
-This page exists for the moment when you need to understand what sits under
+This section exists for the moment when you need to understand what sits under
 streams, or when you are writing library code that genuinely needs the lower
 layer. It is intentionally an overview, not a second reference manual.
 

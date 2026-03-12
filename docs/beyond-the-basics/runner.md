@@ -16,7 +16,7 @@ need to run *multiple* top-level coroutines on the *same* event loop without
 cramming them into one giant `#!py main()`.
 
 This is a good example of a topic where the official docs are already strong.
-This page stays focused on when `Runner` is worth it.
+This section stays focused on when `Runner` is worth it.
 
 ## When to Use `Runner`
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
 Both coroutines run on the same loop. That is the whole point.
 
-## When [`asyncio.run()`][asyncio-run] Is Still Better
+## When `asyncio.run()` Is Still Better
 
 If you only need one top-level async entry point, [`asyncio.run()`][asyncio-run] is simpler,
 clearer, and more idiomatic.

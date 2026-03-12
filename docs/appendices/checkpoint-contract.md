@@ -8,7 +8,7 @@ description: >-
 
 # Checkpoint Contract
 
-!!! warning
+!!! Warning
 
     This appendix was collected on March 2026 against **CPython 3.11**. It is
     **not** an official asyncio contract, it is **not** guaranteed, and it may
@@ -23,7 +23,7 @@ condition holds. And many asyncio operations are not [`await`][await]able at
 all -- they are plain synchronous calls that never yield control.
 
 Asyncio does not publish a single official checkpoint contract for the whole
-API surface. This page is a practical reference for the common operations used
+API surface. This section is a practical reference for the common operations used
 throughout this guide. Only rows marked **Official** are explicitly documented
 by Python as always suspending the current task. Everything else here is an
 interpretation of the docs and CPython 3.11's implementation details.
@@ -88,7 +88,7 @@ to land.
 | `#!py await future` | The future is not yet resolved | The future already has a result or exception | Language + asyncio semantics |
 | [`asyncio.wait_for(aw, timeout)`][asyncio-wait-for-aw-timeout] | `#!py timeout > 0`, or `#!py timeout <= 0` and the awaitable is not already done | `#!py timeout is None` and the awaitable is already done, or `#!py timeout <= 0` and it is already done | CPython 3.11 source |
 
-!!! warning
+!!! Warning
 
     **`#!py await task` on an already-finished task does not suspend.** This is
     a common source of confusion. If you are counting on [`await`][await] as a
@@ -117,7 +117,7 @@ that trigger asynchronous consequences later without yielding themselves.
 | Operation | Why it is easy to misread |
 |-----------|---------------------------|
 | [`stream.write(data)`][stream-write-data] / [`write_eof()`][stream-write-eof] / [`close()`][stream-close] | They start network-related work, but the call itself only buffers data or initiates closing. Use [`drain()`][drain] or [`wait_closed()`][wait-closed] to actually wait for progress. |
-| [`Event.set()`][event-set], [`Lock.release()`][lock-release], [`Condition.notify()`][condition-notify] / [`notify_all()`][notify-all], [`Semaphore.release()`][semaphore-release] | They can wake waiting tasks, but the current task keeps running until its next real suspension point. |
+| [`Event.set()`][event-set], [`Lock.release()`][lock-release], [`Condition.notify()`][condition-notify] / [`notify_all()`][notify-all], [`Semaphore.release()`][semaphore-release] | They can wake waiting tasks, but the current task keeps running until its next real checkpoint. |
 | [`task.cancel(msg=...)`][task-cancel-msg] | It requests cancellation, but the [`CancelledError`][cancellederror] is delivered later when the target task next truly suspends. |
 | [`future.set_result()`][future-set-result] / [`future.set_exception()`][future-set-exception] | They resolve a future and schedule awaiters to resume later, but the call itself does not yield. |
 | [`Queue.put_nowait(item)`][queue-put-nowait-item], [`Queue.get_nowait()`][queue-get-nowait], [`Queue.task_done()`][queue-task-done] | These are immediate queue operations with no suspension path. |
@@ -159,7 +159,7 @@ so the event loop stays responsive.
 ### Shared state is safe between checkpoints
 
 On the flip side, cooperative scheduling gives you a strong guarantee: between
-two consecutive real suspension points, no other task can run. This means you
+two consecutive real checkpoints, no other task can run. This means you
 do not need a lock to protect a read-modify-write sequence *as long as there
 is no [`await`][await] (or only non-suspending [`await`][await]s) between the read and
 the write*. Understanding exactly which operations suspend is what lets you

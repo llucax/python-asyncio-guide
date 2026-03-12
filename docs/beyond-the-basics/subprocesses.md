@@ -12,12 +12,12 @@ Running external commands is common in async programs. You might call `git`,
 `ffmpeg`, or another CLI tool as one step in a larger workflow.
 
 This is a good place to lean on the official docs. Python's subprocess coverage
-is already solid, so this page stays focused on the choices and pitfalls that
+is already solid, so this section stays focused on the choices and pitfalls that
 matter most when you are learning asyncio.
 
-!!! info
+!!! Info
 
-    Read this page for the shape of the API and the safety rules. Use the
+    Read this section for the shape of the API and the safety rules. Use the
     official docs for the full signatures, all stream options, and platform
     details:
     [Subprocesses][subprocesses].
@@ -46,12 +46,12 @@ proc = await asyncio.create_subprocess_shell(
 )
 ```
 
-!!! danger
+!!! Danger
 
     Never pass untrusted input to [`create_subprocess_shell()`][create-subprocess-shell]. If the command
     string contains attacker-controlled text, you have a shell-injection bug.
 
-## The Default Pattern: [`communicate()`][communicate]
+## The Default Pattern: `communicate()`
 
 If you want to send optional stdin, collect stdout and stderr, and wait for the
 child to finish, use [`Process.communicate()`][process-communicate].

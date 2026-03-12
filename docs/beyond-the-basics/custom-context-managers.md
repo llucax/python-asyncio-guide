@@ -8,19 +8,19 @@ description: >-
 
 # Custom Context Managers
 
-Chapter 1 covered *using* [`async with`][async-with] with context managers that asyncio
-hands you --
+The [Resource Management](../the-basics/resource-management.md) section covered
+*using* [`async with`][async-with] with context managers that asyncio hands you --
 [`Lock`][lock],
 [`TaskGroup`][taskgroup],
 [`timeout()`](../the-basics/cancellation-and-timeouts.md). You know
 the contract: [`__aenter__`][aenter] runs on entry, [`__aexit__`][aexit] runs on exit, cleanup
 is guaranteed even under
-[cancellation](../the-basics/cancellation-and-timeouts.md). This
-section covers the other side: *creating* your
+[cancellation](../the-basics/cancellation-and-timeouts.md). This section covers
+the other side: *creating* your
 own async context managers so you can wrap setup/teardown logic into a clean
 [`async with`][async-with] block that callers can use the same way.
 
-## [`@asynccontextmanager`][at-asynccontextmanager]
+## `@asynccontextmanager`
 
 The
 [`@contextlib.asynccontextmanager`][contextlib-asynccontextmanager]
@@ -88,14 +88,14 @@ runs. When that block exits -- whether normally, via exception, or via
 cancellation -- execution resumes after the `#!py yield`, inside the `#!py finally`
 block, and `#!py conn.close()` runs.
 
-!!! note
+!!! Note
 
     The return type annotation is `AsyncIterator[DBConnection]` because the
     function is technically an async generator. The decorator wraps it so
     callers see a regular async context manager, but the annotation reflects
     the function's actual signature.
 
-## Error Handling in [`@asynccontextmanager`][at-asynccontextmanager]
+## Error Handling in `@asynccontextmanager`
 
 The `#!py try`/`#!py finally` around the `#!py yield` is not optional decoration -- it is
 *required* if you want cleanup to run when the body raises. Without it, an
@@ -146,7 +146,7 @@ async def fixed_manager() -> AsyncIterator[str]:
         print("Teardown -- always runs")
 ```
 
-!!! info
+!!! Info
 
     **Always** wrap the `#!py yield` in `#!py try`/`#!py finally` if your context manager
     acquires a resource that needs cleanup. There are no exceptions to this
@@ -206,14 +206,14 @@ The [`__aenter__`][aenter] method returns whatever the `as` target should be -- 
 clean exit). If [`__aexit__`][aexit] returns `#!py True`, the exception is suppressed; if it
 returns `#!py None` or `#!py False` (the default), the exception propagates.
 
-!!! tip
+!!! Tip
 
     For most resource wrappers, [`@asynccontextmanager`][at-asynccontextmanager] is shorter and easier
     to read. Reach for the class-based protocol when you need the context
     manager to be a reusable object with its own methods and attributes --
     like the `Timer` above, where callers access `.elapsed` after the block.
 
-## [`AsyncExitStack`][asyncexitstack]
+## `AsyncExitStack`
 
 Sometimes you don't know at coding time how many context managers you need.
 Maybe you're opening one connection per shard, or one file per partition, and
@@ -290,7 +290,7 @@ async with AsyncExitStack() as stack:
     # server.shutdown() will be called when the block exits
 ```
 
-!!! warning
+!!! Warning
 
     If a context manager's [`__aexit__`][aexit] raises, the [`AsyncExitStack`][asyncexitstack] still
     proceeds to close the remaining managers. Exceptions are collected and

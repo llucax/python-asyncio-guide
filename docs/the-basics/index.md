@@ -21,8 +21,15 @@ too early is where most asyncio bugs come from.
 This is the most guide-owned chapter in the repository. The goal here is not to
 mirror the stdlib reference, but to teach you how to think about asyncio. For
 the few API-heavy areas -- especially streams and synchronization primitives --
-the individual pages link out to the official docs for full method-by-method
+the individual sections link out to the official docs for full method-by-method
 reference.
+
+When you are ready to go past the high-level APIs, continue to
+[Beyond the Basics](../beyond-the-basics/index.md) for
+[Blocking Code](../beyond-the-basics/blocking-code.md) and
+[Shielding](../beyond-the-basics/shielding.md), then to
+[How Asyncio Works](../how-asyncio-works/index.md) for
+[The Event Loop](../how-asyncio-works/the-event-loop.md).
 
 ## Sections
 

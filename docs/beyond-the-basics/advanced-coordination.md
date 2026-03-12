@@ -8,25 +8,25 @@ description: >-
 
 # Advanced Coordination
 
-Chapter 1 covered the four coordination primitives you will use most often --
-[Queue, Lock, Event, and Semaphore](../the-basics/coordination.md). Those
-handle the vast majority of inter-task communication.
+The [Coordination](../the-basics/coordination.md) section in
+[The Basics](../the-basics/index.md) covered the four coordination primitives
+you will use most often -- Queue, Lock, Event, and Semaphore. Those handle the
+vast majority of inter-task communication.
 
-This page is about the *specialized* tools that you reach for when those four
+This section is about the *specialized* tools that you reach for when those four
 are not enough. It is intentionally short. The official docs already document
 these APIs well, so the goal here is to help you choose the right tool and avoid
 the main footguns.
 
-!!! info
+!!! Info
 
-    Use this page for the decision-making. Use the official docs for the full
-    method reference. The appendix
-    [Official Docs Roadmap](../appendices/official-docs-roadmap.md) points to
-    the relevant stdlib pages.
+    Use this section for the decision-making. Use the official docs for the full
+    method reference. The relevant stdlib pages are
+    [Synchronization Primitives][sync-primitives] and [Queues][queues].
 
 ## Start With the Simpler Primitive
 
-Before you reach for anything on this page, ask yourself:
+Before you reach for anything in this section, ask yourself:
 
 - Would a bounded [`Queue`][queue] solve this more simply?
 - Would a plain [`Event`][event] or [`Semaphore`][semaphore] be enough?
@@ -98,7 +98,7 @@ That makes it a debugging and correctness tool, not a fundamentally different
 coordination pattern. Use it when an over-release would be a serious bug and you
 want that bug to surface immediately.
 
-## [`PriorityQueue`][priorityqueue] and [`LifoQueue`][lifoqueue]
+## `PriorityQueue` and `LifoQueue`
 
 These are queue variants, so the usual queue advice still applies:
 

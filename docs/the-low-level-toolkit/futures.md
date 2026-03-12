@@ -8,7 +8,7 @@ description: >-
 
 # Futures
 
-Application code rarely needs bare futures. That is why this page is short.
+Application code rarely needs bare futures. That is why this section is short.
 
 When you do need them, it is usually because you are building glue code between
 two worlds:

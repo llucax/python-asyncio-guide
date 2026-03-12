@@ -14,9 +14,9 @@ clean async/await syntax. The streams API gives you a high-level interface for
 reading and writing bytes over the network -- no callbacks, no protocol
 classes, just a reader and a writer that you [`await`][await] like anything else.
 
-!!! info
+!!! Info
 
-    This page focuses on the stream lifecycle, backpressure, and cleanup.
+    This section focuses on the stream lifecycle, backpressure, and cleanup.
     Use the official [Streams][official-streams] page for the full
     `StreamReader` and `StreamWriter` method reference.
 
@@ -68,7 +68,7 @@ data synchronously (no [`await`][await]), but [`.drain()`][drain] is a coroutine
 the buffer to flush. And at the end, you must call both [`.close()`][close] and
 [`.wait_closed()`][wait-closed] -- more on that shortly.
 
-!!! warning
+!!! Warning
 
     Always close the writer when you are done. An unclosed writer leaks a socket
     and its associated file descriptor. The reader does not need to be closed
@@ -80,7 +80,7 @@ the buffer to flush. And at the end, you must call both [`.close()`][close] and
 is the read side of a stream. All of its read methods are coroutines -- each
 one is a *checkpoint* that may suspend while waiting for data from the network.
 
-The main methods:
+You do not need every reader method on day one. The three that matter most are:
 
 - **[`.read(n)`][read-n]**
   -- read *up to* `n` bytes. Returns fewer if fewer are available. Returns
@@ -93,14 +93,10 @@ The main methods:
   [`asyncio.IncompleteReadError`][asyncio-incompletereaderror]
   if EOF is reached before `n` bytes have been read. Use this when your
   protocol defines fixed-size messages.
-- **[`.readuntil(separator)`][readuntil-separator]**
-  -- read until `separator` is found in the stream (inclusive). Raises
-  [`asyncio.IncompleteReadError`][asyncio-incompletereaderror] if EOF comes first, or
-  [`asyncio.LimitOverrunError`][asyncio-limitoverrunerror] if the internal buffer limit is exceeded before
-  the separator appears.
-- **[`.at_eof()`][at-eof]**
-  -- returns `#!py True` if the read buffer is empty *and* the connection has been
-  closed by the remote end. This is not a coroutine.
+
+There are others -- notably [`.readuntil()`][readuntil-separator] and
+[`.at_eof()`][at-eof] -- but most beginner code can stay with the three methods
+above. Use the official streams docs when you need the rest.
 
 The pattern for reading until the remote end disconnects:
 
@@ -112,7 +108,7 @@ while not reader.at_eof():
     process(chunk)
 ```
 
-!!! tip
+!!! Tip
 
     [`.read(n)`][read-n] returning `#!py b""` and [`.at_eof()`][at-eof] returning `#!py True` both indicate
     EOF, but they serve different purposes. Use `#!py read()` return value checks in
@@ -125,22 +121,15 @@ while not reader.at_eof():
 is the write side. Writing works differently from reading: you buffer data
 synchronously, then flush asynchronously.
 
-- **[`.write(data)`][write-data]**
-  -- buffer `data` (a `bytes` object) for sending. This returns `#!py None`
-  immediately -- it does **not** await. The data is queued in an internal
-  buffer and sent by the event loop when the socket is ready.
-- **[`.writelines(data)`][writelines-data]**
-  -- buffer a list of `bytes` objects. Same as calling `#!py .write()` for each
-  item, but potentially more efficient. Also not a coroutine.
-- **[`.drain()`][drain]**
-  -- wait for the write buffer to be flushed to the OS. This **is** a
-  coroutine and a checkpoint. This is where *backpressure* happens: if the
-  remote end is reading slowly, the OS send buffer fills up, and [`drain()`][drain]
-  will suspend your coroutine until there is room.
-- **[`.close()`][close]**
-  -- initiate closing the underlying connection. Not a coroutine.
-- **[`.wait_closed()`][wait-closed]**
-  -- wait for the connection to actually close. This is a coroutine.
+The core writer quartet is:
+
+- **[`.write(data)`][write-data]** -- buffer bytes synchronously
+- **[`.drain()`][drain]** -- wait for backpressure to clear
+- **[`.close()`][close]** -- start shutdown
+- **[`.wait_closed()`][wait-closed]** -- wait for shutdown to finish
+
+There are other helpers such as [`.writelines()`][writelines-data], but these
+four explain almost every stream example in this guide.
 
 The *write/drain dance* is the core pattern: call `#!py .write()` to buffer, call
 `#!py await .drain()` to flush. You must call [`drain()`][drain] after writing -- otherwise
@@ -153,7 +142,7 @@ writer.write(b"world!\n")
 await writer.drain()  # Flush both writes to the network
 ```
 
-!!! warning
+!!! Warning
 
     `#!py .write()` does not raise if the connection has been lost. The error only
     surfaces when you call [`drain()`][drain] (or `#!py close()`). If you forget [`drain()`][drain],
@@ -179,7 +168,7 @@ finally:
     await writer.wait_closed()
 ```
 
-!!! danger
+!!! Danger
 
     `StreamWriter` is **not** an async context manager in the standard library
     (as of Python 3.13). You cannot write `#!py async with writer:`. You must call
@@ -271,7 +260,7 @@ connection is handled independently -- if one client disconnects, the others
 keep going. The `#!py try`/`#!py finally` ensures the writer is closed even if the
 client disconnects unexpectedly or the read raises an exception.
 
-!!! note
+!!! Note
 
     `#!py start_server()` spawns each callback as an independent task. This means
     errors in one connection do not propagate to the server or to other
@@ -359,7 +348,7 @@ finishes, the group exits, and the `#!py async with server:` block exits, stoppi
 the server cleanly. No manual cancellation needed -- structured concurrency
 takes care of shutdown.
 
-!!! tip
+!!! Tip
 
     Using port `0` is a good practice for tests and examples. In production you
     will bind to a specific port, but for development it avoids a whole class of
@@ -420,7 +409,7 @@ server can drop the connection. You can apply the same pattern to writes --
 wrap the [`drain()`][drain] call in [`asyncio.timeout()`][asyncio-timeout] to guard against slow
 consumers.
 
-!!! warning
+!!! Warning
 
     A timeout on `#!py .write()` alone does nothing useful -- `#!py .write()` is
     synchronous and returns immediately. Put the timeout around [`.drain()`][drain],

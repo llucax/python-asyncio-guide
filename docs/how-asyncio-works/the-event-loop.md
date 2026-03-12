@@ -75,7 +75,7 @@ A few things to notice:
 This is the entire scheduling algorithm. There is no thread pool, no priority
 system, no preemption. One callback runs. It finishes. The next one runs.
 
-## [`call_soon()`][call-soon]
+## `call_soon()`
 
 [`loop.call_soon()`][loop-call-soon]
 places a callback on the ready queue. It will execute during phase 1 of the
@@ -124,14 +124,14 @@ asyncio creates a [`Task`][task] object and then calls `call_soon` to schedule t
 first step of that task. Every task begins life as a callback on the ready
 queue.
 
-!!! note
+!!! Note
 
     `call_soon` returns a
     [`Handle`][handle]
     object. You can call `#!py handle.cancel()` to prevent the callback from
     running, as long as it hasn't been executed yet.
 
-## Timers: [`call_later()`][call-later] and [`call_at()`][call-at]
+## Timers: `call_later()` and `call_at()`
 
 [`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
 schedules a callback to run after *delay* seconds.
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 Even though the 0.3s timer was registered first, the 0.1s timer fires first.
 The timer heap is sorted by deadline, not by registration order.
 
-### [`loop.time()`][loop-time]
+### `loop.time()`
 
 [`loop.time()`][loop-time]
 returns the current time as a `float`, according to the event loop's
@@ -187,7 +187,7 @@ When you call `#!py loop.call_later(0.5, cb)`, asyncio computes
 `#!py loop.time() + 0.5` and inserts that into the timer heap. `call_later` is just
 a convenience wrapper around `call_at`.
 
-!!! info
+!!! Info
 
     [`asyncio.sleep()`][asyncio-sleep] is built on [`call_later()`][call-later] under the hood. When you
     write `#!py await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
@@ -229,7 +229,7 @@ Next time the loop reaches phase 1, it calls `task.__step`, which calls
 That is the full round trip. No magic, no thread switching, no signals -- just
 callbacks and a queue.
 
-### When an [`await`][await] is *not* a checkpoint
+### When an `await` is *not* a checkpoint
 
 Not every [`await`][await] causes a suspension. If you [`await`][await] a coroutine that returns
 a value without itself suspending, the `Task.__step` method receives the result
@@ -305,7 +305,7 @@ Here is exactly what happened inside the loop:
 The total wall time is ~2 seconds (1s for `hog` + 1s for `polite`'s sleeps in
 series) instead of the ~1s you would see if they overlapped.
 
-!!! tip
+!!! Tip
 
     If a computation is genuinely heavy, sprinkling `#!py await asyncio.sleep(0)`
     every N iterations is a band-aid. The better solution is
@@ -367,7 +367,7 @@ asyncio.sleep(0)` sends the current task to the back of the ready queue, and
 the next task gets its turn. This is the only form of "fairness" asyncio
 provides -- there is no preemption, no time budgets, no automatic yielding.
 
-!!! note
+!!! Note
 
     The output order above depends on the order in which tasks were created.
     If you need a specific execution order between tasks, use explicit

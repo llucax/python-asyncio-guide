@@ -19,7 +19,7 @@ normally.
 [`asyncio.shield()`][asyncio-shield]
 is the tool for this job. It is a sharp tool -- use it deliberately.
 
-## What [`shield()`][shield] Does
+## What `shield()` Does
 
 [`asyncio.shield()`][asyncio-shield] wraps an awaitable so that cancelling the *outer* task does
 not cancel the *inner* work. Under the hood it creates a new [`Future`][future] that
@@ -44,7 +44,7 @@ async def handler() -> None:
         print(f"handler: got {result}")
     except asyncio.CancelledError:
         print("handler: cancelled, but the write continues in the background")
-        raise  # Always re-raise -- Chapter 1 rule still applies
+        raise  # Always re-raise -- the cancellation rule still applies
 
 
 async def main() -> None:
@@ -73,7 +73,7 @@ main: done
 The handler was cancelled after 0.2 seconds, but `critical_write` ran to
 completion. That is the whole point of [`shield()`][shield].
 
-!!! note
+!!! Note
 
     Notice that the `#!py except CancelledError` block still re-raises. Shielding
     protects the *inner* awaitable -- it does not change the fact that the
@@ -159,7 +159,7 @@ result, no way to cancel it if the program needed to shut down. If
 `slow_write` had raised an exception, you would get a "Task exception was
 never retrieved" warning and nothing else.
 
-!!! warning
+!!! Warning
 
     Every call to [`shield()`][shield] is a promise: "I know this work will outlive its
     caller, and I have arranged for someone else to own it." If you cannot point
@@ -232,7 +232,7 @@ main: all flushed, exiting cleanly
 The key difference from the orphan example: `#!py main()` holds a reference to the
 flush task and awaits it before exiting. The shielded work has an owner.
 
-!!! tip
+!!! Tip
 
     Notice you pass the *task* to [`shield()`][shield], not the coroutine directly. When
     you write `#!py asyncio.shield(some_coroutine())`, shield creates the task for
@@ -359,7 +359,8 @@ outer task, then await the inner one and assert on its side effects.
 ---
 
 [`shield()`][shield] is the one legitimate exception to the "never swallow
-cancellation" rule from [Chapter 1](../the-basics/cancellation-and-timeouts.md).
+cancellation" rule from
+[Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md).
 It exists because real systems have work that must not be interrupted --
 commits, close frames, flushes. But it breaks structured concurrency by
 design, so treat every use as a small, deliberate exception: keep the shielded

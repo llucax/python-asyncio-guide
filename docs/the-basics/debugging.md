@@ -17,9 +17,9 @@ your first few programs without drowning in detail. A comprehensive
 [Debugging Guide](../appendices/debugging.md) lives in the appendices for when
 you need heavier machinery.
 
-!!! info
+!!! Info
 
-    This page is the compact debugging checklist. The appendix goes deeper, and
+    This section is the compact debugging checklist. The appendix goes deeper, and
     the official [Developing with asyncio][official-dev] page is the canonical
     stdlib reference for debug mode and common development traps.
 
@@ -56,7 +56,7 @@ When debug mode is active, the event loop:
 - **Reports unclosed resources** -- transports, event loops, and other objects
   that were garbage-collected without being properly shut down.
 
-!!! tip
+!!! Tip
 
     Always develop with `#!py debug=True`. The overhead is negligible and the
     diagnostics catch real bugs. Turn it off in production if the extra logging
@@ -85,7 +85,7 @@ file I/O, any C extension that holds the GIL for a long time.
 
 *Fix:* Replace with the async equivalent ([`asyncio.sleep()`][asyncio-sleep], [`aiohttp`][aiohttp-docs],
 [`asyncio.to_thread()`][asyncio-to-thread] for unavoidable blocking work -- covered in
-[Chapter 2](../beyond-the-basics/index.md)).
+[Blocking Code](../beyond-the-basics/blocking-code.md)).
 
 **3. Swallowing [`CancelledError`][cancellederror]**
 
@@ -116,7 +116,7 @@ the loop thread, deadlocking everything.
 threads; the [`asyncio`][asyncio] versions are for tasks. See
 [Coordination](coordination.md).
 
-!!! note
+!!! Note
 
     If your bug isn't in this list, check the
     [Best Practices, Pitfalls, and Gotchas](../appendices/best-practices.md)
@@ -140,7 +140,7 @@ these two lines?", first ask whether there is an [`await`][await] at all. If not
 the answer is no. If there is, check whether it is in the "always suspends"
 category or whether a conditional operation actually needs to wait right now.
 
-!!! info
+!!! Info
 
     [`await`][await] does not *always* mean "another task runs here." It means "another
     task *may* run here." The distinction matters when reasoning about shared
@@ -167,7 +167,7 @@ creation-site traceback for every task. When something goes wrong, you see not
 just *where* the exception was raised, but *where the task was created*. This
 is invaluable when a task was spawned in one place and failed in another.
 
-!!! tip
+!!! Tip
 
     When a traceback is overwhelming, start from the bottom. The last exception
     in the chain is usually the root cause. Work upward to see how it propagated

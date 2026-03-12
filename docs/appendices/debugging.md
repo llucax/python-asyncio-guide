@@ -8,8 +8,9 @@ description: >-
 
 # Debugging Guide
 
-The [Debugging](../the-basics/debugging.md) section in Chapter 1
-covers the most common async mistakes. This appendix is the full reference --
+The [Debugging](../the-basics/debugging.md) section in
+[The Basics](../the-basics/index.md) covers the most common async mistakes.
+This appendix is the full reference --
 it goes deeper on debug mode and adds diagnostic techniques for problems that
 show up in larger programs: blocked loops, task leaks, deadlocks, and timeout
 failures that make you question your understanding of time itself.
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     asyncio.run(main(), debug=True)
 ```
 
-!!! tip
+!!! Tip
 
     In staging, set the threshold to something slightly below your latency
     budget. If your SLA is 200 ms end-to-end, warning at 50 ms gives you
@@ -112,7 +113,7 @@ with ProcessPoolExecutor() as pool:
     result = await loop.run_in_executor(pool, expensive_computation, payload)
 ```
 
-!!! note
+!!! Note
 
     Debug mode warns *after* the blocking call completes. It cannot
     interrupt the call or prevent the freeze. The only real fix is to not
@@ -215,7 +216,7 @@ except asyncio.CancelledError:
     raise  # Never omit this
 ```
 
-!!! danger
+!!! Danger
 
     Third-party libraries can swallow [`CancelledError`][cancellederror] too. If the bug is
     not in your code, check the library's exception handling. This is a
@@ -273,7 +274,7 @@ matching handler, and re-raises anything unhandled as a new [`ExceptionGroup`][e
 See [Concurrent Tasks](../the-basics/concurrent-tasks.md) for the
 full explanation.
 
-!!! info
+!!! Info
 
     You cannot mix `#!py except` and [`except*`][except] in the same `#!py try` block. If you
     need [`except*`][except] for the [`TaskGroup`][taskgroup] errors, all handlers in that block
@@ -295,7 +296,7 @@ full explanation.
   that will never arrive because the producer has finished or crashed.
 - **Blocking call masquerading as a hang.** Sometimes what looks like a
   deadlock is actually a blocking call that takes a very long time. Check the
-  "Diagnosing a Blocked Loop" section first.
+  "Diagnosing a Blocked Loop" subsection first.
 
 **Diagnosis:**
 
@@ -390,11 +391,11 @@ async def main() -> None:
             tg.create_task(worker(item), name=f"worker-{i}")
 ```
 
-### [`Task.print_stack()`][task-print-stack] for On-Demand Inspection
+### `Task.print_stack()` for On-Demand Inspection
 
 [`Task.print_stack()`][task-print-stack]
 prints the stack trace of a specific task -- where it is currently suspended.
-You already saw it in the deadlock section; it is equally useful for any case
+You already saw it in the deadlock subsection; it is equally useful for any case
 where you need to understand what a task is waiting on. Use
 [`Task.get_stack()`][task-get-stack]
 if you need the frames as a list for programmatic inspection.

@@ -254,7 +254,7 @@ The `maxsize` you choose is a tuning knob. Smaller means tighter
 memory bounds but more context-switching between actors. Larger means
 more buffering but fewer suspensions.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     [Trio][trio-docs]'s [`trio.open_memory_channel()`][trio-open-memory-channel] requires a max
     buffer size at creation time -- there is no "unbounded" default.
@@ -584,7 +584,7 @@ sibling processors also see it and shut down in turn. The
 supervisor's [`TaskGroup`][taskgroup] waits for all processors to finish, then
 sends a single `Stop` to the output queue for the aggregator.
 
-### Nested [`TaskGroup`][taskgroup] for the supervisor
+### Nested `TaskGroup` for the supervisor
 
 The `processor_supervisor` function uses its own
 [`TaskGroup`][taskgroup]
@@ -602,7 +602,7 @@ cleanup code required -- the structure handles it. (See
 
 ## Common Failure Modes
 
-!!! warning
+!!! Warning
 
     Watch out for these common failure modes -- each one can cause
     subtle, hard-to-debug problems in production:

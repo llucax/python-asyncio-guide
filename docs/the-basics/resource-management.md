@@ -16,7 +16,7 @@ you get leaked connections, stuck locks, and file descriptors that pile up
 until the OS complains. The good news: the tools for handling this are
 straightforward, and if you follow a few rules you will never leak a resource.
 
-## [`async with`][async-with]
+## `async with`
 
 The
 [`async with` statement][async-with-statement]
@@ -78,7 +78,7 @@ You have already been using [`async with`][async-with] throughout this chapter:
 async context managers. The pattern is always the same -- enter with
 [`async with`][async-with], and the cleanup is guaranteed.
 
-!!! warning
+!!! Warning
 
     If an API gives you an async context manager, **always** use it with
     [`async with`][async-with]. Calling [`__aenter__()`][aenter] and [`__aexit__()`][aexit] by hand is fragile
@@ -87,9 +87,10 @@ async context managers. The pattern is always the same -- enter with
 
 ## Cleanup Under Cancellation
 
-The previous section introduced `#!py try`/`#!py finally` for cleanup when a coroutine
-is cancelled. Let's go deeper with a resource-oriented example. Imagine an
-async connection that must be explicitly closed:
+The [Cancellation and Timeouts](cancellation-and-timeouts.md) section
+introduced `#!py try`/`#!py finally` for cleanup when a coroutine is
+cancelled. Let's go deeper with a resource-oriented example. Imagine an async
+connection that must be explicitly closed:
 
 ```python title="cleanup_under_cancel.py" hl_lines="13 14 15"
 import asyncio
@@ -140,7 +141,7 @@ The timeout fires after one second, cancelling the `#!py await conn.query()` cal
 The [`CancelledError`][cancellederror] unwinds the `#!py try` block, the `#!py finally` block runs, and
 the connection is closed properly. This is exactly the behaviour you want.
 
-!!! warning
+!!! Warning
 
     Cleanup code in `#!py finally` blocks runs while the task is being cancelled.
     Keep it fast and simple -- closing a socket, releasing a lock, writing a
@@ -150,7 +151,7 @@ the connection is closed properly. This is exactly the behaviour you want.
     account for that extra time, and the program's shutdown behaviour becomes
     unpredictable.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     The same rule applies in [Trio][trio-docs]. [Trio][trio-docs] enforces it more
     strictly with [cancel scope][trio-cancel-scope] semantics -- by default, cancelled tasks
@@ -265,14 +266,14 @@ garbage collector is delayed, the `#!py finally` block may run much later -- or 
 a context where it can no longer do async cleanup properly. In a long-running
 server, this means leaked connections and file descriptors.
 
-!!! danger
+!!! Danger
 
     Never rely on the garbage collector to clean up async generators. The
     `#!py finally` block may run, but the *timing* is unpredictable and async
     operations inside it may fail or be silently skipped. Always close async
     generators explicitly.
 
-## [`contextlib.aclosing()`][contextlib-aclosing]
+## `contextlib.aclosing()`
 
 [`contextlib.aclosing()`][contextlib-aclosing]
 is the fix. It wraps an async generator (or any object with an [`aclose()`][aclose]
@@ -323,14 +324,14 @@ when the [`async with`][async-with] block exits -- not at some unpredictable lat
 the garbage collector. The `#!py finally` block inside the generator runs promptly,
 and any async cleanup it needs to do happens in the right context.
 
-!!! tip
+!!! Tip
 
     The rule is simple: **always wrap async generators in `#!py aclosing()` when you
     consume them.** If you iterate to completion you don't strictly need it, but
     applying it consistently means you never have to think about whether early
     exit is possible.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     [Trio][trio-docs] requires [`trio.aclosing()`][trio-aclosing] for every async generator
     iteration and will warn you loudly if you forget. asyncio is more lenient at
@@ -360,7 +361,7 @@ The loop calls [`__anext__()`][anext] before each iteration, which is a coroutin
 may suspend while waiting for the next item. When the iterable is exhausted,
 it raises `StopAsyncIteration` and the loop ends.
 
-!!! note
+!!! Note
 
     `#!py async for` does **not** automatically close the iterable when the loop
     exits early (via `#!py break` or exception). That is why `#!py aclosing()` is

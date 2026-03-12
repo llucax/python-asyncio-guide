@@ -10,17 +10,26 @@ icon: lucide/book-open
 # Beyond the Basics
 
 This chapter covers patterns you will reach for once you are comfortable with
-the material in Chapter 1. Everything here is still application-level code --
-no event loop internals, no framework plumbing. These are the recipes and
-tools that fill the gap between "I can write a TaskGroup" and "I can build a
-production async service."
+[The Basics](../the-basics/index.md). Everything here is still
+application-level code -- no event loop internals, no framework plumbing.
+These are the recipes and tools that fill the gap between "I can write a
+TaskGroup" and "I can build a production async service."
 
-This chapter mixes two kinds of pages:
+If a pattern here feels slippery, bounce back to
+[Concurrent Tasks](../the-basics/concurrent-tasks.md),
+[Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md), and
+[Resource Management](../the-basics/resource-management.md). When you want the
+machinery underneath, continue to
+[How Asyncio Works](../how-asyncio-works/index.md), especially
+[Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
 
-- **Pattern pages** that stay fully guide-owned, such as blocking code,
+This chapter mixes two kinds of sections:
+
+- **Pattern sections** that stay fully guide-owned, such as blocking code,
   shielding, and context-manager design.
-- **Reference companion pages** that stay deliberately short when the official
-  docs already explain an API well. Those pages focus on when to reach for the
+- **Reference companion sections** that stay deliberately short when the
+  official docs already explain an API well. Those sections focus on when to
+  reach for the
   tool, the main pitfall, and where to read the full reference next.
 
 ## Sections
@@ -37,18 +46,19 @@ This chapter mixes two kinds of pages:
    resource lifetimes.
 
 4. [Advanced Coordination](advanced-coordination.md) -- [`Condition`][condition],
-   [`Barrier`][barrier], [`BoundedSemaphore`][boundedsemaphore],
-   [`PriorityQueue`][priorityqueue], [`LifoQueue`][lifoqueue]. This is a
-   reference companion page.
+    [`Barrier`][barrier], [`BoundedSemaphore`][boundedsemaphore],
+    [`PriorityQueue`][priorityqueue], [`LifoQueue`][lifoqueue]. This is a
+    reference companion section.
 
 5. [Subprocesses](subprocesses.md) --
    [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec],
    [`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell], and
-   the key deadlock and shell-safety rules. This is a reference companion page.
+   the key deadlock and shell-safety rules. This is a reference companion
+   section.
 
 6. [Runner](runner.md) -- [`asyncio.Runner`][asyncio-runner] for running
    multiple top-level coroutines in sequence, testing, and REPL use. This is a
-   reference companion page.
+   reference companion section.
 
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
 [loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor

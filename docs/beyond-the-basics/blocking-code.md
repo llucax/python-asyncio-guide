@@ -15,9 +15,9 @@ gap. The catch is that you have to use them *deliberately*, because calling a
 blocking function directly inside a coroutine is one of the easiest ways to
 break an async program.
 
-!!! info
+!!! Info
 
-    This page focuses on the decision-making: what blocks the loop, when to use
+    This section focuses on the decision-making: what blocks the loop, when to use
     `#!py to_thread()`, and when to escalate to a process pool. Use the official
     [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
     and [Developing with asyncio][official-dev] pages for full executor and
@@ -79,14 +79,14 @@ would expect from concurrent execution. In a real application, those 2 frozen
 seconds mean dropped connections, missed heartbeats, and unresponsive
 services.
 
-!!! warning
+!!! Warning
 
     Asyncio debug mode (covered in [Debugging](../the-basics/debugging.md))
     logs a warning when a callback blocks the loop for more than 100 ms, but it
     cannot *prevent* the freeze. The only fix is to not block the loop in the
     first place.
 
-## [`asyncio.to_thread()`][asyncio-to-thread]
+## `asyncio.to_thread()`
 
 [`asyncio.to_thread()`][asyncio-to-thread]
 is the standard way to call a blocking function without freezing the event
@@ -152,12 +152,12 @@ Notice that `blocking_work` is a plain `#!py def` function, not `#!py async def`
 is the whole point: you already have synchronous code and you need to call it
 from an async context. `to_thread` bridges the gap.
 
-!!! tip "Trio users"
+!!! Tip "Trio"
 
     [`asyncio.to_thread()`][asyncio-to-thread] is equivalent to
     [`trio.to_thread.run_sync()`][trio-to-thread-run-sync]. Same idea, same purpose.
 
-!!! note
+!!! Note
 
     `to_thread` uses Python's default
     [`ThreadPoolExecutor`][threadpoolexecutor].
@@ -212,11 +212,12 @@ if __name__ == "__main__":
 Results: ['item-0', 'item-1', 'item-2']
 ```
 
-!!! note
+!!! Note
 
     [`asyncio.get_running_loop()`][asyncio-get-running-loop] and [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] are low-level
     event loop APIs covered in detail in
-    [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
+    [Loop Access and Inspection](../the-low-level-toolkit/loop-access-and-inspection.md)
+    in [The Low-Level Toolkit](../the-low-level-toolkit/index.md).
     They appear here because they are the *only* way to safely communicate from
     a background thread back to the event loop -- there is no high-level
     alternative for this pattern.
@@ -227,14 +228,14 @@ thread. For more complex patterns -- like feeding items into an
 [`asyncio.Queue`][asyncio-queue] from a thread -- wrap the `#!py queue.put_nowait()` call inside
 `call_soon_threadsafe`.
 
-!!! warning
+!!! Warning
 
     Do not pass asyncio primitives (locks, events, queues) directly to a thread
     and call their methods there. It will appear to work in simple cases and
     break under load. Always go through `call_soon_threadsafe` or use
     `threading`-based synchronization primitives instead.
 
-## [`ProcessPoolExecutor`][processpoolexecutor] for CPU-Bound Work
+## `ProcessPoolExecutor` for CPU-Bound Work
 
 `to_thread` solves the problem for I/O-bound blocking work -- file reads,
 network calls, database queries. But for CPU-bound work -- number crunching,
@@ -298,11 +299,13 @@ if __name__ == "__main__":
 Checked 5 numbers in 0.43s
 ```
 
-!!! note
+!!! Note
 
     Like the `call_soon_threadsafe` example above, this recipe uses the low-level
     APIs [`asyncio.get_running_loop()`][asyncio-get-running-loop] and [`loop.run_in_executor()`][loop-run-in-executor], which are
-    covered in [Chapter 4](../the-low-level-toolkit/loop-access-and-inspection.md).
+    covered in
+    [Loop Access and Inspection](../the-low-level-toolkit/loop-access-and-inspection.md)
+    in [The Low-Level Toolkit](../the-low-level-toolkit/index.md).
     `run_in_executor` is the only built-in way to dispatch work to a
     [`ProcessPoolExecutor`][processpoolexecutor] from async code, so you will see it whenever CPU-bound
     offloading comes up.
@@ -321,7 +324,7 @@ A few things to note:
   work is done. In a long-running service, you would typically create the pool
   once at startup and reuse it.
 
-!!! info
+!!! Info
 
     Only reach for [`ProcessPoolExecutor`][processpoolexecutor] when the work is genuinely CPU-bound.
     Process creation and inter-process communication have significant overhead

@@ -30,7 +30,7 @@ replace it. The intended split is simple:
   to look up full signatures, platform notes, version changes, and exhaustive
   API details.
 
-Some pages in this guide are deliberately short and point you at the official
+Some sections in this guide are deliberately short and point you at the official
 docs when the stdlib reference is already strong. That is by design. The goal
 is to keep this guide cohesive and complete without turning it into a second
 API manual.
@@ -59,60 +59,112 @@ and other modern APIs throughout without version guards.
 
 ## How To Read This Guide
 
-**Chapters 1 and 2** cover everything you need for application programming.
-You can stop after Chapter 2 and write correct, maintainable async code.
+**[The Basics](the-basics/index.md)** covers all you need to write simple but
+robust and correct asyncio programs.
 
-**Chapter 3** explains how the machinery underneath works. Read it when you hit
-a bug that surprised you and need to reason precisely about scheduling and
-cancellation.
+**[Beyond the Basics](beyond-the-basics/index.md)** adds more advanced patterns
+and tools that are necessary only when writing more complex programs, but are
+good to know about, as knowing the right tools can make your *asyncio life*
+much easier.
 
-**Chapter 4** is for library and framework authors who need to build on top of
-asyncio's low-level APIs.
+**[How Asyncio Works](how-asyncio-works/index.md)** explains the machinery
+underneath. Not strictly necessary for day-to-day programming, but useful for
+understanding why things work the way they do, and for debugging and library
+work.
+
+**[The Low-Level Toolkit](the-low-level-toolkit/index.md)** is for library and
+framework authors who need to build on top of asyncio's low-level APIs.
 
 **Appendices** are reference material: the checkpoint contract reference,
-consolidated best practices, a debugging guide, and a map to the official docs
-for the API-heavy areas that this guide intentionally keeps light.
+consolidated best practices, and a debugging guide.
 
----
+## Chapter Index
 
-## Chapters
+You can use this index have a quick look into what chapter offers in more
+detail, or to quickly jump to the section you need, but bear in mind that the
+guide is designed to be read linearly.
 
-1. [The Basics](the-basics/index.md) -- [`asyncio.run()`][asyncio-run],
-   coroutines, [`TaskGroup`][taskgroup], [`asyncio.timeout()`][asyncio-timeout],
-   [`Event`][event], [`Queue`][queue], and everything you need for day-to-day
-   async programming.
+1. [The Basics](the-basics/index.md) -- Learn the core vocabulary, safety
+   rules, and high-level patterns for day-to-day async programming.
 
-2. [Beyond the Basics](beyond-the-basics/index.md) --
-   [`asyncio.to_thread()`][asyncio-to-thread], [`shield()`][shield], subprocesses, async
-   context managers, advanced synchronization, and
-   [`asyncio.Runner`][asyncio-runner]. Some pages here are intentionally lighter
-   and act as reference companions.
+    * [Getting Started](the-basics/getting-started.md) -- Learn `async`/
+      `await`, the async sandwich, and checkpoints.
+    * [Concurrent Tasks](the-basics/concurrent-tasks.md) -- Use `TaskGroup`,
+      structured concurrency, and `except*` for child-task failures.
+    * [Cancellation and Timeouts](the-basics/cancellation-and-timeouts.md) --
+      Understand `CancelledError`, timeout scopes, and sibling cancellation.
+    * [Resource Management](the-basics/resource-management.md) -- Clean up
+      locks, streams, and async generators safely under cancellation.
+    * [Streams](the-basics/streams.md) -- Work with client and server streams,
+      backpressure, and stream shutdown.
+    * [Coordination](the-basics/coordination.md) -- Use queues, locks, events,
+      and semaphores for inter-task coordination.
+    * [Building a Pipeline](the-basics/building-a-pipeline.md) -- Combine
+      queues, task groups, and sentinels into a realistic pipeline.
+    * [Debugging](the-basics/debugging.md) -- Catch forgotten awaits, blocking
+      calls, and cancellation bugs early.
 
-3. [How Asyncio Works](how-asyncio-works/index.md) -- the event loop model,
-   [`asyncio.Future`][asyncio-future], [`asyncio.Task`][asyncio-task], task
-   lifecycle, and the full cancellation mechanics.
+2. [Beyond the Basics](beyond-the-basics/index.md) -- Learn the advanced
+   application-level patterns that sit between the basics and library
+   internals.
 
-4. [The Low-Level Toolkit](the-low-level-toolkit/index.md) --
-   [`get_running_loop()`][get-running-loop], [`wait()`][wait], [`as_completed()`][as-completed], [`wait_for()`][wait-for],
-   cross-thread communication, protocols/transports, and low-level server APIs.
-   Treat this chapter as an orientation map first and a reference second.
+    * [Blocking Code](beyond-the-basics/blocking-code.md) -- Decide when to use
+      threads, executors, and process pools.
+    * [Shielding](beyond-the-basics/shielding.md) -- Protect truly critical work
+      without creating orphaned tasks.
+    * [Custom Context Managers](beyond-the-basics/custom-context-managers.md) --
+      Build reusable async setup and teardown blocks.
+    * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
+      Reach for conditions, barriers, bounded semaphores, and specialty queues
+      when the basics are not enough.
+    * [Subprocesses](beyond-the-basics/subprocesses.md) -- Run subprocesses
+      safely and avoid pipe deadlocks.
+    * [Runner](beyond-the-basics/runner.md) -- Use `asyncio.Runner` when you
+      need multiple top-level coroutines in one process.
 
----
+3. [How Asyncio Works](how-asyncio-works/index.md) -- Learn the runtime
+   machinery underneath the high-level APIs.
 
-## Appendices
+    * [The Event Loop](how-asyncio-works/the-event-loop.md) -- See how ready
+      queues, timers, and I/O polling drive execution.
+    * [Tasks and Futures](how-asyncio-works/tasks-and-futures.md) -- Understand
+      how tasks wrap coroutines and futures connect low-level callbacks to
+      `await`.
+    * [Cancellation Internals](how-asyncio-works/cancellation-internals.md) --
+      Learn how cancellation requests are tracked and delivered under the hood.
+    * [Shutdown Sequence](how-asyncio-works/shutdown-sequence.md) -- Follow what
+      `asyncio.run()` does when the main coroutine finishes.
 
-- [Checkpoint Contract](appendices/checkpoint-contract.md) -- guide-level
-  reference for the common asyncio operations this guide uses and whether they
-  always suspend, conditionally suspend, or never suspend.
+4. [The Low-Level Toolkit](the-low-level-toolkit/index.md) -- Learn the
+   low-level building blocks for library and framework code.
+    
+    * [Loop Access and
+      Inspection](the-low-level-toolkit/loop-access-and-inspection.md) -- Know
+      when you really need the loop object and what it gives you.
+    * [Task Coordination](the-low-level-toolkit/task-coordination.md) -- Use
+      low-level waiting helpers like `wait()`, `as_completed()`, and
+      `wait_for()`.
+    * [Futures](the-low-level-toolkit/futures.md) -- Work with bare futures and
+      bridge `concurrent.futures` safely.
+    * [Callbacks and
+      Threading](the-low-level-toolkit/callbacks-and-threading.md) -- Schedule
+      callbacks across threads and submit coroutines from synchronous code.
+    * [Transports and
+      Protocols](the-low-level-toolkit/transports-and-protocols.md) --
+      Understand the callback-based networking layer underneath streams.
 
-- [Best Practices, Pitfalls, and Gotchas](appendices/best-practices.md) --
-  consolidated list of recurring mistakes and the correct patterns.
+5. Appendices -- Reference material for common patterns, best practices, and
+    debugging.
 
-- [Debugging Guide](appendices/debugging.md) -- practical techniques for
-  diagnosing blocked loops, task leaks, timeout failures, and more.
+    * [Checkpoint Contract](appendices/checkpoint-contract.md) -- guide-level
+      reference for the common asyncio operations this guide uses and whether
+      they always suspend, conditionally suspend, or never suspend.
 
-- [Official Docs Roadmap](appendices/official-docs-roadmap.md) -- where to go
-  in the Python docs when you need the full reference for a topic.
+    * [Best Practices, Pitfalls, and Gotchas](appendices/best-practices.md) --
+      consolidated list of recurring mistakes and the correct patterns.
+
+    * [Debugging Guide](appendices/debugging.md) -- practical techniques for
+      diagnosing blocked loops, task leaks, timeout failures, and more.
 
 [asyncio]: https://docs.python.org/3/library/asyncio.html
 [official-asyncio-documentation]: https://docs.python.org/3/library/asyncio.html
@@ -121,16 +173,4 @@ for the API-heavy areas that this guide intentionally keeps light.
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
-[asyncio-run]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run
-[event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
-[queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
-[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
-[asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
-[asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
-[asyncio-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [trio-docs]: https://trio.readthedocs.io/en/stable/
-[as-completed]: https://docs.python.org/3/library/asyncio-task.html#asyncio.as_completed
-[wait-for]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
-[shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
-[wait]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait
-[get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop

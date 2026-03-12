@@ -1,76 +1,40 @@
 # AGENTS.md -- Python Asyncio Guide
 
-This repository is a prose-first documentation project for learning
-Python's `asyncio`. It contains Markdown pages, embedded example snippets,
-and Zensical configuration. It does not contain application code.
+This repository is a prose-first documentation project for learning Python's
+`asyncio`. It contains Markdown sections, embedded Python examples, and
+Zensical configuration. It does not contain application code.
 
 There are no Cursor rules in `.cursor/rules/`, no `.cursorrules`, and no
 Copilot instructions in `.github/copilot-instructions.md`.
 
 ## Repository Shape
 
-```text
-docs/
-  index.md
-  the-basics/
-  beyond-the-basics/
-  how-asyncio-works/
-  the-low-level-toolkit/
-  appendices/
-zensical.toml
-pyproject.toml
-uv.lock
-```
-
-- `docs/` contains the guide content.
+- `docs/` holds the guide content.
+- `docs/the-basics/`, `docs/beyond-the-basics/`,
+  `docs/how-asyncio-works/`, `docs/the-low-level-toolkit/`, and
+  `docs/appendices/` are the main chapter directories.
+- `docs/index.md` is the guide index.
 - `zensical.toml` defines navigation and Markdown extensions.
 - `pyproject.toml` only declares package metadata plus a dev dependency on
-  `zensical`.
+  `zensical>=0.0.24`.
 
 ## Environment And Tooling
 
 - Python: 3.11+ (`.python-version` is `3.11`).
 - Package manager: `uv`.
 - Docs engine: `zensical`.
-- CI build command from `.github/workflows/docs.yml`:
-
-  ```sh
-  zensical build --clean
-  ```
-
-- There is no configured linter, formatter, or automated test suite.
-
-## Setup Commands
-
-- Install dev tools:
-
-  ```sh
-  uv sync --dev
-  ```
-
+- CI builds the site with `zensical build --clean`.
+- No configured linter, formatter, or automated test suite exists.
 - If `.contai-venv/` exists, prefer it for direct Python commands.
 - For repo tooling, prefer `uv run ...`.
 
-## Build / Preview / Validation Commands
+## Setup / Build / Preview Commands
 
-- Full docs build:
-
-  ```sh
-  uv run zensical build --clean
-  ```
-
-- Local preview server:
-
-  ```sh
-  uv run zensical serve
-  ```
-
-- If `uv` is unavailable but `zensical` is already installed globally:
-
-  ```sh
-  zensical build --clean
-  zensical serve
-  ```
+- Install dev tools: `uv sync --dev`
+- Full docs build: `uv run zensical build --clean`
+- Local preview server: `uv run zensical serve`
+- Fallback if `uv` is unavailable: `zensical build --clean`
+- Fallback preview: `zensical serve`
 
 ## Lint / Test Commands
 
@@ -81,15 +45,15 @@ uv.lock
 Validation is manual:
 
 1. Run `uv run zensical build --clean` after content or config changes.
-2. Optionally run `uv run zensical preview` and inspect affected pages.
-3. Check links, headings, admonitions, code fences, and navigation.
+2. Optionally run `uv run zensical serve` and inspect affected sections.
+3. Check links, headings, admonitions, code fences, diagrams, and navigation.
 
-## How To Verify Changes
+## Verification Checklist
 
-- Content edits: verify the changed page renders correctly.
+- Content edits: verify the changed section renders correctly.
 - Navigation edits: verify both `docs/index.md` and `zensical.toml`.
 - Cross-links: click through in preview rather than assuming anchors.
-- Mermaid/admonition/code-block changes: verify visually in preview.
+- Mermaid or admonition edits: verify visually in preview.
 
 ## Core Writing Style
 
@@ -97,60 +61,68 @@ Validation is manual:
 - Use second person and present tense.
 - Prefer expanded forms: `do not`, `cannot`, `it is`, `you will`.
 - Use ` -- ` for prose dashes. Use a Unicode em dash only where a file
-  already uses it intentionally.
+  already uses one intentionally.
 - Keep explanations concept-first: establish the mental model, then show code.
 - Explain why a pattern exists, not just what to type.
 - Assume the reader knows Python well but is new to `asyncio`.
 
-## File Structure Rules
+## Structure And Navigation
 
-- Every page needs YAML front matter with at least `title` and `description`.
-- Chapter index pages also include `icon: lucide/book-open`.
+- Use `chapter` for directory-level units, `section` for Markdown files, and
+  `subsection` for in-file H2/H3 units.
+- Every section file needs YAML front matter with at least `title` and
+  `description`.
+- Chapter index sections also include `icon: lucide/book-open`.
 - Use ATX headings only (`#`, `##`, `###`).
-- Keep one blank line between sections.
+- Do not put links in headings. Keep heading text plain.
+- Keep one blank line between blocks and subsections.
 - No trailing whitespace.
 - No trailing blank line at end of file.
-
-## Navigation Rules
-
 - Do not add manual Previous/Next links in Markdown.
-- When adding or renaming pages, update the chapter `index.md` page list.
+- Prefer contextual cross-links between related chapters and sections.
+- When adding or renaming sections, update the chapter `index.md` section list.
 - If the path or chapter structure changes, also update `zensical.toml`.
 
 ## Links And Reference Style
 
 - Internal links: use relative Markdown links such as
   `../appendices/debugging.md`.
-- Link guide-level concepts to the page in this guide that explains them in
-  depth.
+- Link guide-level concepts to the guide's own sections before linking
+  externally.
 - For Python stdlib APIs, link to the official Python 3 docs.
-- For Trio APIs/concepts, link to the official Trio docs.
-- For other external library APIs/concepts, link to the project's official docs
-  rather than a GitHub repository when possible.
+- For Trio APIs and concepts, link to the official Trio docs.
+- For third-party libraries, prefer official project docs over GitHub when
+  possible.
 - In prose, link all meaningful occurrences of Python, Trio, and external API
-  mentions, not just the first one on the page.
-- Prefer split reference links for readability:
-
-  ```markdown
-  [`asyncio.sleep()`][asyncio-sleep]
-
-  [asyncio-sleep]: https://docs.python.org/...
-  ```
-
+  mentions, not just the first one in a section.
+- Prefer split reference links for readability, for example
+  ``[`asyncio.sleep()`][asyncio-sleep]`` with
+  `[asyncio-sleep]: https://docs.python.org/...`.
 - Use explicit labels, not shortcut references.
-- Prefer short labels when they are unambiguous (`[await]`, `[taskgroup]`).
-- For guide-level topics such as debugging workflows, prefer linking to this
-  guide's own pages before linking externally.
+- Prefer short labels when unambiguous (`[await]`, `[taskgroup]`).
 - Link PEPs directly with their canonical URL.
 
-## Code Block Rules
+## Embedded Python Style
 
-- Real examples: use `python` fences.
-- Output examples: use `text` fences with a command title.
-- Use `title="filename.py"` when a filename helps.
-- Type-annotate function signatures and locals when it improves clarity.
+These rules apply to runnable examples and Python-flavoured pseudocode.
+
 - Use modern Python 3.11 syntax: `list[str]`, `str | None`, etc.
-- Imports: stdlib first, one per line, `import asyncio` first when present.
+- Type-annotate function signatures and locals when it improves clarity.
+- Prefer small, self-contained examples over framework-heavy code.
+- Imports: stdlib only, one import per line, and put `import asyncio` first
+  when it is present.
+- Use descriptive names such as `main`, `worker`, `queue`, `task`, and
+  `deadline`; avoid clever abbreviations.
+- Prefer explicit control flow over compact tricks.
+- Keep examples cancellation-safe and resource-safe.
+- Do not swallow `CancelledError`; if you catch it for cleanup, re-raise it.
+- Prefer `async with` for owned resources and structured concurrency.
+- Prefer `TaskGroup` over bare `create_task()` in application-level examples
+  unless the section is explicitly teaching low-level internals.
+- Prefer `python` fences for real examples and `text` fences for output.
+- Use `title="filename.py"` when a filename helps.
+- For inline Python syntax in prose, prefer `#!py` where it improves
+  readability, for example `#!py async with sem:`.
 - Preferred entry point:
 
   ```python
@@ -161,49 +133,32 @@ Validation is manual:
       asyncio.run(main())
   ```
 
-- Language-agnostic pseudocode: use `text` fences.
-- Python-flavoured pseudocode: `python` fences are allowed when the Python-like
-  structure helps explain the idea, even if the snippet is not runnable.
-- For inline Python syntax in prose, prefer inline highlighting with
-  backticks plus `#!py` when it improves readability, for example
-  `` `#!py async with sem:` `` or `` `#!py await queue.get()` ``.
-- Keep plain backticks for file paths, environment variables, headings, and
-  non-Python snippets.
-- Prefer code annotations (`# (1)!`) over dense inline comments for step-by-step
-  explanations.
-- Use `hl_lines` sparingly to emphasize 1-3 critical lines.
-
 ## Asyncio Content Guidelines
 
 - Link meaningful mentions of `asyncio` APIs in prose to the official docs.
 - Keep cancellation guidance consistent: cancellation arrives at checkpoints,
   not at arbitrary points.
 - Prefer structured concurrency terminology and patterns.
-- Keep Chapter 1 beginner-friendly but technically precise.
-- Preserve the "Code Review Checklist" pattern on introductory pages when it
+- Keep `The Basics` beginner-friendly but technically precise.
+- Preserve the "Code Review Checklist" pattern on introductory sections when it
   fits.
 
-## Naming And Terminology
+## Terminology, Admonitions, And Diagrams
 
-- Use the repository's chapter names exactly, e.g. `The Basics`.
+- Use the repository's chapter names exactly, for example `The Basics`.
 - Be consistent with coroutine, coroutine function, task, awaitable, event
   loop, checkpoint, and cancellation.
 - Prefer `Python interpreter` over `compiler` when describing syntax rules.
-
-## Admonitions And Diagrams
-
-- Use Zensical/MkDocs admonitions: `note`, `tip`, `info`, `warning`,
-  `danger`, `example`.
-- Use `!!! tip "Trio users"` for Trio comparisons.
-- Mermaid is supported. Prefer simple flowcharts, sequence diagrams, or state
-  diagrams when a visual clearly improves comprehension.
+- Use capitalized admonition markers: `!!! Note`, `!!! Tip`, `!!! Info`,
+  `!!! Warning`, `!!! Danger`, `!!! Example`.
+- Use `!!! Tip "Trio"` for Trio comparisons.
+- Mermaid is supported. Prefer simple diagrams that clarify a concept.
 
 ## Agent Guidance
 
 - Treat this repo as documentation, not as a Python package to refactor.
-- Before changing style conventions, inspect nearby pages and preserve the
-  existing voice.
-- Be careful with bulk replacements; chapter renames and link-style changes can
-  touch many files.
+- Before changing conventions, inspect nearby sections and preserve the voice.
+- Be careful with bulk replacements; navigation and link-style changes can
+  affect many sections at once.
 - Never assume tests exist; say explicitly when validation is manual.
 - If you change content conventions, update this file too.

@@ -18,7 +18,7 @@ never fully iterated, drain the thread pool, and close the event loop. If you
 understand this sequence, the warnings and tracebacks that appear during
 shutdown stop being mysterious.
 
-## The [`asyncio.run()`][asyncio-run] Shutdown Sequence
+## The `asyncio.run()` Shutdown Sequence
 
 When your top-level coroutine finishes -- whether it returns normally or raises
 an exception -- [`asyncio.run()`][asyncio-run] does not simply close the loop. It walks
@@ -66,7 +66,7 @@ through a deliberate multi-step teardown:
 Only after all seven steps complete does [`asyncio.run()`][asyncio-run] return (or re-raise)
 the result from step 1.
 
-!!! note
+!!! Note
 
     Steps 5 and 6 were added in Python 3.9 and 3.12 respectively, but if
     you are on Python 3.11+ (which this guide assumes), both are part of
@@ -118,7 +118,7 @@ and had to be forcibly cleaned up. It is not always fatal, but it signals a
 structural problem: somewhere in your code, a task's lifetime was not tied to a
 scope.
 
-!!! warning
+!!! Warning
 
     The "Task was destroyed but it is pending" warning means you have an
     ownership gap. A task was created but nobody was responsible for
@@ -126,7 +126,7 @@ scope.
     warning is telling you that your program's concurrency structure has a
     hole.
 
-### Why [`TaskGroup`][taskgroup] Prevents This
+### Why `TaskGroup` Prevents This
 
 A [`TaskGroup`][taskgroup] is the fix. Every
 task created with `#!py tg.create_task()` is awaited
@@ -199,7 +199,7 @@ every async generator you consume in
 so it is closed deterministically when you are done with it, not at some
 later point during shutdown.
 
-!!! tip
+!!! Tip
 
     Think of `#!py shutdown_asyncgens()` as a safety net, not a strategy. Use
     `#!py aclosing()` so your generators are cleaned up at the right time, not
@@ -225,8 +225,9 @@ interrupted.
 
 ## Clean Shutdown Patterns
 
-If you followed the advice from Chapter 1, clean shutdown is largely
-automatic. Here is a summary of the patterns that make it work:
+If you followed the advice from [The Basics](../the-basics/index.md), clean
+shutdown is largely automatic. Here is a summary of the patterns that make it
+work:
 
 **Use [`TaskGroup`][taskgroup] for all concurrency.** Every task is tied to a scope and
 awaited before that scope exits. No leaked tasks, no warnings.
@@ -268,7 +269,7 @@ clean up. [`asyncio.run()`][asyncio-run] still runs its full shutdown sequence, 
 through 5 find nothing to do -- every task is already done, every generator
 already closed, every resource already released. That is the ideal.
 
-!!! info
+!!! Info
 
     Clean shutdown is not about adding shutdown *code*. It is about
     structuring your program so that lifetimes are explicit and scoped. If

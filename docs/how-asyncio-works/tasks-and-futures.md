@@ -19,7 +19,7 @@ Together, they are the concrete machinery that makes concurrency work. The
 event loop spins, futures hold eventual results, and tasks drive coroutines
 forward one [`await`][await] at a time.
 
-## [`asyncio.Future`][asyncio-future]
+## `asyncio.Future`
 
 A *future* is a container for a value that doesn't exist yet. You can think of
 it as an empty box with a label that says "result goes here." Someone will put
@@ -48,14 +48,17 @@ You can also [`await`][await] a future. When you do, the current coroutine suspe
 until the future is done, then the [`await`][await] expression returns the future's
 result (or raises its exception).
 
-!!! note
+!!! Note
 
     Application code rarely creates futures directly. They are the low-level
     plumbing that asyncio's internals -- transports, protocols, and the loop
     itself -- use to communicate results between components. You will see
-    them when you work with the low-level APIs in Chapter 4 (callbacks,
-    transports, [`loop.create_future()`][loop-create-future]). For now, understanding what they
-    *are* is enough.
+    them when you work with
+    [The Low-Level Toolkit](../the-low-level-toolkit/index.md), especially
+    [Callbacks and Threading](../the-low-level-toolkit/callbacks-and-threading.md),
+    [Transports and Protocols](../the-low-level-toolkit/transports-and-protocols.md),
+    and [`loop.create_future()`][loop-create-future]. For now, understanding
+    what they *are* is enough.
 
 Here is a minimal example that shows the lifecycle. You would not write this in
 a real program, but it makes the mechanics clear:
@@ -97,7 +100,7 @@ for it, and the code that awaits doesn't need to know who will provide it.
 This decoupling is what allows the event loop to wire together callbacks,
 I/O completions, and coroutines into a single coherent system.
 
-## [`asyncio.Task`][asyncio-task]
+## `asyncio.Task`
 
 A *task* is a future that wraps a coroutine and drives it on the event loop.
 Where a plain future is a passive container (someone else must call
@@ -121,12 +124,13 @@ instant you create the task. It starts on the *next iteration* of the event
 loop, when the loop processes the [`call_soon()`][call-soon] callback. This is why
 [`create_task()`][create-task] returns immediately -- it just puts work on the queue.
 
-## [`asyncio.create_task()`][asyncio-create-task]
+## `asyncio.create_task()`
 
 [`asyncio.create_task()`][asyncio-create-task]
 is the function that wraps a coroutine in a [`Task`][task] and schedules it on the
-running loop. In Chapter 1 you saw `#!py tg.create_task()` -- the [`TaskGroup`][taskgroup]
-method that gives tasks an owner. Under the hood, `#!py TaskGroup.create_task()`
+running loop. In [Concurrent Tasks](../the-basics/concurrent-tasks.md) you saw
+`#!py tg.create_task()` -- the [`TaskGroup`][taskgroup] method that gives tasks an owner.
+Under the hood, `#!py TaskGroup.create_task()`
 calls [`asyncio.create_task()`][asyncio-create-task] and then tracks the resulting task so it can
 enforce structured concurrency. This section is about the raw function
 underneath.
@@ -174,15 +178,15 @@ Task names appear in tracebacks and debug output, so naming your tasks -- even
 with something short like `#!py f"fetch-{url}"` -- pays off immediately when
 something goes wrong.
 
-!!! info
+!!! Info
 
     **Prefer `#!py TaskGroup.create_task()` over bare [`asyncio.create_task()`][asyncio-create-task].**
     A [`TaskGroup`][taskgroup] gives every task an owner, ensures exceptions propagate,
     and prevents orphaned tasks. Bare [`create_task()`][create-task] is a building block
     -- it is what [`TaskGroup`][taskgroup] calls internally -- but in application code
-    the unowned version is almost always a mistake. See the
-    [Concurrent Tasks](../the-basics/concurrent-tasks.md) section in
-    Chapter 1 for the full argument.
+    the unowned version is almost always a mistake. See
+    [Concurrent Tasks](../the-basics/concurrent-tasks.md) for the full
+    argument.
 
 ## Task Lifecycle
 
@@ -264,7 +268,7 @@ whatever ended the task (the stored exception, or [`CancelledError`][cancelleder
 `#!py .result()` on a done task does the same thing without suspending -- but if
 you call it on a task that isn't done yet, you get `InvalidStateError`.
 
-!!! tip
+!!! Tip
 
     After a [`TaskGroup`][taskgroup] block exits normally, every task in the group is
     guaranteed done. That is why the
@@ -319,7 +323,7 @@ async def main() -> None:
     await task
 ```
 
-!!! warning
+!!! Warning
 
     This is one more reason to prefer [`TaskGroup`][taskgroup]. When you call
     `#!py tg.create_task()`, the group stores a strong reference to the task
@@ -390,7 +394,7 @@ This send-yield-callback loop is the heartbeat of asyncio concurrency. Every
 can go service other tasks. When the thing being awaited finishes, the loop
 comes back and picks up where it left off.
 
-!!! note
+!!! Note
 
     The real implementation in CPython is in
     [`_asyncio.Task`](https://github.com/python/cpython/blob/main/Modules/_asynciomodule.c)

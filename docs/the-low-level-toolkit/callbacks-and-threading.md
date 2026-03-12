@@ -8,22 +8,22 @@ description: >-
 
 # Callbacks and Threading
 
-Chapter 2 covered
-[`asyncio.to_thread()`][asyncio-to-thread]
--- the way to call blocking code *from* an async context. But sometimes the
-boundary runs the other direction. You have a thread -- maybe a web framework's
-request handler, a GUI event loop, or a monitoring watchdog -- and it needs to
-reach *into* the asyncio event loop to schedule work or collect results. That
-requires a different set of tools: done callbacks, thread-safe scheduling,
-coroutine submission from non-async threads, and signal handling.
+[Blocking Code](../beyond-the-basics/blocking-code.md) covered
+[`asyncio.to_thread()`][asyncio-to-thread] -- the way to call blocking code
+*from* an async context. But sometimes the boundary runs the other direction.
+You have a thread -- maybe a web framework's request handler, a GUI event
+loop, or a monitoring watchdog -- and it needs to reach *into* the asyncio
+event loop to schedule work or collect results. That requires a different set
+of tools: done callbacks, thread-safe scheduling, coroutine submission from
+non-async threads, and signal handling.
 
-!!! info
+!!! Info
 
-    This page focuses on the boundary patterns. Use the official
+    This section focuses on the boundary patterns. Use the official
     [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
     and [Developing with asyncio][official-dev] pages for the full reference.
 
-## [`add_done_callback()`][add-done-callback] and `#!py remove_done_callback()`
+## `add_done_callback()` and `#!py remove_done_callback()`
 
 Every
 [`asyncio.Future`][asyncio-future]
@@ -85,11 +85,12 @@ A few things to know:
 - **If the future is already done when you add the callback, it still fires**
   -- on the next loop iteration, via [`call_soon()`][call-soon].
 
-!!! note
+!!! Note
 
     Done callbacks are the low-level mechanism that makes `#!py await task`
     work. The task pseudocode in
-    [Chapter 3](../how-asyncio-works/tasks-and-futures.md) showed how a
+    [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md) in
+    [How Asyncio Works](../how-asyncio-works/index.md) showed how a
     task registers `__step` as a done callback on the future it is
     awaiting. You rarely need done callbacks yourself -- [`await`][await] is almost
     always cleaner -- but they are indispensable in library code that must
@@ -104,8 +105,8 @@ calling it from a background thread can corrupt internal data structures.
 `#!py call_soon_threadsafe()` uses proper synchronization and wakes the loop's
 selector so the callback runs promptly, even if the loop is blocked on I/O.
 
-Chapter 2's [Blocking Code](../beyond-the-basics/blocking-code.md) section
-introduced this briefly. Here is a fuller example -- a background thread that
+The [Blocking Code](../beyond-the-basics/blocking-code.md) section introduced
+this briefly. Here is a fuller example -- a background thread that
 sends progress updates to the event loop:
 
 ```python title="threadsafe_progress.py"
@@ -158,12 +159,12 @@ progress: 100%
 background work complete
 ```
 
-!!! warning
+!!! Warning
 
     `#!py call_soon_threadsafe()` only schedules *plain callbacks* -- regular
     functions with positional arguments. You cannot pass a coroutine to it.
     If you need to schedule a coroutine from another thread, use
-    `#!py run_coroutine_threadsafe()` (next section).
+    `#!py run_coroutine_threadsafe()` (next subsection).
 
 ## `#!py run_coroutine_threadsafe()`
 
@@ -245,7 +246,7 @@ Key details:
   thread. You can also call `#!py cf_future.cancel()` to cancel the underlying
   asyncio task.
 
-!!! warning
+!!! Warning
 
     You need a *running* event loop to use
     `#!py run_coroutine_threadsafe()`. It does not start one for you. The
@@ -326,7 +327,7 @@ A few notes:
   forbids it). Common choices are `SIGINT`, `SIGTERM`, and occasionally
   `SIGHUP` for configuration reload.
 
-!!! tip
+!!! Tip
 
     If your program is a simple script rather than a long-running server,
     you probably do not need signal handlers. [`asyncio.run()`][asyncio-run] already

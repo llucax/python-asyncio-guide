@@ -9,7 +9,7 @@ description: >-
 
 # Best Practices, Pitfalls, and Gotchas
 
-This page distills every recommendation from the guide into one place. The
+This section distills every recommendation from the guide into one place. The
 pattern is always the same: use structured concurrency to bound task lifetimes,
 respect cancellation so timeouts and teardown actually work, manage resources
 with [`async with`][async-with], and never block the event loop. If you follow these twenty
