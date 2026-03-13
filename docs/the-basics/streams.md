@@ -8,12 +8,11 @@ description: >-
 
 # Streams
 
-Everything up to this point has used [`asyncio.sleep()`][asyncio-sleep] as a
-stand-in for real work. Streams are where asyncio earns its keep: actual TCP
-networking with clean async/await syntax. The streams API gives you a
-high-level interface for reading and writing bytes over the network -- no
-callbacks, no protocol classes, just a reader and a writer that you
-[`await`][await] like anything else.
+Streams are where asyncio earns its keep: actual TCP networking with clean
+async/await syntax. The streams API gives you a high-level interface for
+reading and writing bytes over the network -- no callbacks, no protocol
+classes, just a reader and a writer that you [`await`][await] like anything
+else.
 
 !!! Info
 
@@ -29,7 +28,7 @@ and returns a ([`StreamReader`][streamreader], [`StreamWriter`][streamwriter])
 tuple. The reader is for receiving data, the writer is for sending it.
 
 Here is a minimal client that connects to an HTTP server, sends a request, and
-reads the response:
+reads the first chunk of the response:
 
 ```python title="http_client.py"
 import asyncio
@@ -71,7 +70,9 @@ handshake happens during the [`await`][await]. The writer's `#!py .write()`
 method buffers data synchronously (no [`await`][await]), but
 [`.drain()`][drain] is a coroutine that waits for the buffer to flush. And at
 the end, you must call both [`.close()`][close] and
-[`.wait_closed()`][wait-closed] -- more on that shortly.
+[`.wait_closed()`][wait-closed] -- more on that shortly. The single `#!py
+reader.read(4096)` call reads up to 4096 bytes, so this example prints just the
+first chunk rather than the full HTTP response.
 
 !!! Warning
 
@@ -335,7 +336,7 @@ async def main() -> None:
         print(f"Server: listening on port {port}")
 
         async with asyncio.TaskGroup() as tg:
-            client_task = tg.create_task(run_client(port))
+            client_task = tg.create_task(run_client(port), name="echo-client")
 
         print(f"Results: {client_task.result()}")
 

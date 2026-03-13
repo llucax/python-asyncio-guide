@@ -34,23 +34,23 @@ happen exactly once:
 ```python title="lock_demo.py" hl_lines="4"
 import asyncio
 
-async def increment(lock: asyncio.Lock, counter: int) -> None:
+async def increment(lock: asyncio.Lock, shared_data: dict[str, int]) -> None:
     async with lock: # (1)!
-        value: int = counter
+        value: int = shared_data["counter"]
         await asyncio.sleep(0.1)  # Simulate async work
-        counter = value + 1
-        print(f"Incremented to {counter}")
+        shared_data["counter"] = value + 1
+        print(f"Incremented to {shared_data['counter']}")
     # (2)!
 
 async def main() -> None:
     lock = asyncio.Lock()
-    counter: int = 0
+    shared_data: dict[str, int] = {"counter": 0}
 
     async with asyncio.TaskGroup() as tg:
-        for _ in range(3):
-            tg.create_task(increment(lock, counter))
+        for i in range(3):
+            tg.create_task(increment(lock, shared_data), name=f"increment-{i}")
 
-    print(f"Final count: {counter['n']}")
+    print(f"Final count: {shared_data['counter']}")
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -110,7 +110,7 @@ for the entire lifetime of the children.
 async def process_batch(urls: list[str]) -> None:
     async with asyncio.TaskGroup() as tg:
         for url in urls:
-            tg.create_task(fetch(url))
+            tg.create_task(fetch(url), name=f"fetch-{url}")
     # All tasks done, all resources they used are safe to clean up
 ```
 
@@ -436,10 +436,12 @@ async def main() -> None:
     ):
         async with asyncio.TaskGroup() as tg:
             t1: asyncio.Task[list[str]] = tg.create_task(
-                consumer("fast", stream_a, limit=2)
+                consumer("fast", stream_a, limit=2),
+                name="fast-consumer",
             )
             t2: asyncio.Task[list[str]] = tg.create_task(
-                consumer("slow", stream_b, limit=3)
+                consumer("slow", stream_b, limit=3),
+                name="slow-consumer",
             )
 
     print(f"\nfast collected: {t1.result()}")

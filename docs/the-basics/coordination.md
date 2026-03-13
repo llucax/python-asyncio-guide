@@ -1,56 +1,53 @@
 ---
 title: Coordination
 description: >-
-  Coordinate concurrent tasks with asyncio.Queue, Lock, Event, and
-  Semaphore. Learn inter-task communication patterns, backpressure with
-  bounded queues, and rate limiting.
+  Coordinate concurrent tasks with asyncio.Queue, Lock, Event, and Semaphore.
+  Learn inter-task communication patterns, backpressure with bounded queues,
+  and rate limiting.
 ---
 
 # Coordination
 
 Up to this point, your concurrent tasks have been independent -- they each do
-their own work and you collect the results when the [`TaskGroup`][taskgroup] finishes. Real
-programs are rarely that tidy. Tasks need to *talk* to each other: pass data,
-wait for signals, or limit how many hit an external API at once. asyncio
-provides four coordination primitives for these situations:
-[`Queue`][queue],
-[`Lock`][lock],
-[`Event`][event],
-and
+their own work and you collect the results when the [`TaskGroup`][taskgroup]
+finishes. Real programs are rarely that tidy. Tasks need to *talk* to each
+other: pass data, wait for signals, or limit how many hit an external API at
+once. asyncio provides four coordination primitives for these situations:
+[`Queue`][queue], [`Lock`][lock], [`Event`][event], and
 [`Semaphore`][semaphore].
 
 !!! Info
 
-    This section focuses on the patterns: bounded queues, backpressure, sentinels,
-    and throttling. Use the official [Queues][official-queues] and
+    This section focuses on the patterns: bounded queues, backpressure,
+    sentinels, and throttling. Use the official [Queues][official-queues] and
     [Synchronization Primitives][official-sync] pages for the full API details.
 
 There are more specialized primitives too -- notably [`Condition`][condition],
-[`Barrier`][barrier], and [`BoundedSemaphore`][boundedsemaphore].
-You do not need them to get started, so this chapter stays focused on the four
-primitives you will reach for most often.
-[Advanced Coordination](../beyond-the-basics/advanced-coordination.md) in
-[Beyond the Basics](../beyond-the-basics/index.md) is the map for the rest.
+[`Barrier`][barrier], and [`BoundedSemaphore`][boundedsemaphore]. You do not
+need them to get started, so this chapter stays focused on the four primitives
+you will reach for most often. [Advanced
+Coordination](../beyond-the-basics/advanced-coordination.md) in [Beyond the
+Basics](../beyond-the-basics/index.md) is the map for the rest.
 
-## `asyncio.Queue`
+## `#!py asyncio.Queue`
 
 The *queue* is the primary tool for inter-task communication. Instead of
-sharing mutable state and protecting it with locks, you pass messages through
-a queue. One task puts items in, another takes them out -- the queue handles
-all the synchronisation.
+sharing mutable state and protecting it with locks, you pass messages through a
+queue. One task puts items in, another takes them out -- the queue handles all
+the synchronisation.
 
-Create a queue with
-[`asyncio.Queue(maxsize=...)`][asyncio-queue-maxsize].
+Create a queue with [`asyncio.Queue(maxsize=...)`][asyncio-queue-maxsize].
 **Always set `maxsize`** -- you will see why shortly. In beginner code, the
 operations you need most are:
 
 - [`put(item)`][put-item] -- suspend if the queue is full
 - [`get()`][get] -- suspend if the queue is empty
-- [`task_done()`][task-done] and [`join()`][join] -- optional completion tracking
+- [`task_done()`][task-done] and [`join()`][join] -- optional completion
+  tracking
 
 There are also `*_nowait()` methods plus inspection helpers such as
 [`qsize()`][qsize] and [`empty()`][empty], but those are best treated as
-secondary tools. Use the official queue docs when you need the full surface.
+secondary tools. Use the official queue docs when you need the full API.
 
 Here is a minimal producer/consumer to see the queue in action:
 
@@ -65,16 +62,16 @@ async def producer(queue: asyncio.Queue[int]) -> None:
 async def consumer(queue: asyncio.Queue[int]) -> None:
     for _ in range(5):
         item: int = await queue.get()
-        await asyncio.sleep(0.2)  # Simulate processing
         print(f"Consumed: {item}")
+        await asyncio.sleep(0.2)  # Simulate processing
         queue.task_done()
 
 async def main() -> None:
     queue: asyncio.Queue[int] = asyncio.Queue(maxsize=2)
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(producer(queue))
-        tg.create_task(consumer(queue))
+        tg.create_task(producer(queue), name="producer")
+        tg.create_task(consumer(queue), name="consumer")
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -111,47 +108,51 @@ queue: asyncio.Queue[int] = asyncio.Queue(maxsize=50)
 ```
 
 Now the producer blocks after 50 items and can only continue as the consumer
-drains the queue. Memory stays bounded, and the system adapts to the
-consumer's pace.
+drains the queue. Memory stays bounded, and the system adapts to the consumer's
+pace.
 
 !!! Warning
 
-    Always set `maxsize`. Start with a small number (10--100) and adjust based
+    Always set `maxsize`. Start with a small number (10-100) and adjust based
     on observation.
 
 !!! Tip "Trio"
 
-    [Trio][trio-docs]'s [`trio.open_memory_channel()`][trio-open-memory-channel] requires a max buffer
-    size at creation time -- no "unbounded" default. asyncio's [`Queue`][queue] defaults
-    to unbounded, which is why you must be disciplined about `maxsize`.
+    [Trio][trio-docs]'s
+    [`trio.open_memory_channel()`][trio-open-memory-channel] requires a max
+    buffer size at creation time -- no "unbounded" default. asyncio's
+    [`Queue`][queue] defaults to unbounded, which is why you must be
+    disciplined about `maxsize`.
 
 ## Queue Shutdown Patterns
 
-Eventually your producers run out of work and your consumers need to know it
-is time to stop. The simplest approach is a *sentinel value* -- a special item
-that means "no more data is coming." The most common sentinel is `#!py None`, but
-any unique object works. The critical detail: **send one sentinel per
-consumer.** If you have three consumers but only send one sentinel, two of
-them will hang forever.
+Eventually your producers run out of work and your consumers need to know it is
+time to stop. The simplest approach is a *sentinel value* -- a special item
+that means "no more data is coming." The most common sentinel is `#!py None`,
+but any unique object works. The critical detail: **send one sentinel per
+consumer.** If you have three consumers but only send one sentinel, two of them
+will hang forever.
 
 !!! Tip
 
-    If `#!py None` is a valid data value, define a dedicated sentinel:
-    `#!py _STOP = object()`. Then compare with `#!py is _STOP` instead of `#!py is None`.
+    If `#!py None` is a valid data value, define a dedicated sentinel: `#!py
+    class Stop: pass; STOP = Stop()`. Then compare with `#!py is STOP` instead
+    of `#!py is None`.
 
-An alternative is [`task_done()`][task-done]/[`join()`][join]: the producer calls [`join()`][join] after
-enqueuing all items, which blocks until every item has been marked done. This
-tells you when all *work* is finished but does not tell consumers to stop.
-Sentinels are simpler -- prefer them.
+An alternative is [`task_done()`][task-done]/[`join()`][join]: the producer
+calls [`join()`][join] after enqueuing all items, which blocks until every item
+has been marked done. This tells you when all *work* is finished but does not
+tell consumers to stop. Sentinels are simpler -- prefer them.
 
 ## Producer/Consumer with TaskGroup
 
 Let's put everything together: multiple producers, multiple consumers, a
-bounded queue, sentinel-based shutdown, and a [`TaskGroup`][taskgroup] managing it all.
+bounded queue, sentinel-based shutdown, and a [`TaskGroup`][taskgroup] managing
+it all.
 
-The key design question is: who sends the sentinels? Individual producers
-don't know when the others are done. The clean solution is a `run_producers`
-function wrapping all producers in an inner [`TaskGroup`][taskgroup]. When that group
+The key design question is: who sends the sentinels? Individual producers don't
+know when the others are done. The clean solution is a `run_producers` function
+wrapping all producers in an inner [`TaskGroup`][taskgroup]. When that group
 exits, the function sends the sentinels:
 
 ```python title="producer_consumer.py"
@@ -196,7 +197,10 @@ async def run_producers(
 ) -> None:
     async with asyncio.TaskGroup() as tg:
         for i in range(n_producers):
-            tg.create_task(producer(f"P{i}", queue, items_each))
+            tg.create_task(
+                producer(f"P{i}", queue, items_each),
+                name=f"producer-{i}",
+            )
     # All producers are done -- send one sentinel per consumer
     for _ in range(n_consumers):
         await queue.put(SENTINEL)
@@ -207,9 +211,12 @@ async def main() -> None:
     queue: asyncio.Queue[tuple[str, int] | None] = asyncio.Queue(maxsize=4)
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(run_producers(queue, n_producers, 4, n_consumers))
+        tg.create_task(
+            run_producers(queue, n_producers, 4, n_consumers),
+            name="run-producers",
+        )
         consumer_tasks = [
-            tg.create_task(consumer(f"C{i}", queue))
+            tg.create_task(consumer(f"C{i}", queue), name=f"consumer-{i}")
             for i in range(n_consumers)
         ]
 
@@ -219,6 +226,9 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+Because the producers sleep for random intervals, the exact interleaving varies
+from run to run. One run looks like this:
 
 ```text title="$ python producer_consumer.py"
   [C0] processed (P0, 0)
@@ -238,22 +248,22 @@ if __name__ == "__main__":
 Total processed: 8
 ```
 
-The inner [`TaskGroup`][taskgroup] ensures all producers finish before sentinels are sent.
-Consumers run inside the outer group, draining the queue the whole time.
+The inner [`TaskGroup`][taskgroup] ensures all producers finish before
+sentinels are sent. Consumers run inside the outer group, draining the queue
+the whole time.
 
 !!! Warning
 
-    If a producer raises, the inner [`TaskGroup`][taskgroup] cancels its siblings and the
-    exception propagates to the outer group, which cancels the consumers. This
-    is correct -- if producers fail, consumers should not wait for data that
-    will never arrive.
+    If a producer raises, the inner [`TaskGroup`][taskgroup] cancels its
+    siblings and the exception propagates to the outer group, which cancels the
+    consumers. This is correct -- if producers fail, consumers should not wait
+    for data that will never arrive.
 
 ## `asyncio.Lock`
 
-When you *must* share mutable state between tasks, a
-[`Lock`][lock]
-serialises access. Only one task can hold the lock at a time; others suspend
-until it is released. The idiomatic usage is [`async with`][async-with]:
+When you *must* share mutable state between tasks, a [`Lock`][lock] serialises
+access. Only one task can hold the lock at a time; others suspend until it is
+released. The idiomatic usage is [`async with`][async-with]:
 
 ```python title="lock_example.py"
 import asyncio
@@ -279,9 +289,18 @@ async def main() -> None:
     ledger: dict[str, int] = {"alice": 100, "bob": 50}
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(transfer(lock, ledger, "alice", "bob", 30))
-        tg.create_task(transfer(lock, ledger, "alice", "bob", 30))
-        tg.create_task(transfer(lock, ledger, "bob", "alice", 10))
+        tg.create_task(
+            transfer(lock, ledger, "alice", "bob", 30),
+            name="alice-to-bob-1",
+        )
+        tg.create_task(
+            transfer(lock, ledger, "alice", "bob", 30),
+            name="alice-to-bob-2",
+        )
+        tg.create_task(
+            transfer(lock, ledger, "bob", "alice", 10),
+            name="bob-to-alice",
+        )
 
     print(f"Final balances: {ledger}")
 
@@ -293,11 +312,12 @@ if __name__ == "__main__":
 Transferred 30 from alice to bob
 Transferred 30 from alice to bob
 Transferred 10 from bob to alice
-Final balances: {'alice': 50, 'bob': 60}
+Final balances: {'alice': 50, 'bob': 100}
 ```
 
-Without the lock, the [`await`][await] between reading and writing would create a race
-condition -- two tasks could both see `#!py alice: 100` and each deduct 30.
+Without the lock, the [`await`][await] between reading and writing would create
+a race condition -- two tasks could both see `#!py alice: 100` and each deduct
+30.
 
 !!! Danger
 
@@ -307,24 +327,20 @@ condition -- two tasks could both see `#!py alice: 100` and each deduct 30.
 
 !!! Tip
 
-    Prefer queues over locks whenever possible. A queue makes data flow explicit
-    and avoids bugs where you forget to acquire the lock or hold two locks in
-    the wrong order.
+    Prefer queues over locks whenever possible. A queue makes data flow
+    explicit and avoids bugs where you forget to acquire the lock or hold two
+    locks in the wrong order.
 
 ## `asyncio.Event`
 
-An [`Event`][event]
-is a simple flag that tasks can wait on. It starts unset.
-[`event.set()`][event-set]
-raises the flag, waking all tasks blocked on
-[`event.wait()`][event-wait].
-The event stays set until you call
-[`event.clear()`][event-clear],
-and you can check its state with
+An [`Event`][event] is a simple flag that tasks can wait on. It starts unset.
+[`event.set()`][event-set] raises the flag, waking all tasks blocked on
+[`event.wait()`][event-wait]. The event stays set until you call
+[`event.clear()`][event-clear], and you can check its state with
 [`event.is_set()`][event-is-set].
 
-The classic use case is startup coordination -- tasks that wait until a
-service is ready:
+The classic use case is startup coordination -- tasks that wait until a service
+is ready:
 
 ```python title="event_example.py"
 import asyncio
@@ -345,14 +361,17 @@ async def main() -> None:
     db_ready = asyncio.Event()
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(database_init(db_ready))
-        tg.create_task(request_handler("req-1", db_ready))
-        tg.create_task(request_handler("req-2", db_ready))
-        tg.create_task(request_handler("req-3", db_ready))
+        tg.create_task(database_init(db_ready), name="database-init")
+        tg.create_task(request_handler("req-1", db_ready), name="req-1")
+        tg.create_task(request_handler("req-2", db_ready), name="req-2")
+        tg.create_task(request_handler("req-3", db_ready), name="req-3")
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+Once the event is set, the exact order in which the handlers wake up can vary.
+One run looks like this:
 
 ```text title="$ python event_example.py"
 DB: initialising...
@@ -365,28 +384,28 @@ req-2: done
 req-3: done
 ```
 
-All three handlers blocked on `#!py db_ready.wait()` until `#!py ready.set()` was
-called, then woke up simultaneously. Calling `#!py wait()` *after* the event is
-already set returns immediately -- no race condition.
+All three handlers blocked on `#!py db_ready.wait()` until `#!py ready.set()`
+was called, then woke up simultaneously. Calling `#!py wait()` *after* the
+event is already set returns immediately -- no race condition.
 
 !!! Note
 
-    An [`Event`][event] is best suited for *one-shot* or *phase-transition* signaling: a
-    resource is ready, a shutdown has been requested, initialisation is complete.
-    If you need repeated notifications, a [`Queue`][queue] or a [`Condition`][condition]
-    from [Advanced Coordination](../beyond-the-basics/advanced-coordination.md)
-    is a better fit.
+    An [`Event`][event] is best suited for *one-shot* or *phase-transition*
+    signaling: a resource is ready, a shutdown has been requested,
+    initialisation is complete. If you need repeated notifications, a
+    [`Queue`][queue] or a [`Condition`][condition] from [Advanced
+    Coordination](../beyond-the-basics/advanced-coordination.md) is a better
+    fit.
 
 ## `asyncio.Semaphore`
 
-A [`Semaphore`][semaphore]
-limits how many tasks can enter a section of code concurrently. Create one
-with a count, and each `#!py async with semaphore:` decrements it. When it hits
-zero, the next task suspends until someone exits.
+A [`Semaphore`][semaphore] limits how many tasks can enter a section of code
+concurrently. Create one with a count, and each `#!py async with semaphore:`
+decrements it. When it hits zero, the next task suspends until someone exits.
 
-The most common use case is limiting concurrency against an external
-resource -- an API, a database connection pool, or a filesystem that chokes
-under too many parallel reads:
+The most common use case is limiting concurrency against an external resource
+-- an API, a database connection pool, or a filesystem that chokes under too
+many parallel reads:
 
 ```python title="semaphore_example.py"
 import asyncio
@@ -402,7 +421,10 @@ async def main() -> None:
     sem = asyncio.Semaphore(3)  # At most 3 concurrent fetches
 
     async with asyncio.TaskGroup() as tg:
-        tasks = [tg.create_task(fetch_url(sem, url)) for url in urls]
+        tasks = [
+            tg.create_task(fetch_url(sem, url), name=f"fetch-page-{i}")
+            for i, url in enumerate(urls)
+        ]
 
     print(f"Fetched {len([t.result() for t in tasks])} pages")
 
@@ -421,33 +443,32 @@ Fetched 6 pages
 ```
 
 All six tasks were created at once, but the semaphore ensured only three were
-active at any given time. This gives you the full concurrency of a [`TaskGroup`][taskgroup]
-with a hard cap on how many tasks are doing real work simultaneously.
+active at any given time. This gives you the full concurrency of a
+[`TaskGroup`][taskgroup] with a hard cap on how many tasks are doing real work
+simultaneously.
 
 !!! Tip "Trio"
 
-    [Trio][trio-docs] has [`trio.CapacityLimiter`][trio-capacity-limiter], which works similarly but
-    has stricter ownership semantics. asyncio's [`Semaphore`][semaphore] is simpler -- it is
-    just a counter.
+    [Trio][trio-docs] has [`trio.CapacityLimiter`][trio-capacity-limiter],
+    which works similarly but has stricter ownership semantics. asyncio's
+    [`Semaphore`][semaphore] is simpler -- it is just a counter.
 
 !!! Warning
 
-    A [`Semaphore`][semaphore] limits concurrency, not rate. A semaphore with a value of 3
-    means "at most 3 tasks at once," not "3 tasks per second." If you need rate
-    limiting, you need a token bucket or leaky bucket algorithm.
+    A [`Semaphore`][semaphore] limits concurrency, not rate. A semaphore with a
+    value of 3 means "at most 3 tasks at once," not "3 tasks per second." If
+    you need rate limiting, you need a token bucket or leaky bucket algorithm.
 
 ## Choosing the Right Tool
 
 When you need tasks to communicate, reach for a **Queue** -- it provides
 natural backpressure and makes data flow explicit. When tasks must share
 mutable state, use a **Lock** to serialise access. When one task needs to
-signal others that a condition has been met, use an **Event**. When you want
-to limit how many tasks are active at once, use a **Semaphore**. These four
-cover the vast majority of coordination needs; for [`Condition`][condition], [`Barrier`][barrier],
-and the bounded/priority queue variants, see
-[Advanced Coordination](../beyond-the-basics/advanced-coordination.md).
-
----
+signal others that a condition has been met, use an **Event**. When you want to
+limit how many tasks are active at once, use a **Semaphore**. These four cover
+the vast majority of coordination needs; for [`Condition`][condition],
+[`Barrier`][barrier], and the bounded/priority queue variants, see [Advanced
+Coordination](../beyond-the-basics/advanced-coordination.md).
 
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [asyncio-event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event

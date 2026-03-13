@@ -179,6 +179,7 @@ if __name__ == "__main__":
 ```text title="$ python wrong_call.py"
 wrong_call.py:7: RuntimeWarning: coroutine 'greet' was never awaited
   greet("world")
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
 ```
 
 Nothing printed, no greeting -- just a [`RuntimeWarning`][runtimewarning]. The
@@ -206,8 +207,8 @@ if __name__ == "__main__":
 
 ```text title="$ python forgot_await.py"
 The answer is <coroutine object get_answer at 0x...>
-forgot_await.py:8: RuntimeWarning: coroutine 'get_answer' was never awaited
-  answer = get_answer()
+... RuntimeWarning: coroutine 'get_answer' was never awaited
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
 ```
 
 Instead of `42`, you get a coroutine object printed as a string. The fix is

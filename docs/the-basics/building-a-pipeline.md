@@ -99,9 +99,9 @@ async def main() -> None:
     q2: asyncio.Queue[int | None] = asyncio.Queue()
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(generator(q1))
-        tg.create_task(processor(q1, q2))
-        aggregator_task = tg.create_task(aggregator(q2))
+        tg.create_task(generator(q1), name="generator")
+        tg.create_task(processor(q1, q2), name="processor")
+        aggregator_task = tg.create_task(aggregator(q2), name="aggregator")
 
     print(f"final results: {aggregator_task.result()}")
 
@@ -198,9 +198,9 @@ async def main() -> None:
     q2: asyncio.Queue[int | None] = asyncio.Queue(maxsize=2)
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(generator(q1))
-        tg.create_task(processor(q1, q2))
-        task = tg.create_task(aggregator(q2))
+        tg.create_task(generator(q1), name="generator")
+        tg.create_task(processor(q1, q2), name="processor")
+        task = tg.create_task(aggregator(q2), name="aggregator")
 
     print(f"final results: {task.result()}")
 
@@ -209,7 +209,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-The interleaving in the output shows the backpressure at work:
+The exact interleaving depends on scheduling, but the output still shows the
+backpressure at work. One run looks like this:
 
 ```text title="$ python pipeline_v2.py"
   generator: sent 1
@@ -316,9 +317,9 @@ async def main() -> None:
 
     try:
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(generator(q1))
-            tg.create_task(processor(q1, q2))
-            tg.create_task(aggregator(q2))
+            tg.create_task(generator(q1), name="generator")
+            tg.create_task(processor(q1, q2), name="processor")
+            tg.create_task(aggregator(q2), name="aggregator")
     except* ValueError as eg:
         for exc in eg.exceptions:
             print(f"caught: {exc}")
@@ -329,6 +330,9 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+The exact prefix varies because cancellation can stop the other actors at
+slightly different points. One run looks like this:
 
 ```text title="$ python pipeline_v3.py"
   generator: sent 1
@@ -457,7 +461,8 @@ async def processor_supervisor(
     async with asyncio.TaskGroup() as tg:
         for i in range(num_workers):
             tg.create_task(
-                processor(f"processor-{i}", inp, out)
+                processor(f"processor-{i}", inp, out),
+                name=f"processor-{i}",
             )
 
     # All processors have stopped. Send one stop downstream.
@@ -488,15 +493,16 @@ async def main() -> None:
     )
 
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(generator(q_in, num_items))
+        tg.create_task(generator(q_in, num_items), name="generator")
         tg.create_task(
-            processor_supervisor(num_workers, q_in, q_out)
+            processor_supervisor(num_workers, q_in, q_out),
+            name="processor-supervisor",
         )
-        result_task = tg.create_task(aggregator(q_out))
+        result_task = tg.create_task(aggregator(q_out), name="aggregator")
 
     results: list[int] = result_task.result()
     log.info("pipeline complete: %d results", len(results))
-    log.info("results: %s", results)
+    log.info("results (sorted): %s", sorted(results))
 
 
 if __name__ == "__main__":
@@ -549,7 +555,7 @@ Timestamps and interleaving will vary, but output looks like this:
 12:00:00  aggregator      collected 144 (total: 12)
 12:00:00  aggregator      done, collected 12 results
 12:00:00  pipeline        pipeline complete: 12 results
-12:00:00  pipeline        results: [1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144]
+12:00:00  pipeline        results (sorted): [1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144]
 ```
 
 Let's walk through the design decisions.
@@ -583,6 +589,9 @@ The shutdown protocol for fan-out needs care. When a processor sees
 sibling processors also see it and shut down in turn. The
 supervisor's [`TaskGroup`][taskgroup] waits for all processors to finish, then
 sends a single `Stop` to the output queue for the aggregator.
+
+The aggregator still sees results in completion order, not input order. The
+final log sorts them purely to make the summary easier to scan.
 
 ### Nested `TaskGroup` for the supervisor
 

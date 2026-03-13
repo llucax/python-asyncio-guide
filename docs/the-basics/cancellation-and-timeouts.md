@@ -298,9 +298,9 @@ async def main() -> None:
     try:
         async with asyncio.timeout(1):
             async with asyncio.TaskGroup() as tg:
-                tg.create_task(fetch("https://example.com/a"))
-                tg.create_task(fetch("https://example.com/b"))
-                tg.create_task(fetch("https://example.com/c"))
+                tg.create_task(fetch("https://example.com/a"), name="fetch-a")
+                tg.create_task(fetch("https://example.com/b"), name="fetch-b")
+                tg.create_task(fetch("https://example.com/c"), name="fetch-c")
     except TimeoutError:
         print("All fetches cancelled -- group took too long")
 
@@ -333,8 +333,14 @@ async def fetch_with_timeout(url: str, deadline: float) -> str:
 
 async def main() -> None:
     async with asyncio.TaskGroup() as tg:
-        t1 = tg.create_task(fetch_with_timeout("https://example.com/fast", 3.0))
-        t2 = tg.create_task(fetch_with_timeout("https://example.com/slow", 0.5))
+        t1 = tg.create_task(
+            fetch_with_timeout("https://example.com/fast", 3.0),
+            name="fetch-fast",
+        )
+        t2 = tg.create_task(
+            fetch_with_timeout("https://example.com/slow", 0.5),
+            name="fetch-slow",
+        )
 
     print(t1.result())
     print(t2.result())

@@ -103,8 +103,8 @@ async def greet(name: str, delay: float) -> str:
 
 async def main() -> None:
     async with asyncio.TaskGroup() as tg: # (1)!
-        tg.create_task(greet("Alice", 1.0))
-        tg.create_task(greet("Bob", 0.5))
+        tg.create_task(greet("Alice", 1.0), name="greet-alice")
+        tg.create_task(greet("Bob", 0.5), name="greet-bob")
         print("Tasks are running...")
 
     # This line runs ONLY after both tasks have finished
@@ -209,8 +209,8 @@ async def slow_worker() -> None:
 async def main() -> None:
     try:
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(slow_worker())
-            tg.create_task(fast_failure())
+            tg.create_task(slow_worker(), name="slow-worker")
+            tg.create_task(fast_failure(), name="fast-failure")
     except Exception as exc: # (3)!
         print(f"Error: {exc}")
 
@@ -225,6 +225,8 @@ if __name__ == "__main__":
    except Exception:` here instead of `#!py except RuntimeError:`. We'll get
    into how exceptions are handled in task groups in the [next
    topic](#exceptiongroup-and-except).
+
+The two tasks can start in either order. One run looks like this:
 
 ```text title="$ python sibling_cancel.py"
 slow_worker: starting long operation...
@@ -273,9 +275,9 @@ async def fail_runtime() -> None:
 async def main() -> None:
     try:
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(fail_value())
-            tg.create_task(fail_type())
-            tg.create_task(fail_runtime())
+            tg.create_task(fail_value(), name="fail-value")
+            tg.create_task(fail_type(), name="fail-type")
+            tg.create_task(fail_runtime(), name="fail-runtime")
     except* ValueError as eg:
         for exc in eg.exceptions:
             print(f"Handled ValueError: {exc}")
@@ -286,6 +288,10 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+With equal delays like this, the exact number and order of handled exceptions
+can vary depending on how sibling cancellation lands. One run where all three
+tasks get to raise looks like this:
 
 ```text title="$ python exception_group.py"
 Handled ValueError: bad value
@@ -334,7 +340,11 @@ async def main() -> None:
 
     async with asyncio.TaskGroup() as tg:
         tasks: list[asyncio.Task[str]] = [
-            tg.create_task(fetch_page(url)) for url in urls
+            tg.create_task(
+                fetch_page(url),
+                name=f"fetch-{url.rsplit('/', 1)[-1]}",
+            )
+            for url in urls
         ]
 
     # All tasks are done here -- safe to call .result()
@@ -350,9 +360,9 @@ if __name__ == "__main__":
 Fetching https://example.com/page1...
 Fetching https://example.com/page2...
 Fetching https://example.com/page3...
-https://example.com/page1 -> 40 chars
-https://example.com/page2 -> 40 chars
-https://example.com/page3 -> 40 chars
+https://example.com/page1 -> 49 chars
+https://example.com/page2 -> 49 chars
+https://example.com/page3 -> 49 chars
 ```
 
 All three fetches ran concurrently (total wall time ~0.5s, not ~1.5s). After
@@ -377,15 +387,18 @@ async def download(name: str) -> str:
 
 async def process_batch(batch_id: int, items: list[str]) -> list[str]:
     async with asyncio.TaskGroup() as tg:
-        tasks = [tg.create_task(download(item)) for item in items]
+        tasks = [
+            tg.create_task(download(item), name=f"download-{item}")
+            for item in items
+        ]
     results = [t.result() for t in tasks]
     print(f"Batch {batch_id}: {results}")
     return results
 
 async def main() -> None:
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(process_batch(1, ["a", "b", "c"]))
-        tg.create_task(process_batch(2, ["x", "y", "z"]))
+        tg.create_task(process_batch(1, ["a", "b", "c"]), name="batch-1")
+        tg.create_task(process_batch(2, ["x", "y", "z"]), name="batch-2")
     print("All batches complete.")
 
 if __name__ == "__main__":
@@ -439,7 +452,11 @@ async def main() -> None:
             for i, batch in enumerate(batches)
         ]
 
-    all_results: list[str] = [t.result() for t in worker_tasks]
+    all_results: list[str] = [
+        result
+        for task in worker_tasks
+        for result in task.result()
+    ]
     print(f"\nAll results: {all_results}")
 
 if __name__ == "__main__":
@@ -478,14 +495,21 @@ see it in older code:
 import asyncio
 
 async def fetch_data(url: str) -> str:
-    await asyncio.sleep(1)
     if "bad" in url:
+        await asyncio.sleep(0.2)
         raise ValueError(f"Failed to fetch {url}")
+    await asyncio.sleep(1)
     return f"Data from {url}"
 
 async def main() -> None:
-    asyncio.create_task(fetch_data("https://example.com/good"))
-    asyncio.create_task(fetch_data("https://example.com/bad"))
+    asyncio.create_task(
+        fetch_data("https://example.com/good"),
+        name="fetch-good",
+    )
+    asyncio.create_task(
+        fetch_data("https://example.com/bad"),
+        name="fetch-bad",
+    )
     await asyncio.sleep(0.5)
     print("main() is done!")
 
@@ -493,15 +517,18 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+The exact ordering of the warning and the final print can vary because they go
+to different streams, but you will see both:
+
 ```text title="$ python fire_and_forget.py"
-main() is done!
 Task exception was never retrieved
   ...
 ValueError: Failed to fetch https://example.com/bad
+main() is done!
 ```
 
-`#!py main()` finished after half a second, abandoning both tasks. The
-[`ValueError`][valueerror] went uncaught -- just a warning in the logs. This
+The bad task raised in the background and only produced a log warning. `#!py
+main()` still finished after half a second, abandoning the good task. This
 pattern has three problems:
 
 1. **Lost references.** Without storing the [`Task`][task] object you cannot
