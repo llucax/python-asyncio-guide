@@ -16,10 +16,7 @@ right move is not to fight the cancellation system -- it is to *shield* a
 small, critical piece of work from it while letting everything else wind down
 normally.
 
-[`asyncio.shield()`][asyncio-shield]
-is the tool for this job. It is a sharp tool -- use it deliberately.
-
-## What `shield()` Does
+## `#!py asyncio.shield()`
 
 [`asyncio.shield()`][asyncio-shield] wraps an awaitable so that cancelling the *outer* task does
 not cancel the *inner* work. Under the hood it creates a new [`Future`][future] that
@@ -80,32 +77,7 @@ completion. That is the whole point of [`shield()`][shield].
     *outer* task has been cancelled. You are not swallowing cancellation here;
     you are splitting one piece of work off so it can finish independently.
 
-## When to Use It
-
-[`shield()`][shield] is appropriate when all of the following are true:
-
-1. **The work is short.** A database commit, a single network frame, a buffer
-   flush -- seconds at most, not minutes.
-2. **Interrupting it would leave things in a bad state.** A half-committed
-   transaction, a protocol that requires a closing handshake, an incomplete
-   file write.
-3. **You have thought about ownership.** You know who will observe the
-   shielded task's result or exception, and how long it is allowed to run.
-
-Common legitimate uses:
-
-- **Database commit/rollback** -- the transaction must complete once started.
-- **Sending a goodbye message** -- a websocket or protocol peer expects a
-  close frame.
-- **Flushing a write buffer** -- partial writes corrupt data.
-- **Logging or metrics flush** -- telemetry that would be lost if abandoned.
-- **Graceful-shutdown cleanup** -- releasing external leases or locks.
-
-If the work is long-running, or you find yourself shielding an entire request
-handler, that is a design smell. Restructure so that the critical part is
-small and the rest cooperates with cancellation normally.
-
-## The Sharp Edge
+## Shielding is not Structured
 
 Here is the uncomfortable truth: [`shield()`][shield] creates *unstructured* work. The
 shielded coroutine keeps running with no parent, no [`TaskGroup`][taskgroup], no scope. If
@@ -356,7 +328,48 @@ The same approach works in pytest with
 [`pytest-asyncio`][pytest-asyncio-docs]. Cancel the
 outer task, then await the inner one and assert on its side effects.
 
----
+## When to Use Shielding
+
+[`shield()`][shield] is appropriate when all of the following are true:
+
+1. **The work is short.** A database commit, a single network frame, a buffer
+   flush -- seconds at most, not minutes.
+2. **Interrupting it would leave things in a bad state.** A half-committed
+   transaction, a protocol that requires a closing handshake, an incomplete
+   file write.
+3. **You have thought about ownership.** You know who will observe the
+   shielded task's result or exception, and how long it is allowed to run.
+
+Common legitimate uses:
+
+- **Database commit/rollback** -- the transaction must complete once started.
+- **Sending a goodbye message** -- a websocket or protocol peer expects a
+  close frame.
+- **Flushing a write buffer** -- partial writes corrupt data.
+- **Logging or metrics flush** -- telemetry that would be lost if abandoned.
+- **Graceful-shutdown cleanup** -- releasing external leases or locks.
+
+If the work is long-running, or you find yourself shielding an entire request
+handler, that is a design smell. Restructure so that the critical part is
+small and the rest cooperates with cancellation normally.
+
+### Timeout or Shield?
+
+When [cleanup itself needs to
+`await`](../the-basics/cancellation-and-timeouts.md#async-cleanup),
+[`shield()`][shield] is not the default. Start by asking whether the cleanup is
+best-effort or must-finish.
+
+For best-effort cleanup, prefer a small [`asyncio.timeout()`][asyncio-timeout]
+around the awaited step. This keeps shutdown bounded and preserves structured
+control flow.
+
+For must-finish cleanup, use [`shield()`][shield] only around the smallest
+critical step, and only after you have arranged an owner for the inner task.
+
+Timeout-bounded cleanup trades completeness for bounded latency. Shielded
+cleanup trades bounded latency for a better chance of completion. Pick the
+failure mode that is safer for your program.
 
 [`shield()`][shield] is the one legitimate exception to the "never swallow
 cancellation" rule from
@@ -369,6 +382,7 @@ before the program exits. If you cannot articulate who owns the shielded task,
 you do not need [`shield()`][shield] -- you need a redesign.
 
 [shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
+[asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
 [asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
 [future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError

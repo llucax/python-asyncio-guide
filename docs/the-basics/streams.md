@@ -2,29 +2,31 @@
 title: Streams
 description: >-
   Build TCP clients and servers with asyncio's Streams API. Use
-  asyncio.open_connection() and asyncio.start_server() with StreamReader
-  and StreamWriter for clean async networking.
+  asyncio.open_connection() and asyncio.start_server() with StreamReader and
+  StreamWriter for clean async networking.
 ---
 
 # Streams
 
-Everything up to this point has used [`asyncio.sleep()`][asyncio-sleep] as a stand-in for real
-work. Streams are where asyncio earns its keep: actual TCP networking with
-clean async/await syntax. The streams API gives you a high-level interface for
-reading and writing bytes over the network -- no callbacks, no protocol
-classes, just a reader and a writer that you [`await`][await] like anything else.
+Everything up to this point has used [`asyncio.sleep()`][asyncio-sleep] as a
+stand-in for real work. Streams are where asyncio earns its keep: actual TCP
+networking with clean async/await syntax. The streams API gives you a
+high-level interface for reading and writing bytes over the network -- no
+callbacks, no protocol classes, just a reader and a writer that you
+[`await`][await] like anything else.
 
 !!! Info
 
     This section focuses on the stream lifecycle, backpressure, and cleanup.
     Use the official [Streams][official-streams] page for the full
-    `StreamReader` and `StreamWriter` method reference.
+    [`StreamReader`][streamreader] and [`StreamWriter`][streamwriter] method
+    reference.
 
 ## Opening a Client Connection
 
-[`asyncio.open_connection()`][asyncio-open-connection]
-opens a TCP connection and returns a `#!py (StreamReader, StreamWriter)` tuple. The
-reader is for receiving data, the writer is for sending it.
+[`asyncio.open_connection()`][asyncio-open-connection] opens a TCP connection
+and returns a ([`StreamReader`][streamreader], [`StreamWriter`][streamwriter])
+tuple. The reader is for receiving data, the writer is for sending it.
 
 Here is a minimal client that connects to an HTTP server, sends a request, and
 reads the response:
@@ -34,27 +36,29 @@ import asyncio
 
 async def main() -> None:
     reader, writer = await asyncio.open_connection("example.com", 80)
-
     request: bytes = b"GET / HTTP/1.0\r\nHost: example.com\r\n\r\n"
-    writer.write(request)
-    await writer.drain()  # (1)!
 
-    response: bytes = await reader.read(4096)
-    print(response[:200].decode())
+    try:
+        writer.write(request)
+        await writer.drain()  # (1)!
 
-    writer.close()
-    await writer.wait_closed()  # (2)!
+        response: bytes = await reader.read(4096)
+        print(response[:200].decode())
+
+    finally:
+        writer.close()
+        await writer.wait_closed()  # (2)!
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. `#!py .write()` only buffers data -- [`.drain()`][drain] is the coroutine that
-   actually waits for the buffer to flush. This is where backpressure
+1. `#!py .write()` only buffers data -- [`.drain()`][drain] is the coroutine
+   that actually waits for the buffer to flush. This is where backpressure
    happens.
-2. Always call both [`.close()`][close] and [`.wait_closed()`][wait-closed]. The first starts
-   the shutdown, the second waits for it to complete (including TLS
-   teardown and final buffer flush).
+2. Always call both [`.close()`][close] and [`.wait_closed()`][wait-closed].
+   The first starts the shutdown, the second waits for it to complete
+   (including TLS teardown and final buffer flush).
 
 ```text title="$ python http_client.py"
 HTTP/1.0 200 OK
@@ -63,36 +67,36 @@ Content-Type: text/html; charset=UTF-8
 ```
 
 A few things to notice. `#!py open_connection()` is a coroutine -- the TCP
-handshake happens during the [`await`][await]. The writer's `#!py .write()` method buffers
-data synchronously (no [`await`][await]), but [`.drain()`][drain] is a coroutine that waits for
-the buffer to flush. And at the end, you must call both [`.close()`][close] and
+handshake happens during the [`await`][await]. The writer's `#!py .write()`
+method buffers data synchronously (no [`await`][await]), but
+[`.drain()`][drain] is a coroutine that waits for the buffer to flush. And at
+the end, you must call both [`.close()`][close] and
 [`.wait_closed()`][wait-closed] -- more on that shortly.
 
 !!! Warning
 
-    Always close the writer when you are done. An unclosed writer leaks a socket
-    and its associated file descriptor. The reader does not need to be closed
-    separately -- closing the writer shuts down the underlying connection.
+    Always close the writer when you are done. An unclosed writer leaks a
+    socket and its associated file descriptor. The reader does not need to be
+    closed separately -- closing the writer shuts down the underlying
+    connection.
 
-## `StreamReader`
+## `#!py StreamReader`
 
-[`asyncio.StreamReader`][asyncio-streamreader]
-is the read side of a stream. All of its read methods are coroutines -- each
-one is a *checkpoint* that may suspend while waiting for data from the network.
+[`asyncio.StreamReader`][asyncio-streamreader] is the read side of a stream.
+All of its read methods are coroutines -- each one is a *checkpoint* that may
+suspend while waiting for data from the network.
 
 You do not need every reader method on day one. The three that matter most are:
 
-- **[`.read(n)`][read-n]**
-  -- read *up to* `n` bytes. Returns fewer if fewer are available. Returns
-  `#!py b""` at EOF. This is the most common read method.
-- **[`.readline()`][readline]**
-  -- read until `\n` (inclusive). If EOF is reached before a newline, returns
-  whatever is left.
-- **[`.readexactly(n)`][readexactly-n]**
-  -- read exactly `n` bytes. Raises
-  [`asyncio.IncompleteReadError`][asyncio-incompletereaderror]
-  if EOF is reached before `n` bytes have been read. Use this when your
-  protocol defines fixed-size messages.
+- **[`.read(n)`][read-n]** -- read *up to* `n` bytes. Returns fewer if fewer
+  are available. Returns `#!py b""` at EOF. This is the most common read
+  method.
+- **[`.readline()`][readline]** -- read until `\n` (inclusive). If EOF is
+  reached before a newline, returns whatever is left.
+- **[`.readexactly(n)`][readexactly-n]** -- read exactly `n` bytes. Raises
+  [`asyncio.IncompleteReadError`][asyncio-incompletereaderror] if EOF is
+  reached before `n` bytes have been read. Use this when your protocol defines
+  fixed-size messages.
 
 There are others -- notably [`.readuntil()`][readuntil-separator] and
 [`.at_eof()`][at-eof] -- but most beginner code can stay with the three methods
@@ -110,16 +114,17 @@ while not reader.at_eof():
 
 !!! Tip
 
-    [`.read(n)`][read-n] returning `#!py b""` and [`.at_eof()`][at-eof] returning `#!py True` both indicate
-    EOF, but they serve different purposes. Use `#!py read()` return value checks in
-    loops where you are consuming data; use `#!py at_eof()` when you need a
-    non-blocking check outside of a read call.
+    [`.read(n)`][read-n] returning `#!py b""` and [`.at_eof()`][at-eof]
+    returning `#!py True` both indicate EOF, but they serve different purposes.
+    Use `#!py read()` return value checks in loops where you are consuming
+    data; use `#!py at_eof()` when you need a non-blocking check outside of a
+    read call.
 
 ## `StreamWriter`
 
-[`asyncio.StreamWriter`][asyncio-streamwriter]
-is the write side. Writing works differently from reading: you buffer data
-synchronously, then flush asynchronously.
+[`asyncio.StreamWriter`][asyncio-streamwriter] is the write side. Writing works
+differently from reading: you buffer data synchronously, then flush
+asynchronously.
 
 The core writer quartet is:
 
@@ -131,10 +136,11 @@ The core writer quartet is:
 There are other helpers such as [`.writelines()`][writelines-data], but these
 four explain almost every stream example in this guide.
 
-The *write/drain dance* is the core pattern: call `#!py .write()` to buffer, call
-`#!py await .drain()` to flush. You must call [`drain()`][drain] after writing -- otherwise
-you can pile up unbounded data in the buffer without ever giving the event loop
-a chance to send it (or to tell you the remote end is gone).
+The *write/drain dance* is the core pattern: call `#!py .write()` to buffer,
+call `#!py await .drain()` to flush. You must call [`drain()`][drain] after
+writing -- otherwise you can pile up unbounded data in the buffer without ever
+giving the event loop a chance to send it (or to tell you the remote end is
+gone).
 
 ```python
 writer.write(b"Hello, ")
@@ -144,16 +150,18 @@ await writer.drain()  # Flush both writes to the network
 
 !!! Warning
 
-    `#!py .write()` does not raise if the connection has been lost. The error only
-    surfaces when you call [`drain()`][drain] (or `#!py close()`). If you forget [`drain()`][drain],
-    you may silently write into a broken pipe for a long time before noticing.
+    `#!py .write()` does not raise if the connection has been lost. The error
+    only surfaces when you call [`drain()`][drain] (or `#!py close()`). If you
+    forget [`drain()`][drain], you may silently write into a broken pipe for a
+    long time before noticing.
 
 ## Resource Management for Streams
 
-Always close writers. Always call [`wait_closed()`][wait-closed] after `#!py close()`. The
-[`.close()`][close] method starts the shutdown process, but [`.wait_closed()`][wait-closed] is the
-coroutine that waits for it to complete -- including flushing any remaining
-buffered data and tearing down the TLS layer if one exists.
+Always close writers. Always call [`wait_closed()`][wait-closed] after `#!py
+close()`. The [`.close()`][close] method starts the shutdown process, but
+[`.wait_closed()`][wait-closed] is the coroutine that waits for it to complete
+-- including flushing any remaining buffered data and tearing down the TLS
+layer if one exists.
 
 The standard pattern is `#!py try`/`#!py finally`:
 
@@ -168,40 +176,44 @@ finally:
     await writer.wait_closed()
 ```
 
-!!! Danger
+This pattern is useful beyond streams. `#!py writer.close()` is synchronous, so
+it cannot be interrupted by an `#!py await`. `#!py await writer.wait_closed()`
+is the part that can block. When a cleanup API has this shape, start shutdown
+first, then decide how long you are willing to wait for it to finish.
 
-    `StreamWriter` is **not** an async context manager in the standard library
-    (as of Python 3.13). You cannot write `#!py async with writer:`. You must call
-    [`.close()`][close] and [`.wait_closed()`][wait-closed] manually in a `#!py try`/`#!py finally` block. Some
-    third-party libraries add this, but the stdlib does not provide it.
-
-If you want to keep things tidy, you can write a small helper:
+On shutdown paths where you cannot afford an unbounded wait, keep the same
+ordering and add a small timeout around the awaited part:
 
 ```python
-from contextlib import asynccontextmanager
-from collections.abc import AsyncIterator
-
-@asynccontextmanager
-async def open_stream(
-    host: str, port: int
-) -> AsyncIterator[tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
-    reader, writer = await asyncio.open_connection(host, port)
+finally:
+    writer.close()
     try:
-        yield reader, writer
-    finally:
-        writer.close()
-        await writer.wait_closed()
+        async with asyncio.timeout(1):
+            await writer.wait_closed()
+    except TimeoutError:
+        print("writer close timed out")
 ```
 
-This lets you write `#!py async with open_stream(host, port) as (reader, writer):`
-and get automatic cleanup. But understand what it does under the hood -- you
-will encounter plenty of code that uses the manual pattern.
+If [`TimeoutError`][timeouterror] is raised here, the close did not finish
+gracefully, but the shutdown request was still started.
+
+If the protocol absolutely requires the close handshake to finish, that is when
+to consider the owned shielding patterns from
+[Shielding](../beyond-the-basics/shielding.md).
+
+!!! Note
+
+    [`StreamWriter`][streamwriter] is **not** an async context manager in the
+    standard library. You cannot write `#!py async with writer:`. You must call
+    [`.close()`][close] and [`.wait_closed()`][wait-closed] manually in a `#!py
+    try`/`#!py finally` block. Some third-party libraries add this, but the
+    stdlib does not provide it.
 
 ## Building a TCP Server
 
-[`asyncio.start_server()`][asyncio-start-server]
-starts a TCP server. You give it a *callback* that is called with a
-`#!py (StreamReader, StreamWriter)` pair for each new incoming connection. The
+[`asyncio.start_server()`][asyncio-start-server] starts a TCP server. You give
+it a *callback* that is called with a ([`StreamReader`][streamreader],
+[`StreamWriter`][streamwriter]) pair for each new incoming connection. The
 callback can be a coroutine function -- asyncio will schedule it as a task
 automatically.
 
@@ -248,31 +260,30 @@ if __name__ == "__main__":
 Serving on [('127.0.0.1', 8888)]
 ```
 
-A few details worth noting.
-[`asyncio.Server`][asyncio-server]
-is an async context manager -- `#!py async with server:` ensures the server is
-closed and cleaned up when the block exits. Inside the block,
-[`server.serve_forever()`][server-serve-forever]
-runs until the server is stopped or cancelled.
+A few details worth noting. [`asyncio.Server`][asyncio-server] is an async
+context manager -- `#!py async with server:` ensures the server is closed and
+cleaned up when the block exits. Inside the block,
+[`server.serve_forever()`][server-serve-forever] runs until the server is
+stopped or cancelled.
 
 The callback `handle_client` is responsible for its own writer cleanup. Each
 connection is handled independently -- if one client disconnects, the others
-keep going. The `#!py try`/`#!py finally` ensures the writer is closed even if the
-client disconnects unexpectedly or the read raises an exception.
+keep going. The `#!py try`/`#!py finally` ensures the writer is closed even if
+the client disconnects unexpectedly or the read raises an exception.
 
 !!! Note
 
-    `#!py start_server()` spawns each callback as an independent task. This means
-    errors in one connection do not propagate to the server or to other
-    connections. If you want centralised error handling, catch exceptions inside
-    the callback and log them.
+    [`start_server()`][asyncio-start-server] spawns each callback as an
+    independent task. This means errors in one connection do not propagate to
+    the server or to other connections. If you want centralised error handling,
+    catch exceptions inside the callback and log them.
 
 ## Complete Example: Echo Client and Server
 
 Let's put both sides together into a single runnable program. The server echoes
 lines back, and the client sends a few messages and reads the echoes. A
-[`TaskGroup`][taskgroup] starts the server, runs the client, and shuts everything down
-cleanly.
+[`TaskGroup`][taskgroup] starts the server, runs the client, and shuts
+everything down cleanly.
 
 ```python title="echo_client_server.py"
 import asyncio
@@ -316,7 +327,7 @@ async def run_client(port: int) -> list[str]:
 
 async def main() -> None:
     server: asyncio.Server = await asyncio.start_server(
-        handle_client, "127.0.0.1", 0  # Port 0 = pick a free port
+        handle_client, "127.0.0.1", 0 # (1)!
     )
 
     async with server:
@@ -332,6 +343,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+1. Port 0 = pick a free port.
+
 ```text title="$ python echo_client_server.py"
 Server: listening on port 41233
 Client: sent 'Hello', got 'Hello'
@@ -343,23 +356,16 @@ Results: ['Hello', 'asyncio', 'streams']
 
 A few things to note about this example. The server uses port `0`, which tells
 the OS to pick an available port -- this avoids "address already in use" errors
-when running examples. The [`TaskGroup`][taskgroup] runs the client task; when the client
-finishes, the group exits, and the `#!py async with server:` block exits, stopping
-the server cleanly. No manual cancellation needed -- structured concurrency
-takes care of shutdown.
-
-!!! Tip
-
-    Using port `0` is a good practice for tests and examples. In production you
-    will bind to a specific port, but for development it avoids a whole class of
-    annoying startup errors.
+when running examples. The [`TaskGroup`][taskgroup] runs the client task; when
+the client finishes, the group exits, and the `#!py async with server:` block
+exits, stopping the server cleanly. No manual cancellation needed -- structured
+concurrency takes care of shutdown.
 
 ## Timeouts on Stream Operations
 
 Network operations can hang indefinitely if the remote end stops responding.
-Wrap stream reads and writes in
-[`asyncio.timeout()`][asyncio-timeout]
-to enforce deadlines:
+Wrap stream reads and writes in [`asyncio.timeout()`][asyncio-timeout] to
+enforce deadlines:
 
 ```python title="stream_timeout.py"
 import asyncio
@@ -406,19 +412,20 @@ if __name__ == "__main__":
 The `cautious_read` function wraps a single `#!py readline()` in a 5-second
 timeout. If the client goes silent for too long, the read is cancelled and the
 server can drop the connection. You can apply the same pattern to writes --
-wrap the [`drain()`][drain] call in [`asyncio.timeout()`][asyncio-timeout] to guard against slow
-consumers.
+wrap the [`drain()`][drain] call in [`asyncio.timeout()`][asyncio-timeout] to
+guard against slow consumers.
 
 !!! Warning
 
-    A timeout on `#!py .write()` alone does nothing useful -- `#!py .write()` is
-    synchronous and returns immediately. Put the timeout around [`.drain()`][drain],
-    which is the coroutine that actually waits for the buffer to flush.
-
----
+    A timeout on `#!py .write()` alone does nothing useful -- `#!py .write()`
+    is synchronous and returns immediately. Put the timeout around
+    [`.drain()`][drain], which is the coroutine that actually waits for the
+    buffer to flush.
 
 [asyncio-sleep]: https://docs.python.org/3/library/asyncio-task.html#asyncio.sleep
 [await]: https://docs.python.org/3/reference/expressions.html#await
+[streamreader]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamReader
+[streamwriter]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamWriter
 [asyncio-open-connection]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.open_connection
 [drain]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamWriter.drain
 [close]: https://docs.python.org/3/library/asyncio-stream.html#asyncio.StreamWriter.close
@@ -438,5 +445,6 @@ consumers.
 [server-serve-forever]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Server.serve_forever
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
 [official-streams]: https://docs.python.org/3/library/asyncio-stream.html
 [asyncio-limitoverrunerror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.LimitOverrunError

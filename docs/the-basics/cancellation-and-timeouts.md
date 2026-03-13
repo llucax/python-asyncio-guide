@@ -41,7 +41,7 @@ accidentally swallow it.
     *cooperative cancellation* model: the framework requests cancellation, and
     your code cooperates by hitting an [`await`][await].
 
-### Never Swallow a `#!py CancelledError` { #never-swallow-a-cancellederror }
+### Never Swallow a `#!py CancelledError`
 
 The single most important cancellation rule: **never catch
 [`CancelledError`][cancellederror] and suppress it.** If you do, the caller
@@ -121,8 +121,6 @@ Cancellation propagates correctly now. The
 [`TimeoutError`][timeouterror] at the [`async with`][async-with] boundary, and
 the caller handles the timeout cleanly.
 
-#### The `#!py except BaseException:` Trap { #the-except-baseexception-trap }
-
 !!! Danger
 
     If you see `#!py except asyncio.CancelledError:` without a `#!py raise` in
@@ -135,7 +133,7 @@ the caller handles the timeout cleanly.
     The "Never Swallow" rule applies in these cases as well, and you should
     always re-raise `CancelledError` if you catch it.
 
-### Cleanup with `#!py try`/`#!py finally` { #cleanup-with-tryfinally }
+### Cleanup with `#!py try`/`#!py finally`
 
 Most of the time you don't need to catch [`CancelledError`][cancellederror] at
 all. If your cleanup should run regardless of *how* the coroutine exits --
@@ -174,7 +172,39 @@ The `#!py finally` block ran even though the coroutine was cancelled. Reach for
 rare cases where cleanup is *specific* to cancellation (e.g., logging a
 different message).
 
-## Timeouts { #timeouts }
+!!! Danger
+
+    If the code in your `#!py finally` block can raise an exception, that
+    exception will propagate instead of the original `CancelledError`. This can
+    lead to unexpected behavior where the cancellation is effectively ignored
+    because the new exception takes precedence.
+
+    This is another instance where the "Never Swallow" rule applies, **your
+    `#!py finally` block should never raise**.
+
+    If the cleanup is best-effort and can still fail, put a nested
+    `#!py try`/`#!py except Exception` inside the `#!py finally` block. That
+    lets you log the cleanup failure without replacing the original
+    cancellation:
+
+    ```python
+    async def worker(name: str) -> None:
+        print(f"{name}: starting")
+        try:
+            await asyncio.sleep(10)
+            print(f"{name}: finished")
+        finally:
+            try:
+                print(f"{name}: cleaning up")
+                # Cleanup code that can raise an exception
+            except Exception as exc:
+                print(f"{name}: cleanup failed with exception: {exc}")
+    ```
+
+    Use `#!py except Exception`, not a bare `#!py except:`, so
+    [`CancelledError`][cancellederror] still propagates.
+
+## Timeouts
 
 [`asyncio.timeout()`][asyncio-timeout] is an async context manager that
 enforces a deadline on the code inside it. If the block takes longer than the
@@ -339,6 +369,7 @@ the timeout is a property of the whole group or of individual operations.
 [baseexception]: https://docs.python.org/3/library/exceptions.html#BaseException
 [exception]: https://docs.python.org/3/library/exceptions.html#Exception
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout
+[asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
 [timeouterror]: https://docs.python.org/3/library/exceptions.html#TimeoutError
 [trio-fail-after]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.fail_after
 [trio-docs]: https://trio.readthedocs.io/en/stable/
