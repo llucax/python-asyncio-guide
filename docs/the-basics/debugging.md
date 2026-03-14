@@ -114,7 +114,9 @@ the loop thread, deadlocking everything.
 *Fix:* Use [`asyncio.Lock`][asyncio-lock],
 [`asyncio.Event`][asyncio-event], [`asyncio.Semaphore`][asyncio-semaphore], etc. The `threading` versions are for
 threads; the [`asyncio`][asyncio] versions are for tasks. See
-[Coordination](coordination.md).
+[Coordination](coordination.md) for queues, events, and semaphores, and
+[Advanced Coordination](../beyond-the-basics/advanced-coordination.md) for
+locks.
 
 !!! Note
 

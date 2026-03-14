@@ -54,9 +54,10 @@ When you are ready to go past the high-level APIs, continue to
    stream cleanup rules. Use the official docs for the full API surface.
 
 6. [Coordination](coordination.md) -- [`asyncio.Queue`][asyncio-queue],
-   [`Lock`][lock], [`Event`][event], [`Semaphore`][semaphore], and
-   producer/consumer patterns. Use the official docs for exhaustive primitive
-   details.
+   [`Event`][event], [`Semaphore`][semaphore], and producer/consumer patterns.
+   Shared-state primitives such as [`Lock`][lock] move to [Advanced
+   Coordination](../beyond-the-basics/advanced-coordination.md). Use the
+   official docs for exhaustive primitive details.
 
 7. [Building a Pipeline](building-a-pipeline.md) -- an actor-based pipeline
    combining [`TaskGroup`][taskgroup], bounded queues, sentinels, fan-out, and

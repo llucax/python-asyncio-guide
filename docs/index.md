@@ -94,11 +94,11 @@ guide is designed to be read linearly.
     * [Cancellation and Timeouts](the-basics/cancellation-and-timeouts.md) --
       Understand `CancelledError`, timeout scopes, and sibling cancellation.
     * [Resource Management](the-basics/resource-management.md) -- Clean up
-      locks, streams, and async generators safely under cancellation.
+      task groups, streams, and async generators safely under cancellation.
     * [Streams](the-basics/streams.md) -- Work with client and server streams,
       backpressure, and stream shutdown.
-    * [Coordination](the-basics/coordination.md) -- Use queues, locks, events,
-      and semaphores for inter-task coordination.
+    * [Coordination](the-basics/coordination.md) -- Use queues, events, and
+      semaphores for inter-task coordination.
     * [Building a Pipeline](the-basics/building-a-pipeline.md) -- Combine
       queues, task groups, and sentinels into a realistic pipeline.
     * [Debugging](the-basics/debugging.md) -- Catch forgotten awaits, blocking
@@ -115,8 +115,8 @@ guide is designed to be read linearly.
     * [Custom Context Managers](beyond-the-basics/custom-context-managers.md) --
       Build reusable async setup and teardown blocks.
     * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
-      Reach for conditions, barriers, bounded semaphores, and specialty queues
-      when the basics are not enough.
+      Reach for locks, conditions, barriers, bounded semaphores, and
+      specialty queues when the basics are not enough.
     * [Subprocesses](beyond-the-basics/subprocesses.md) -- Run subprocesses
       safely and avoid pipe deadlocks.
     * [Runner](beyond-the-basics/runner.md) -- Use `asyncio.Runner` when you

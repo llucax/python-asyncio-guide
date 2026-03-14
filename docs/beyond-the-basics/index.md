@@ -1,9 +1,9 @@
 ---
 title: Beyond the Basics
 description: >-
-  Advanced application-level asyncio patterns -- integrating blocking code,
-  shielding critical work from cancellation, custom context managers,
-  advanced coordination primitives, subprocesses, and the Runner API.
+  Application-level asyncio patterns beyond the core toolkit -- integrating
+  blocking code, shielding critical work from cancellation, custom context
+  managers, less-common coordination tools, subprocesses, and the Runner API.
 icon: lucide/book-open
 ---
 
@@ -45,10 +45,10 @@ This chapter mixes two kinds of sections:
    [`@asynccontextmanager`][at-asynccontextmanager], [`AsyncExitStack`][asyncexitstack], and patterns for composing async
    resource lifetimes.
 
-4. [Advanced Coordination](advanced-coordination.md) -- [`Condition`][condition],
-    [`Barrier`][barrier], [`BoundedSemaphore`][boundedsemaphore],
-    [`PriorityQueue`][priorityqueue], [`LifoQueue`][lifoqueue]. This is a
-    reference companion section.
+4. [Advanced Coordination](advanced-coordination.md) -- [`Lock`][lock],
+   [`Condition`][condition], [`Barrier`][barrier],
+   [`BoundedSemaphore`][boundedsemaphore], [`PriorityQueue`][priorityqueue],
+   and [`LifoQueue`][lifoqueue]. This is a reference companion section.
 
 5. [Subprocesses](subprocesses.md) --
    [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec],
@@ -64,6 +64,7 @@ This chapter mixes two kinds of sections:
 [loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
 [processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 [asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
+[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
 [barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
 [boundedsemaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BoundedSemaphore

@@ -3,19 +3,20 @@ title: Resource Management
 description: >-
   Learn to manage async resources safely with async with, try/finally,
   contextlib.aclosing(), and async generators. Prevent leaked connections,
-  stuck locks, and file descriptor exhaustion under cancellation.
+  orphaned child tasks, and file descriptor exhaustion under cancellation.
 ---
 
 # Resource Management
 
-Async code opens connections, acquires locks, and allocates resources that need
-cleanup -- just like synchronous code. The difference is that concurrency and
-cancellation make it much easier for cleanup to be skipped by accident.
+Async code opens connections, starts child tasks, and allocates resources that
+need cleanup -- just like synchronous code. The difference is that concurrency
+and cancellation make it much easier for cleanup to be skipped by accident.
 
 A task can be cancelled at any [`await`][await], and if the resource's teardown
-never runs, you get leaked connections, stuck locks, and file descriptors that
-pile up until the OS complains. The good news: the tools for handling this are
-straightforward, and if you follow a few rules you will never leak a resource.
+never runs, you get leaked connections, child tasks that outlive their owner,
+and file descriptors that pile up until the OS complains. The good news: the
+tools for handling this are straightforward, and if you follow a few rules you
+will never leak a resource.
 
 ## Async Context Managers and `#!py async with`
 
@@ -27,57 +28,50 @@ cancellation. Both methods are coroutines, so they can do async work like
 sending a "close" message over the network or releasing a resource that
 requires an [`await`][await].
 
-The canonical example is [`asyncio.Lock`][asyncio-lock]. Acquiring it requires
-an [`await`][await] (another task might be holding it), and releasing it must
-happen exactly once:
+A familiar example at this point in the guide is
+[`asyncio.TaskGroup()`][taskgroup]. You have already been using it, but it is
+worth looking at it here as an async context manager: entering the block
+creates the scope that owns the child tasks, and exiting the block waits for
+them to finish:
 
-```python title="lock_demo.py" hl_lines="4"
+```python title="taskgroup_demo.py" hl_lines="8"
 import asyncio
 
-async def increment(lock: asyncio.Lock, shared_data: dict[str, int]) -> None:
-    async with lock: # (1)!
-        value: int = shared_data["counter"]
-        await asyncio.sleep(0.1)  # Simulate async work
-        shared_data["counter"] = value + 1
-        print(f"Incremented to {shared_data['counter']}")
-    # (2)!
+
+async def worker(name: str, delay: float) -> None:
+    await asyncio.sleep(delay)
+    print(f"{name}: done")
 
 async def main() -> None:
-    lock = asyncio.Lock()
-    shared_data: dict[str, int] = {"counter": 0}
+    async with asyncio.TaskGroup() as tg:  # (1)!
+        tg.create_task(worker("A", 0.2), name="worker-a")
+        tg.create_task(worker("B", 0.1), name="worker-b")
+    # (2)!
 
-    async with asyncio.TaskGroup() as tg:
-        for i in range(3):
-            tg.create_task(increment(lock, shared_data), name=f"increment-{i}")
-
-    print(f"Final count: {shared_data['counter']}")
+    print("All workers finished")
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. The `lock` is acquired here (awaiting for it to be released first if it was
-   already taken), and then held for the whole `#!py async with` block.
-2. The `lock` is released here, even if the body raised or was cancelled.
+1. The task group is entered here, creating a scope that can own child tasks.
+2. The block exits here only after every child task is done, or after failures
+   have cancelled siblings and their cleanup has finished.
 
-```text title="$ python lock_demo.py"
-Incremented to 1
-Incremented to 2
-Incremented to 3
-Final count: 3
+```text title="$ python taskgroup_demo.py"
+B: done
+A: done
+All workers finished
 ```
 
-The `#!py async with lock:` line acquires the lock ([`__aenter__`][aenter]),
-and when the block exits -- for any reason -- it is released
-([`__aexit__`][aexit]). If a cancellation arrives while the body is running,
-the [`CancelledError`][cancellederror] unwinds through the block,
-[`__aexit__`][aexit] runs, and the lock is freed. No task is left waiting
-forever for a lock that will never be released.
+The `#!py async with asyncio.TaskGroup()` line calls [`__aenter__`][aenter]
+when the group scope opens, and [`__aexit__`][aexit] when it closes. On exit,
+the group does async cleanup work: it waits for child tasks to finish, and if
+one fails it cancels the siblings and waits for their cleanup before raising.
 
-You have already been using [`async with`][async-with] throughout this chapter:
-[`asyncio.TaskGroup()`][taskgroup], and [`asyncio.timeout()`][asyncio-timeout]
-are async context managers. The pattern is always the same -- enter with
-[`async with`][async-with], and the cleanup is guaranteed.
+You have already been using other async context managers too -- especially
+[`asyncio.timeout()`][asyncio-timeout]. The pattern is always the same: enter
+with [`async with`][async-with], and cleanup is guaranteed on the way out.
 
 !!! Warning
 
@@ -483,7 +477,6 @@ blocks and `#!py finally` blocks would still run.
 [async-with-statement]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
 [aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
-[asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
 [asyncio-timeout]: https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout

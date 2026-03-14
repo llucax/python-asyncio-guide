@@ -1,9 +1,9 @@
 ---
 title: Coordination
 description: >-
-  Coordinate concurrent tasks with asyncio.Queue, Lock, Event, and Semaphore.
+  Coordinate concurrent tasks with asyncio.Queue, Event, and Semaphore.
   Learn inter-task communication patterns, backpressure with bounded queues,
-  and rate limiting.
+  startup signaling, and concurrency limits.
 ---
 
 # Coordination
@@ -12,38 +12,45 @@ Up to this point, your concurrent tasks have been independent -- they each do
 their own work and you collect the results when the [`TaskGroup`][taskgroup]
 finishes. Real programs are rarely that tidy. Tasks need to *talk* to each
 other: pass data, wait for signals, or limit how many hit an external API at
-once. asyncio provides four coordination primitives for these situations:
-[`Queue`][queue], [`Lock`][lock], [`Event`][event], and
-[`Semaphore`][semaphore].
+once. In simple asyncio programs, the first tools to reach for are
+[`Queue`][queue], [`Event`][event], and [`Semaphore`][semaphore].
 
 !!! Info
 
-    This section focuses on the patterns: bounded queues, backpressure,
-    sentinels, and throttling. Use the official [Queues][official-queues] and
-    [Synchronization Primitives][official-sync] pages for the full API details.
+    This section focuses on the common patterns: bounded queues,
+    backpressure, sentinels, startup signaling, and throttling. Use the
+    official [Queues][official-queues] and [Synchronization
+    Primitives][official-sync] pages for the full API details.
 
-There are more specialized primitives too -- notably [`Condition`][condition],
-[`Barrier`][barrier], and [`BoundedSemaphore`][boundedsemaphore]. You do not
-need them to get started, so this chapter stays focused on the four primitives
-you will reach for most often. [Advanced
+There are more specialized primitives too -- notably [`Lock`][lock],
+[`Condition`][condition], [`Barrier`][barrier], and
+[`BoundedSemaphore`][boundedsemaphore]. Because asyncio tasks are
+cooperative, direct shared-state coordination is more niche here than it is
+in threaded code. This chapter stays focused on message passing, signaling,
+and bounded concurrency. [Advanced
 Coordination](../beyond-the-basics/advanced-coordination.md) in [Beyond the
 Basics](../beyond-the-basics/index.md) is the map for the rest.
 
 ## `#!py asyncio.Queue`
 
 The *queue* is the primary tool for inter-task communication. Instead of
-sharing mutable state and protecting it with locks, you pass messages through a
-queue. One task puts items in, another takes them out -- the queue handles all
-the synchronisation.
+sharing mutable state directly, you pass messages through a queue. One task
+puts items in, another takes them out -- the queue handles all the
+synchronisation.
 
 Create a queue with [`asyncio.Queue(maxsize=...)`][asyncio-queue-maxsize].
 **Always set `maxsize`** -- you will see why shortly. In beginner code, the
-operations you need most are:
+core operations are:
 
 - [`put(item)`][put-item] -- suspend if the queue is full
 - [`get()`][get] -- suspend if the queue is empty
-- [`task_done()`][task-done] and [`join()`][join] -- optional completion
-  tracking
+
+Queue also provides [`task_done()`][task-done] and [`join()`][join] for
+completion tracking. In structured-concurrency code, that is a more specialized
+pattern than basic producer/consumer communication, so this chapter keeps the
+focus on communication, backpressure, and shutdown. See [Advanced
+Coordination](../beyond-the-basics/advanced-coordination.md#queue-completion-tracking)
+when you need an extra "all queued work is finished" checkpoint.
 
 There are also `*_nowait()` methods plus inspection helpers such as
 [`qsize()`][qsize] and [`empty()`][empty], but those are best treated as
@@ -64,7 +71,6 @@ async def consumer(queue: asyncio.Queue[int]) -> None:
         item: int = await queue.get()
         print(f"Consumed: {item}")
         await asyncio.sleep(0.2)  # Simulate processing
-        queue.task_done()
 
 async def main() -> None:
     queue: asyncio.Queue[int] = asyncio.Queue(maxsize=2)
@@ -135,201 +141,9 @@ will hang forever.
 
 !!! Tip
 
-    If `#!py None` is a valid data value, define a dedicated sentinel: `#!py
-    class Stop: pass; STOP = Stop()`. Then compare with `#!py is STOP` instead
-    of `#!py is None`.
-
-An alternative is [`task_done()`][task-done]/[`join()`][join]: the producer
-calls [`join()`][join] after enqueuing all items, which blocks until every item
-has been marked done. This tells you when all *work* is finished but does not
-tell consumers to stop. Sentinels are simpler -- prefer them.
-
-## Producer/Consumer with TaskGroup
-
-Let's put everything together: multiple producers, multiple consumers, a
-bounded queue, sentinel-based shutdown, and a [`TaskGroup`][taskgroup] managing
-it all.
-
-The key design question is: who sends the sentinels? Individual producers don't
-know when the others are done. The clean solution is a `run_producers` function
-wrapping all producers in an inner [`TaskGroup`][taskgroup]. When that group
-exits, the function sends the sentinels:
-
-```python title="producer_consumer.py"
-import asyncio
-import random
-
-SENTINEL: None = None
-
-async def producer(
-    name: str,
-    queue: asyncio.Queue[tuple[str, int] | None],
-    count: int,
-) -> None:
-    for i in range(count):
-        await queue.put((name, i))
-        await asyncio.sleep(random.uniform(0.01, 0.1))
-    print(f"[{name}] finished producing {count} items")
-
-async def consumer(
-    name: str,
-    queue: asyncio.Queue[tuple[str, int] | None],
-) -> int:
-    processed: int = 0
-    while True:
-        item: tuple[str, int] | None = await queue.get()
-        if item is SENTINEL:
-            queue.task_done()
-            break
-        source, seq = item
-        await asyncio.sleep(0.05)  # Simulate work
-        print(f"  [{name}] processed ({source}, {seq})")
-        processed += 1
-        queue.task_done()
-    print(f"[{name}] shutting down after {processed} items")
-    return processed
-
-async def run_producers(
-    queue: asyncio.Queue[tuple[str, int] | None],
-    n_producers: int,
-    items_each: int,
-    n_consumers: int,
-) -> None:
-    async with asyncio.TaskGroup() as tg:
-        for i in range(n_producers):
-            tg.create_task(
-                producer(f"P{i}", queue, items_each),
-                name=f"producer-{i}",
-            )
-    # All producers are done -- send one sentinel per consumer
-    for _ in range(n_consumers):
-        await queue.put(SENTINEL)
-
-async def main() -> None:
-    n_producers: int = 2
-    n_consumers: int = 3
-    queue: asyncio.Queue[tuple[str, int] | None] = asyncio.Queue(maxsize=4)
-
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(
-            run_producers(queue, n_producers, 4, n_consumers),
-            name="run-producers",
-        )
-        consumer_tasks = [
-            tg.create_task(consumer(f"C{i}", queue), name=f"consumer-{i}")
-            for i in range(n_consumers)
-        ]
-
-    total: int = sum(t.result() for t in consumer_tasks)
-    print(f"\nTotal processed: {total}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-Because the producers sleep for random intervals, the exact interleaving varies
-from run to run. One run looks like this:
-
-```text title="$ python producer_consumer.py"
-  [C0] processed (P0, 0)
-  [C1] processed (P1, 0)
-  [C2] processed (P0, 1)
-  [C0] processed (P1, 1)
-  [C1] processed (P0, 2)
-  [C2] processed (P1, 2)
-[P0] finished producing 4 items
-  [C0] processed (P0, 3)
-  [C1] processed (P1, 3)
-[P1] finished producing 4 items
-[C2] shutting down after 2 items
-[C0] shutting down after 3 items
-[C1] shutting down after 3 items
-
-Total processed: 8
-```
-
-The inner [`TaskGroup`][taskgroup] ensures all producers finish before
-sentinels are sent. Consumers run inside the outer group, draining the queue
-the whole time.
-
-!!! Warning
-
-    If a producer raises, the inner [`TaskGroup`][taskgroup] cancels its
-    siblings and the exception propagates to the outer group, which cancels the
-    consumers. This is correct -- if producers fail, consumers should not wait
-    for data that will never arrive.
-
-## `asyncio.Lock`
-
-When you *must* share mutable state between tasks, a [`Lock`][lock] serialises
-access. Only one task can hold the lock at a time; others suspend until it is
-released. The idiomatic usage is [`async with`][async-with]:
-
-```python title="lock_example.py"
-import asyncio
-
-async def transfer(
-    lock: asyncio.Lock,
-    ledger: dict[str, int],
-    src: str,
-    dst: str,
-    amount: int,
-) -> None:
-    async with lock:
-        if ledger[src] < amount:
-            print(f"Insufficient funds in {src}")
-            return
-        await asyncio.sleep(0.01)  # Simulate async work between read and write
-        ledger[src] -= amount
-        ledger[dst] += amount
-        print(f"Transferred {amount} from {src} to {dst}")
-
-async def main() -> None:
-    lock = asyncio.Lock()
-    ledger: dict[str, int] = {"alice": 100, "bob": 50}
-
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(
-            transfer(lock, ledger, "alice", "bob", 30),
-            name="alice-to-bob-1",
-        )
-        tg.create_task(
-            transfer(lock, ledger, "alice", "bob", 30),
-            name="alice-to-bob-2",
-        )
-        tg.create_task(
-            transfer(lock, ledger, "bob", "alice", 10),
-            name="bob-to-alice",
-        )
-
-    print(f"Final balances: {ledger}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-```text title="$ python lock_example.py"
-Transferred 30 from alice to bob
-Transferred 30 from alice to bob
-Transferred 10 from bob to alice
-Final balances: {'alice': 50, 'bob': 100}
-```
-
-Without the lock, the [`await`][await] between reading and writing would create
-a race condition -- two tasks could both see `#!py alice: 100` and each deduct
-30.
-
-!!! Danger
-
-    asyncio locks are **not reentrant**. If a task that already holds the lock
-    tries to acquire it again, it will deadlock. If you need reentrant locking,
-    see [Advanced Coordination](../beyond-the-basics/advanced-coordination.md).
-
-!!! Tip
-
-    Prefer queues over locks whenever possible. A queue makes data flow
-    explicit and avoids bugs where you forget to acquire the lock or hold two
-    locks in the wrong order.
+    If `#!py None` is a valid data value, define a dedicated sentinel. For a
+    type-safe stop sentinel you can use `#!py class Stop: pass`. Then `#!py
+    match` against `#!py case Stop():` instead of `#!py is None`.
 
 ## `asyncio.Event`
 
@@ -462,21 +276,18 @@ simultaneously.
 ## Choosing the Right Tool
 
 When you need tasks to communicate, reach for a **Queue** -- it provides
-natural backpressure and makes data flow explicit. When tasks must share
-mutable state, use a **Lock** to serialise access. When one task needs to
-signal others that a condition has been met, use an **Event**. When you want to
-limit how many tasks are active at once, use a **Semaphore**. These four cover
-the vast majority of coordination needs; for [`Condition`][condition],
-[`Barrier`][barrier], and the bounded/priority queue variants, see [Advanced
-Coordination](../beyond-the-basics/advanced-coordination.md).
+natural backpressure and makes data flow explicit. When one task needs to
+signal others that a condition has been met, use an **Event**. When you want
+to limit how many tasks are active at once, use a **Semaphore**. These three
+cover the vast majority of beginner coordination needs. If you find yourself
+coordinating through shared mutable state instead, see [Advanced
+Coordination](../beyond-the-basics/advanced-coordination.md) for
+[`Lock`][lock], [`Condition`][condition], and the other more specialized tools.
 
-[async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [asyncio-event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
-[asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [asyncio-queue-maxsize]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [asyncio-semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
-[await]: https://docs.python.org/3/reference/expressions.html#await
 [barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
 [boundedsemaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BoundedSemaphore
 [condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
