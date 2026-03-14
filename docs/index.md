@@ -1,48 +1,49 @@
 ---
 title: "Asyncio: A Concept-First Learning Guide"
 description: >-
-  A structured, concept-first guide to Python's asyncio library. Learn
-  async/await from the ground up with modern, structured concurrency
-  patterns, and use the official docs as your API reference.
+  An opinionated, concept-first guide to Python's asyncio library. Learn
+  async/await through modern, structured concurrency patterns, then use
+  the official docs as your API reference.
 ---
 
 # Asyncio: A Concept-First Learning Guide
 
-This is a general-purpose learning guide for Python's built-in
+This is an opinionated learning guide for Python's built-in
 [`asyncio`][asyncio].
 
 The structure and teaching style are inspired by
 [Trio's excellent documentation][trio-docs].
 [Trio][trio-docs] deliberately designs for structured concurrency and
-cancellation ergonomics. If you can adopt [Trio][trio-docs], it is often a
-great choice. But many codebases cannot switch away from the standard library.
-[`asyncio`][asyncio] is widely deployed, and this guide aims to fill the gap in
-high-quality learning resources for it.
+cancellation ergonomics, and this guide borrows that point of view when
+teaching [`asyncio`][asyncio]. If you can adopt [Trio][trio-docs], it is often
+a great choice. But many codebases cannot switch away from the standard
+library. [`asyncio`][asyncio] is widely deployed, and this guide aims to fill
+the gap in high-quality learning resources for it.
 
 This guide complements the
 [official asyncio documentation][official-asyncio-documentation]; it does not
 replace it. The intended split is simple:
 
-- **Use this guide as your primary learning path.** It focuses on mental
-  models, structured concurrency, cancellation, cleanup, backpressure,
-  debugging, and realistic program structure.
+- **Use this guide as your primary learning path.** It is opinionated and
+  focuses on the patterns this guide thinks you should prefer for modern
+  Python 3.11+ application code: structured concurrency, timeout scopes,
+  explicit lifetimes, cancellation-safe cleanup, backpressure, debugging,
+  and realistic program structure.
 - **Use the official docs as your primary reference.** They are the best place
-  to look up full signatures, platform notes, version changes, and exhaustive
-  API details.
+  to look up full signatures, platform notes, version changes, exhaustive API
+  details, and lower-level or historical APIs that this guide intentionally
+  de-emphasizes.
 
-Some sections in this guide are deliberately short and point you at the official
-docs when the stdlib reference is already strong. That is by design. The goal
-is to keep this guide cohesive and complete without turning it into a second
-API manual.
+That means this guide is not a neutral tour of every asyncio style. If you have
+already written a fair amount of async code but mostly through older patterns
+-- ad hoc task spawning, manual loop plumbing, or pre-[`TaskGroup`][taskgroup]
+habits -- that is exactly the kind of experience this guide aims to help you
+update.
 
-## Who This Is For
-
-- You know Python, but [`async`][async]/[`await`][await] still feels slippery.
-- You've written small [`asyncio`][asyncio] snippets, or just simple async
-  functions filling the gaps when using a framework (like a web framework),
-  and now need full, robust, maintainable async programs.
-- You want modern, structured patterns ([`TaskGroup`][taskgroup], timeouts,
-  explicit lifetimes).
+Some sections in this guide are deliberately short and point you at the
+official docs when the stdlib reference is already strong. That is by design.
+The goal is to keep this guide cohesive and complete without turning it into a
+second API manual.
 
 ## Prerequisites
 
@@ -59,30 +60,35 @@ and other modern APIs throughout without version guards.
 
 ## How To Read This Guide
 
-**[The Basics](the-basics/index.md)** covers all you need to write simple but
-robust and correct asyncio programs.
+This guide is designed to be read linearly. The early chapters teach the safe
+defaults first, and the later chapters explain the machinery and escape hatches
+underneath.
 
-**[Beyond the Basics](beyond-the-basics/index.md)** adds more advanced patterns
-and tools that are necessary only when writing more complex programs, but are
-good to know about, as knowing the right tools can make your *asyncio life*
-much easier.
+If you are deciding where to focus, each chapter serves a slightly different
+reader:
 
-**[How Asyncio Works](how-asyncio-works/index.md)** explains the machinery
-underneath. Not strictly necessary for day-to-day programming, but useful for
-understanding why things work the way they do, and for debugging and library
-work.
-
-**[The Low-Level Toolkit](the-low-level-toolkit/index.md)** is for library and
-framework authors who need to build on top of asyncio's low-level APIs.
-
-**Appendices** are reference material: the checkpoint contract reference,
-consolidated best practices, and a debugging guide.
+- **[The Basics](the-basics/index.md)** is for almost everyone. Start here if
+  [`async`][async]/[`await`][await] still feels slippery, if you have only used
+  async through a framework, or if you already know asyncio but want to
+  replace older habits with safer 3.11+ defaults.
+- **[Beyond the Basics](beyond-the-basics/index.md)** is for application code
+  once the core model feels solid. It covers the patterns that sit between
+  "I can use a `TaskGroup`" and "I can build a production async service."
+- **[How Asyncio Works](how-asyncio-works/index.md)** is for when you need the
+  runtime mental model: debugging surprising behavior, understanding why the
+  safe rules exist, or reading older and lower-level code without treating its
+  patterns as your new default.
+- **[The Low-Level Toolkit](the-low-level-toolkit/index.md)** is for library
+  authors, framework authors, and infrastructure code that truly needs the
+  low-level APIs. Most application code can skip it on a first pass.
+- **Appendices** are for reference and revisiting: the checkpoint contract,
+  consolidated best practices, and a dedicated debugging guide.
 
 ## Chapter Index
 
-You can use this index have a quick look into what chapter offers in more
-detail, or to quickly jump to the section you need, but bear in mind that the
-guide is designed to be read linearly.
+You can use this index to get a quick sense of what each chapter covers, or to
+jump straight to a section. Still, the guide works best when you read it
+linearly.
 
 1. [The Basics](the-basics/index.md) -- Learn the core vocabulary, safety
    rules, and high-level patterns for day-to-day async programming.

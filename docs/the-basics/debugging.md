@@ -10,26 +10,26 @@ description: >-
 
 Async bugs can be genuinely confusing. A forgotten [`await`][await] produces a
 coroutine object instead of a value. A blocking call freezes the entire loop
-with no obvious error. A swallowed [`CancelledError`][cancellederror] makes a timeout silently
-fail. The symptoms are indirect and the tracebacks look unfamiliar. This
-section gives you the tools to catch the common ones quickly -- enough to debug
-your first few programs without drowning in detail. A comprehensive
-[Debugging Guide](../appendices/debugging.md) lives in the appendices for when
-you need heavier machinery.
+with no obvious error. A swallowed [`CancelledError`][cancellederror] makes a
+timeout silently fail. The symptoms are indirect and the tracebacks look
+unfamiliar. This section gives you the tools to catch the common ones quickly
+-- enough to debug your first few programs without drowning in detail. A
+comprehensive [Debugging Guide](../appendices/debugging.md) lives in the
+appendices for when you need heavier machinery.
 
 !!! Info
 
-    This section is the compact debugging checklist. The appendix goes deeper, and
-    the official [Developing with asyncio][official-dev] page is the canonical
-    stdlib reference for debug mode and common development traps.
+    This section is the compact debugging checklist. The appendix goes deeper,
+    and the official [Developing with asyncio][official-dev] page is the
+    canonical stdlib reference for debug mode and common development traps.
 
 ## Debug Mode
 
 Asyncio has a built-in debug mode that catches several common mistakes at
-runtime. Enable it by passing
-`#!py debug=True` to [`asyncio.run()`][asyncio-run]:
+runtime. Enable it by passing `#!py debug=True` to
+[`asyncio.run()`][asyncio-run]:
 
-```python
+```python title="debug_mode.py" hl_lines="7"
 import asyncio
 
 async def main() -> None:
@@ -42,9 +42,21 @@ if __name__ == "__main__":
 You can also enable it without touching code by setting the
 `PYTHONASYNCIODEBUG` environment variable:
 
-```text
+```console
 $ PYTHONASYNCIODEBUG=1 python my_program.py
 ```
+
+If the program is already running, you can turn it on for the current loop
+with:
+
+```python
+asyncio.get_running_loop().set_debug(True)
+```
+
+That only affects the loop from that point onward, so enabling debug mode at
+startup gives you the most complete diagnostics. Even so, turning it on
+temporarily during a production incident can still help you catch slow
+callbacks and new warnings without restarting the process.
 
 When debug mode is active, the event loop:
 
@@ -56,63 +68,97 @@ When debug mode is active, the event loop:
 - **Reports unclosed resources** -- transports, event loops, and other objects
   that were garbage-collected without being properly shut down.
 
+Debug mode is extra runtime instrumentation, not a free upgrade to your code.
+It keeps more bookkeeping and emits more diagnostics, so CPU use, memory use,
+and log volume go up somewhat. In development that cost is usually worth it. In
+production, especially in latency-sensitive or high-throughput services, you
+should enable it deliberately rather than by reflex.
+
 !!! Tip
 
-    Always develop with `#!py debug=True`. The overhead is negligible and the
-    diagnostics catch real bugs. Turn it off in production if the extra logging
-    is too noisy, but consider leaving it on in staging.
+    Recommended: enable debug mode during local development, while reproducing
+    a bug, and often in staging.
+
+    Usually do not leave it on blindly in production. The extra bookkeeping and
+    logging can be noisy, and the overhead may matter in busy services. For the
+    full trade-offs and production guidance, see the [Debugging
+    Guide](../appendices/debugging.md).
 
 ## Common Mistakes Checklist
 
 Most asyncio bugs fall into a handful of categories. When something goes wrong,
 run through this list before reaching for heavier tools.
 
-**1. Forgotten [`await`][await]**
+### Forgotten `#!py await`
 
-*Symptom:* You get a `#!py RuntimeWarning: coroutine '...' was never awaited`, or a
+**Symptom**
+
+:   You get a `#!py RuntimeWarning: coroutine '...' was never awaited`, or a
 variable contains a coroutine object instead of the value you expected.
 
-*Fix:* Add [`await`][await] in front of the async function call. Debug mode makes this
-warning harder to miss.
+**Fix**
 
-**2. Blocking call in async code**
+:   Add [`await`][await] in front of the async function call. Debug mode makes
+this warning harder to miss.
 
-*Symptom:* The event loop freezes. Other tasks stop making progress. In debug
-mode you see "Executing ... took X.XXX seconds" warnings.
+### Blocking call in async code
 
-*Culprits:* `#!py time.sleep()`, [`requests.get()`][requests-get], heavy computation, synchronous
-file I/O, any C extension that holds the GIL for a long time.
+**Symptom**
 
-*Fix:* Replace with the async equivalent ([`asyncio.sleep()`][asyncio-sleep], [`aiohttp`][aiohttp-docs],
-[`asyncio.to_thread()`][asyncio-to-thread] for unavoidable blocking work -- covered in
-[Blocking Code](../beyond-the-basics/blocking-code.md)).
+:   The event loop freezes. Other tasks stop making progress. In debug mode you
+see "Executing ... took X.XXX seconds" warnings.
 
-**3. Swallowing [`CancelledError`][cancellederror]**
+**Culprits**
 
-*Symptom:* Timeouts don't fire. [`TaskGroup`][taskgroup] hangs instead of shutting down.
-Code after [`asyncio.timeout()`][asyncio-timeout] runs even though the deadline passed.
+:   `#!py time.sleep()`, [`requests.get()`][requests-get], heavy computation,
+synchronous file I/O, any C extension that holds the GIL for a long time.
 
-*Fix:* Always re-raise [`CancelledError`][cancellederror]. If you catch it for cleanup, end the
-`#!py except` block with `#!py raise`. See
-[Cancellation and Timeouts](cancellation-and-timeouts.md) for the full rule.
+**Fix**
 
-**4. Fire-and-forget tasks**
+:   Replace with the async equivalent ([`asyncio.sleep()`][asyncio-sleep],
+[`aiohttp`][aiohttp-docs], [`asyncio.to_thread()`][asyncio-to-thread] for
+unavoidable blocking work -- covered in [Blocking
+Code](../beyond-the-basics/blocking-code.md)).
 
-*Symptom:* "Task exception was never retrieved" in the logs. Work silently
-disappears. Errors go unnoticed.
+### Swallowing `#!py CancelledError`
 
-*Fix:* Use [`TaskGroup`][taskgroup] instead of bare [`asyncio.create_task()`][asyncio-create-task]. The group
-ensures every child's exception is propagated. See
-[Concurrent Tasks](concurrent-tasks.md).
+**Symptom**
 
-**5. Using threading primitives in async code**
+:   Timeouts don't fire. [`TaskGroup`][taskgroup] hangs instead of shutting
+down. Code after [`asyncio.timeout()`][asyncio-timeout] runs even though the
+deadline passed.
 
-*Symptom:* [`threading.Lock`][threading-lock] does not actually protect shared state (it never
-suspends, so concurrent tasks interleave around it). Or worse, it *does* block
-the loop thread, deadlocking everything.
+**Fix**
 
-*Fix:* Use [`asyncio.Lock`][asyncio-lock],
-[`asyncio.Event`][asyncio-event], [`asyncio.Semaphore`][asyncio-semaphore], etc. The `threading` versions are for
+:   Always re-raise [`CancelledError`][cancellederror]. If you catch it for
+cleanup, end the `#!py except` block with `#!py raise`. See [Cancellation and
+Timeouts](cancellation-and-timeouts.md) for the full rule.
+
+### Fire-and-forget tasks
+
+**Symptom**
+
+:   "Task exception was never retrieved" in the logs. Work silently disappears.
+Errors go unnoticed.
+
+**Fix**
+
+:   Use [`TaskGroup`][taskgroup] instead of bare
+[`asyncio.create_task()`][asyncio-create-task]. The group ensures every child's
+exception is propagated. See [Concurrent Tasks](concurrent-tasks.md).
+
+### Using threading primitives in async code
+
+**Symptom**
+
+:   [`threading.Lock`][threading-lock] does not actually protect shared state
+(it never suspends, so concurrent tasks interleave around it). Or worse, it
+*does* block the loop thread, deadlocking everything.
+
+**Fix**
+
+:   Use [`asyncio.Lock`][asyncio-lock], [`asyncio.Event`][asyncio-event],
+[`asyncio.Semaphore`][asyncio-semaphore], etc. The `threading` versions are for
 threads; the [`asyncio`][asyncio] versions are for tasks. See
 [Coordination](coordination.md) for queues, events, and semaphores, and
 [Advanced Coordination](../beyond-the-basics/advanced-coordination.md) for
@@ -120,16 +166,16 @@ locks.
 
 !!! Note
 
-    If your bug isn't in this list, check the
-    [Best Practices, Pitfalls, and Gotchas](../appendices/best-practices.md)
-    appendix for a more comprehensive catalogue.
+    If your bug isn't in this list, check the [Best Practices, Pitfalls, and
+    Gotchas](../appendices/best-practices.md) appendix for a more comprehensive
+    catalogue.
 
 ## Checkpoint Contract (Condensed)
 
 Understanding which operations suspend and which don't is key to reasoning
 about task interleaving and cancellation. Here is the short version -- enough
-for everyday debugging. The detailed reference is in the
-[Checkpoint Contract](../appendices/checkpoint-contract.md) appendix.
+for everyday debugging. The detailed reference is in the [Checkpoint
+    Contract](../appendices/checkpoint-contract.md) appendix.
 
 | Category                | Examples                                                        |
 |-------------------------|-----------------------------------------------------------------|

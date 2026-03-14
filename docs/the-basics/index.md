@@ -1,63 +1,46 @@
 ---
 title: The Basics
 description: >-
-  Everything you need to write correct, robust async programs -- coroutines,
-  concurrent tasks, cancellation, timeouts, resource management, networking,
-  and inter-task coordination using safe, high-level APIs.
+  Everything you need to write simple but correct and robust async programs --
+  coroutines, concurrent tasks, cancellation, timeouts, resource management,
+  networking, and inter-task coordination using safe, high-level APIs.
 icon: lucide/book-open
 ---
 
 # The Basics
 
-This chapter covers everything you need to write correct, robust async
-programs. By the end, you will be comfortable with coroutines, concurrent
-tasks, cancellation, timeouts, resource management, networking, and
+This chapter covers everything you need to write simple but correct and robust
+async programs. By the end, you will be comfortable with coroutines, concurrent
+tasks, cancellation, timeouts, resource management, networking, and simple
 inter-task coordination -- all using safe, high-level APIs.
 
-No low-level event loop manipulation, no [`create_task()`][create-task], no
-[`wait_for()`][wait-for]. Those exist, but you do not need them here, and reaching for them
-too early is where most asyncio bugs come from.
-
-This is the most guide-owned chapter in the repository. The goal here is not to
-mirror the stdlib reference, but to teach you how to think about asyncio. For
-the few API-heavy areas -- especially streams and synchronization primitives --
-the individual sections link out to the official docs for full method-by-method
-reference.
-
-When you are ready to go past the high-level APIs, continue to
-[Beyond the Basics](../beyond-the-basics/index.md) for
-[Blocking Code](../beyond-the-basics/blocking-code.md) and
-[Shielding](../beyond-the-basics/shielding.md), then to
-[How Asyncio Works](../how-asyncio-works/index.md) for
-[The Event Loop](../how-asyncio-works/the-event-loop.md).
+The goal here is to teach you how to think about asyncio. For the few API-heavy
+areas -- especially streams and synchronization primitives -- the individual
+sections link out to the official docs for full method-by-method reference.
 
 ## Sections
 
 1. [Getting Started](getting-started.md) -- [`async`][async]/[`await`][await],
    coroutines, [`asyncio.run()`][asyncio-run], [`asyncio.sleep()`][asyncio-sleep],
-   the async sandwich, and checkpoints.
+   and checkpoints.
 
 2. [Concurrent Tasks](concurrent-tasks.md) -- [`TaskGroup`][taskgroup],
    structured concurrency, [`ExceptionGroup`][exceptiongroup], and [`except*`][except].
 
 3. [Cancellation and Timeouts](cancellation-and-timeouts.md) --
    [`CancelledError`][cancellederror], [`asyncio.timeout()`][asyncio-timeout],
-   [`asyncio.timeout_at()`][asyncio-timeout-at], and how they interact with
-   [`TaskGroup`][taskgroup].
+   and how they interact with [`TaskGroup`][taskgroup].
 
 4. [Resource Management](resource-management.md) -- [`async with`][async-with],
-   [`try`][try]/[`finally`][finally], [`contextlib.aclosing()`][contextlib-aclosing], and async
-   generators.
+   [`try`][try]/[`finally`][finally], async generators, and
+   [`contextlib.aclosing()`][contextlib-aclosing].
 
 5. [Streams](streams.md) -- [`asyncio.open_connection()`][asyncio-open-connection],
    [`asyncio.start_server()`][asyncio-start-server], backpressure, and the
-   stream cleanup rules. Use the official docs for the full API surface.
+   stream cleanup rules.
 
 6. [Coordination](coordination.md) -- [`asyncio.Queue`][asyncio-queue],
    [`Event`][event], [`Semaphore`][semaphore], and producer/consumer patterns.
-   Shared-state primitives such as [`Lock`][lock] move to [Advanced
-   Coordination](../beyond-the-basics/advanced-coordination.md). Use the
-   official docs for exhaustive primitive details.
 
 7. [Building a Pipeline](building-a-pipeline.md) -- an actor-based pipeline
    combining [`TaskGroup`][taskgroup], bounded queues, sentinels, fan-out, and

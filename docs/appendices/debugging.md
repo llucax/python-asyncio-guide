@@ -22,6 +22,27 @@ You already know the basics: pass `#!py debug=True` to
 or set `PYTHONASYNCIODEBUG=1` in the environment. Here is a deeper look at
 what debug mode actually does and how to tune it.
 
+If the program is already running, you can still enable debug mode for the
+current loop:
+
+```python
+loop = asyncio.get_running_loop()
+loop.set_debug(True)
+```
+
+This only affects that loop from this point onward. It cannot retroactively add
+creation-site tracebacks to tasks that already exist, and it cannot warn about
+problems that already happened before you enabled it. If you want the fullest
+diagnostics, turn it on at startup with `#!py asyncio.run(debug=True)` or
+`PYTHONASYNCIODEBUG=1`.
+
+That limitation does not make runtime enabling useless. During a production
+incident, it can be a practical compromise: turn it on temporarily, gather slow
+callback warnings, task creation tracebacks for newly spawned tasks, and new
+resource warnings, then turn it back off once you have enough signal. This is
+especially useful when restarting the process would hide the problem or cost too
+much.
+
 ### What It Detects
 
 When active, debug mode enables several runtime checks:
@@ -38,6 +59,55 @@ When active, debug mode enables several runtime checks:
   stores the traceback of the code that created it. When something goes wrong,
   you see not just where the exception was raised but where the task was
   spawned.
+
+### Trade-Offs
+
+Debug mode is instrumentation. It makes async programs easier to inspect, but
+it is not free:
+
+- **More bookkeeping.** Asyncio stores extra traceback and scheduling metadata
+  so it can tell you where tasks and coroutines came from.
+- **More logging and warnings.** Slow callback reports, resource warnings, and
+  other diagnostics can add a lot of output in a busy process.
+- **Some runtime overhead.** The extra checks and metadata usually make little
+  difference in local development, but they can matter in high-throughput or
+  latency-sensitive services.
+- **Stricter behavior.** Some mistakes that pass silently in normal mode fail
+  loudly in debug mode. That is usually what you want while debugging, but it
+  can surprise you if you turn it on everywhere without expecting new errors.
+
+That is why debug mode is best treated as a development aid, not as a default
+production setting.
+
+### Recommended Usage
+
+Think in terms of signal versus cost. Debug mode is most useful when you are
+actively trying to understand async behavior and can tolerate extra warnings,
+tracebacks, and overhead. It is less attractive when steady-state performance
+and log clarity matter more than extra diagnostics.
+
+Use it by default in situations like these:
+
+- local development
+- test runs or manual verification while you are changing async code
+- reproducing a bug that only shows up under load or after long runtimes
+- staging environments where the extra logging is acceptable
+- temporary incident investigation in production, especially when restarting
+  would hide the bug or cost too much
+
+Start with it off, and enable it only deliberately, in situations like these:
+
+- high-throughput production services
+- latency-sensitive request paths
+- environments with very tight memory budgets
+- production systems where the extra warnings would drown out useful logs
+
+These are heuristics, not hard rules. If you have measured the overhead and
+log volume, and the diagnostics are worth the cost, you can leave it on in
+production. But make that a deliberate choice.
+
+If you enable it temporarily at runtime during an incident, remember that it
+only helps from that point onward.
 
 ### Tuning the Slow Callback Threshold
 
