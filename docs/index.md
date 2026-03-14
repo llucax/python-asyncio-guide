@@ -94,7 +94,7 @@ guide is designed to be read linearly.
     * [Cancellation and Timeouts](the-basics/cancellation-and-timeouts.md) --
       Understand `CancelledError`, timeout scopes, and sibling cancellation.
     * [Resource Management](the-basics/resource-management.md) -- Clean up
-      task groups, streams, and async generators safely under cancellation.
+      locks, streams, and async generators safely under cancellation.
     * [Streams](the-basics/streams.md) -- Work with client and server streams,
       backpressure, and stream shutdown.
     * [Coordination](the-basics/coordination.md) -- Use queues, events, and

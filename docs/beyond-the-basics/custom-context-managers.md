@@ -10,6 +10,7 @@ description: >-
 
 The [Resource Management](../the-basics/resource-management.md) section covered
 *using* [`async with`][async-with] with context managers that asyncio hands you --
+[`Lock`][lock],
 [`TaskGroup`][taskgroup],
 the timeout scopes from
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md). You know
@@ -407,6 +408,7 @@ a variable number of pools (say, one per tenant), it could use an
 ---
 
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
+[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
 [aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__

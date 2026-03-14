@@ -68,6 +68,15 @@ That is the pattern you will use in nearly every asyncio program: define an
 asyncio.run(main())` at the bottom. [`asyncio.run()`][asyncio-run] is meant to
 be called **once**, at the top level of your program.
 
+!!! Warning
+
+    [`asyncio.run()`][asyncio-run] is an application entry point, not a
+    general-purpose helper. Do not call it from inside async code or from a
+    function that might already be running under an event loop. If you already
+    have async code, use [`await`][await] and let the coroutine bubble up to
+    your top-level `#!py main()`. Calling [`asyncio.run()`][asyncio-run] when
+    a loop is already running raises [`RuntimeError`][runtimeerror].
+
 ## Cooperative Scheduling
 
 Python gives you two main tools for concurrency: threads and asyncio. They

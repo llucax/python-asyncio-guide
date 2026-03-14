@@ -133,11 +133,70 @@ pace.
 ## Queue Shutdown Patterns
 
 Eventually your producers run out of work and your consumers need to know it is
-time to stop. The simplest approach is a *sentinel value* -- a special item
-that means "no more data is coming." The most common sentinel is `#!py None`,
-but any unique object works. The critical detail: **send one sentinel per
-consumer.** If you have three consumers but only send one sentinel, two of them
-will hang forever.
+time to stop. In the first queue example, the consumer used `#!py for _ in
+range(5):` because we already knew the producer would emit exactly five items,
+but it is not a great shutdown pattern. In real code, the consumer usually
+should not need to know ahead of time how many items the producer will send.
+
+The simplest fix is a *sentinel value* -- a special item that means "no more
+data is coming." Here is the same producer/consumer shape as above, extended so
+the producer sends `#!py None` when it is done and the consumer stops when it
+receives that sentinel:
+
+```python title="queue_with_sentinel.py" hl_lines="7 11 13-15 20"
+import asyncio
+
+async def producer(queue: asyncio.Queue[int | None]) -> None:
+    for i in range(5):
+        await queue.put(i)
+        print(f"Produced: {i}")
+    await queue.put(None) # (1)!
+    print("Producer: sent stop signal")
+
+async def consumer(queue: asyncio.Queue[int | None]) -> None:
+    while True: # (2)!
+        item: int | None = await queue.get()
+        if item is None: # (3)!
+            print("Consumer: stopping")
+            return
+        print(f"Consumed: {item}")
+        await asyncio.sleep(0.2)  # Simulate processing
+
+async def main() -> None:
+    queue: asyncio.Queue[int | None] = asyncio.Queue(maxsize=2) # (4)!
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(producer(queue), name="producer")
+        tg.create_task(consumer(queue), name="consumer")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+1. The producer sends `None` to signal shutdown.
+2. The consumer now loops *forever* (until it sees the sentinel).
+3. The consumer checks for the sentinel and stops when it sees it.
+4. The queue type was updated to allow `None` as a valid item to signal shutdown.
+
+```text title="$ python queue_with_sentinel.py"
+Produced: 0
+Produced: 1
+Consumed: 0
+Produced: 2
+Consumed: 1
+Produced: 3
+Consumed: 2
+Produced: 4
+Consumed: 3
+Producer: sent stop signal
+Consumed: 4
+Consumer: stopping
+```
+
+The most common sentinel is `#!py None`, but any unique object works. With one
+consumer, one sentinel is enough. The critical detail is what happens when you
+scale out: **send one sentinel per consumer.** If you have three consumers but
+only send one sentinel, two of them will hang forever.
 
 !!! Tip
 
