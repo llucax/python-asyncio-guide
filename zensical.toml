@@ -94,6 +94,7 @@ nav = [
     "the-low-level-toolkit/transports-and-protocols.md",
   ]},
   { "Appendices" = [
+    "appendices/index.md",
     "appendices/checkpoint-contract.md",
     "appendices/best-practices.md",
     "appendices/debugging.md",

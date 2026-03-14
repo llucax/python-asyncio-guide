@@ -4,7 +4,7 @@ description: >-
   Application-level asyncio patterns beyond the core toolkit -- integrating
   blocking code, shielding critical work from cancellation, custom context
   managers, less-common coordination tools, subprocesses, and the Runner API.
-icon: lucide/book-open
+icon: lucide/workflow
 ---
 
 # Beyond the Basics
@@ -13,7 +13,8 @@ This chapter covers patterns you will reach for once you are comfortable with
 [The Basics](../the-basics/index.md). Everything here is still
 application-level code -- no event loop internals, no framework plumbing.
 These are the recipes and tools that fill the gap between "I can write a
-TaskGroup" and "I can build a production async service."
+[`TaskGroup`](../the-basics/concurrent-tasks.md#asynciotaskgroup)" and
+"I can build a production async service."
 
 If a pattern here feels slippery, bounce back to
 [Concurrent Tasks](../the-basics/concurrent-tasks.md),
@@ -34,44 +35,36 @@ This chapter mixes two kinds of sections:
 
 ## Sections
 
-1. [Blocking Code](blocking-code.md) -- [`asyncio.to_thread()`][asyncio-to-thread],
-   [`loop.run_in_executor()`][loop-run-in-executor] with
-   [`ProcessPoolExecutor`][processpoolexecutor], and when to reach for each.
+1. [Blocking Code](blocking-code.md) --
+   [`asyncio.to_thread()`](blocking-code.md#asyncioto_thread),
+   [CPU-bound work with `ProcessPoolExecutor`](blocking-code.md#processpoolexecutor),
+   and [when to use what](blocking-code.md#when-to-use-what).
 
-2. [Shielding](shielding.md) -- [`asyncio.shield()`][asyncio-shield], when it is
-   actually useful, and how to use it without creating orphaned tasks.
+2. [Shielding](shielding.md) --
+   [safe shielding patterns](shielding.md#safe-patterns),
+   [when to use shielding](shielding.md#when-to-use-shielding), and how to use
+   it without creating orphaned tasks.
 
 3. [Custom Context Managers](custom-context-managers.md) --
-   [`@asynccontextmanager`][at-asynccontextmanager], [`AsyncExitStack`][asyncexitstack], and patterns for composing async
-   resource lifetimes.
+   [`@asynccontextmanager`](custom-context-managers.md#asynccontextmanager),
+   [`AsyncExitStack`](custom-context-managers.md#asyncexitstack), and
+   [composing lifetimes](custom-context-managers.md#composing-lifetimes).
 
-4. [Advanced Coordination](advanced-coordination.md) -- [`Lock`][lock],
-   [`Condition`][condition], [`Barrier`][barrier],
-   [`BoundedSemaphore`][boundedsemaphore], [`PriorityQueue`][priorityqueue],
-   and [`LifoQueue`][lifoqueue]. This is a reference companion section.
+4. [Advanced Coordination](advanced-coordination.md) --
+   [`Lock`](advanced-coordination.md#asynciolock),
+   [`Condition`](advanced-coordination.md#asynciocondition),
+   [`Barrier`](advanced-coordination.md#asynciobarrier),
+   [`BoundedSemaphore`](advanced-coordination.md#asyncioboundedsemaphore), and
+   [`PriorityQueue`/`LifoQueue`](advanced-coordination.md#priorityqueue-and-lifoqueue).
+   This is a reference companion section.
 
 5. [Subprocesses](subprocesses.md) --
-   [`asyncio.create_subprocess_exec()`][asyncio-create-subprocess-exec],
-   [`asyncio.create_subprocess_shell()`][asyncio-create-subprocess-shell], and
-   the key deadlock and shell-safety rules. This is a reference companion
-   section.
+   [exec vs shell](subprocesses.md#exec-vs-shell),
+   [the `communicate()` pattern](subprocesses.md#the-default-pattern-communicate),
+   and [pipe deadlocks](subprocesses.md#the-main-pitfall-pipe-deadlocks). This
+   is a reference companion section.
 
-6. [Runner](runner.md) -- [`asyncio.Runner`][asyncio-runner] for running
-   multiple top-level coroutines in sequence, testing, and REPL use. This is a
-   reference companion section.
-
-[asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
-[loop-run-in-executor]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
-[processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-[asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
-[lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
-[condition]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition
-[barrier]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier
-[boundedsemaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.BoundedSemaphore
-[priorityqueue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.PriorityQueue
-[lifoqueue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.LifoQueue
-[asyncio-create-subprocess-exec]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_exec
-[asyncio-create-subprocess-shell]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_shell
-[asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
-[at-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager
-[asyncexitstack]: https://docs.python.org/3/library/contextlib.html#contextlib.AsyncExitStack
+6. [Runner](runner.md) --
+   [when to use `Runner`](runner.md#when-to-use-runner),
+   [the shape of the API](runner.md#the-shape-of-the-api), and
+   [cleanup](runner.md#cleanup). This is a reference companion section.

@@ -4,7 +4,7 @@ description: >-
   Low-level asyncio APIs for library and framework authors. Covers loop
   access, manual task coordination, bare futures, callbacks, threading
   integration, and the transports-and-protocols layer.
-icon: lucide/book-open
+icon: lucide/wrench
 ---
 
 # The Low-Level Toolkit
@@ -38,34 +38,31 @@ For the application-level boundary cases that usually lead you here, see
 ## Sections
 
 1. [Loop Access and Inspection](loop-access-and-inspection.md) --
-   [`asyncio.get_running_loop()`][asyncio-get-running-loop], loop introspection,
-   and when you need the loop object directly. This is a reference companion
+   [the normal `get_running_loop()` accessor](loop-access-and-inspection.md#the-normal-accessor-get_running_loop),
+   [when you need the loop object directly](loop-access-and-inspection.md#when-you-actually-need-the-loop),
+   and [task inspection](loop-access-and-inspection.md#task-inspection-you-should-remember).
+   This is a reference companion section.
+
+2. [Task Coordination](task-coordination.md) --
+   [`asyncio.wait()`](task-coordination.md#asynciowait),
+   [`asyncio.as_completed()`](task-coordination.md#asyncioas_completed),
+   [`asyncio.wait_for()`](task-coordination.md#asynciowait_for), and
+   [which tool fits which job](task-coordination.md#which-tool-fits-which-job).
+   This is a reference companion section.
+
+3. [Futures](futures.md) --
+   [the three operations that matter most](futures.md#the-three-operations-that-matter-most),
+   [bridging a callback API](futures.md#canonical-pattern-bridge-a-callback-api),
+   and [`wrap_future()`](futures.md#wrap_future). This is a reference companion
    section.
 
-2. [Task Coordination](task-coordination.md) -- [`asyncio.wait()`][asyncio-wait],
-   [`asyncio.as_completed()`][asyncio-as-completed],
-   [`asyncio.wait_for()`][asyncio-wait-for], and manual task management. This
-   is a reference companion section.
-
-3. [Futures](futures.md) -- [`loop.create_future()`][loop-create-future],
-   [`asyncio.wrap_future()`][asyncio-wrap-future], manual result resolution, and
-   bridging `concurrent.futures`. This is a reference companion section.
-
 4. [Callbacks and Threading](callbacks-and-threading.md) --
-   [`add_done_callback()`][add-done-callback], [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe],
-   [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe],
-   signal handling.
+   [`add_done_callback()` and `remove_done_callback()`](callbacks-and-threading.md#add_done_callback-and-remove_done_callback),
+   [`call_soon_threadsafe()`](callbacks-and-threading.md#call_soon_threadsafe),
+   [`run_coroutine_threadsafe()`](callbacks-and-threading.md#run_coroutine_threadsafe),
+   and [signal handling](callbacks-and-threading.md#signal-handling).
 
-5. [Transports and Protocols](transports-and-protocols.md) -- the callback-based
-   networking layer underneath streams, and when to use it. This is a
-   reference companion section.
-
-[asyncio-get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop
-[asyncio-wait]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait
-[asyncio-as-completed]: https://docs.python.org/3/library/asyncio-task.html#asyncio.as_completed
-[asyncio-wait-for]: https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
-[loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
-[asyncio-wrap-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future
-[loop-call-soon-threadsafe]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe
-[asyncio-run-coroutine-threadsafe]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run_coroutine_threadsafe
-[add-done-callback]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.add_done_callback
+5. [Transports and Protocols](transports-and-protocols.md) --
+   [the model in one sentence](transports-and-protocols.md#the-model-in-one-sentence),
+   [main differences from streams](transports-and-protocols.md#main-differences-from-streams),
+   and when to use it. This is a reference companion section.

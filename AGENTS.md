@@ -87,14 +87,18 @@ Validation is manual:
 
 - Internal links: use relative Markdown links such as
   `../appendices/debugging.md`.
+- In `index.md` overview text, prefer internal cross-links to the guide's own
+  headings when describing what a chapter or section covers. Leave external
+  API reference links to the section pages themselves.
 - Link guide-level concepts to the guide's own sections before linking
   externally.
 - For Python stdlib APIs, link to the official Python 3 docs.
 - For Trio APIs and concepts, link to the official Trio docs.
 - For third-party libraries, prefer official project docs over GitHub when
   possible.
-- In prose, link all meaningful occurrences of Python, Trio, and external API
-  mentions, not just the first one in a section.
+- In prose outside `index.md` overview text, link all meaningful occurrences of
+  Python, Trio, and external API mentions, not just the first one in a
+  section.
 - Prefer split reference links for readability, for example
   ``[`asyncio.sleep()`][asyncio-sleep]`` with
   `[asyncio-sleep]: https://docs.python.org/...`.
@@ -135,7 +139,9 @@ These rules apply to runnable examples and Python-flavoured pseudocode.
 
 ## Asyncio Content Guidelines
 
-- Link meaningful mentions of `asyncio` APIs in prose to the official docs.
+- Link meaningful mentions of `asyncio` APIs in prose to the official docs,
+  except in `index.md` overview text where you should point to internal guide
+  headings first.
 - Keep cancellation guidance consistent: cancellation arrives at checkpoints,
   not at arbitrary points.
 - Prefer structured concurrency terminology and patterns.
