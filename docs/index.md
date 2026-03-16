@@ -145,15 +145,15 @@ linearly.
 2. [Beyond the Basics](beyond-the-basics/index.md) -- Learn the advanced
    application-level patterns for [stream-based
    networking](beyond-the-basics/streams.md#opening-a-client-connection),
-   [blocking-code offloading](beyond-the-basics/blocking-code.md#asyncioto_thread),
+   [offloading blocking work](beyond-the-basics/offloading-blocking-work.md),
    [shielding](beyond-the-basics/shielding.md#when-to-use-shielding), and
    other production-oriented asyncio work.
 
-     * [Blocking Code](beyond-the-basics/blocking-code.md) -- Decide when to
-       use
-       [`asyncio.to_thread()`](beyond-the-basics/blocking-code.md#asyncioto_thread),
-       [process pools](beyond-the-basics/blocking-code.md#processpoolexecutor),
-       and each offloading strategy.
+      * [Offloading Blocking Work](beyond-the-basics/offloading-blocking-work.md) --
+        Decide when to use
+        [`asyncio.to_thread()`](beyond-the-basics/offloading-blocking-work.md#asyncioto_thread),
+        [process pools](beyond-the-basics/offloading-blocking-work.md#processpoolexecutor-for-cpu-bound-work),
+        and which offloading strategy fits.
      * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
        patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
        critical work without creating orphaned tasks.

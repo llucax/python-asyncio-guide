@@ -17,8 +17,8 @@ Each rule has a short explanation and a reference to the chapter where the full
 discussion lives. When in doubt, follow the reference -- the chapter sections
 have runnable examples, edge cases, and the reasoning behind each rule.
 
-If you follow these twenty-five rules, the vast majority of asyncio bugs simply
-cannot happen.
+If you follow these rules, the vast majority of asyncio bugs simply cannot
+happen.
 
 ---
 
@@ -203,8 +203,7 @@ warns about calls that exceed 100 ms, but the real fix is to move the blocking
 work out of the coroutine entirely (see [Use `to_thread()` for blocking
 I/O](#use-to_thread-for-blocking-io)).
 
-See [Blocking Code -- The Problem: Blocking the Event
-Loop](../beyond-the-basics/blocking-code.md#the-problem-blocking-the-event-loop).
+See [Offloading Blocking Work -- The Problem](../beyond-the-basics/offloading-blocking-work.md#the-problem).
 
 ### ✅ Use `#!py to_thread()` for blocking I/O
 
@@ -215,8 +214,8 @@ thread-pool worker, freeing the event loop to service other tasks while the
 blocking call completes. For CPU-bound work that needs to release the GIL,
 consider [`ProcessPoolExecutor`][processpoolexecutor] instead.
 
-See [Blocking Code -- `#!py
-asyncio.to_thread()`](../beyond-the-basics/blocking-code.md#asyncioto_thread).
+See [Offloading Blocking Work -- `#!py
+asyncio.to_thread()`](../beyond-the-basics/offloading-blocking-work.md#asyncioto_thread).
 
 ### ❌ Avoid making functions `#!py async` unnecessarily
 
@@ -241,8 +240,8 @@ primitives in coroutines, threading primitives in threads, and
 [`asyncio.to_thread()`][asyncio-to-thread] or `#!py run_coroutine_threadsafe()`
 at the boundary between them.
 
-See [Blocking Code -- Thread
-Safety](../beyond-the-basics/blocking-code.md#thread-safety).
+See [Offloading Blocking Work -- Thread
+Safety](../beyond-the-basics/offloading-blocking-work.md#thread-safety).
 
 ## Clean Up Resources Safely
 

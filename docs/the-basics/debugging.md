@@ -117,8 +117,8 @@ synchronous file I/O, any C extension that holds the GIL for a long time.
 
 :   Replace with the async equivalent ([`asyncio.sleep()`][asyncio-sleep],
 [`aiohttp`][aiohttp-docs], [`asyncio.to_thread()`][asyncio-to-thread] for
-unavoidable blocking work -- covered in [Blocking
-Code](../beyond-the-basics/blocking-code.md)).
+unavoidable blocking work -- covered in [Offloading Blocking
+Work](../beyond-the-basics/offloading-blocking-work.md)).
 
 ### Swallowing `#!py CancelledError`
 

@@ -378,14 +378,16 @@ async def app_context() -> AsyncIterator[ConnectionPool]:
     """Higher-level context that wires up the pool with app-specific config."""
     async with managed_pool("postgres://localhost/prod", size=3) as pool:
         print("App ready")
-        yield pool
-        print("App shutting down")
+        try:
+            yield pool
+        finally:
+            print("App shutting down")
 
 async def main() -> None:
     async with app_context() as pool:
         async with asyncio.TaskGroup() as tg:
-            t1 = tg.create_task(pool.execute("SELECT 1"))
-            t2 = tg.create_task(pool.execute("SELECT 2"))
+            t1 = tg.create_task(pool.execute("SELECT 1"), name="select-1")
+            t2 = tg.create_task(pool.execute("SELECT 2"), name="select-2")
         for r in (t1.result(), t2.result()):
             print(f"  {r}")
 
@@ -404,11 +406,12 @@ Pool closed: all connections released
 ```
 
 The layering is clean: `app_context` delegates resource management to
-`managed_pool` via [`async with`][async-with]. The teardown sequence is natural --
-`app_context`'s "App shutting down" message runs first, then `managed_pool`
-drains and closes. If you later add a cache layer or a metrics reporter, you
-wrap another context manager around the existing ones, and the lifetime nesting
-stays correct.
+`managed_pool` via [`async with`][async-with]. Both wrappers keep their teardown
+logic in `#!py finally` blocks, so the shutdown sequence still runs under
+exceptions and cancellation: `app_context` prints "App shutting down" first,
+then `managed_pool` drains and closes. If you later add a cache layer or a
+metrics reporter, you wrap another context manager around the existing ones,
+and the lifetime nesting stays correct.
 
 This pattern composes well with [`AsyncExitStack`][asyncexitstack] too. If `app_context` needed
 a variable number of pools (say, one per tenant), it could use an

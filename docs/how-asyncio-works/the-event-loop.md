@@ -311,7 +311,7 @@ series) instead of the ~1s you would see if they overlapped.
     every N iterations is a band-aid. The better solution is
     [`asyncio.to_thread()`][asyncio-to-thread] or [`loop.run_in_executor()`][loop-run-in-executor] with a
     [`ProcessPoolExecutor`][processpoolexecutor], as covered in
-    [Blocking Code](../beyond-the-basics/blocking-code.md). Reserve
+    [Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md). Reserve
     `#!py sleep(0)` for cases where the overhead of a thread switch is not
     justified.
 

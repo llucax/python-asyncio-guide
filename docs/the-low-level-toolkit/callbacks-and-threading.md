@@ -8,7 +8,7 @@ description: >-
 
 # Callbacks and Threading
 
-[Blocking Code](../beyond-the-basics/blocking-code.md) covered
+[Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md) covered
 [`asyncio.to_thread()`][asyncio-to-thread] -- the way to call blocking code
 *from* an async context. But sometimes the boundary runs the other direction.
 You have a thread -- maybe a web framework's request handler, a GUI event
@@ -105,8 +105,9 @@ calling it from a background thread can corrupt internal data structures.
 `#!py call_soon_threadsafe()` uses proper synchronization and wakes the loop's
 selector so the callback runs promptly, even if the loop is blocked on I/O.
 
-The [Blocking Code](../beyond-the-basics/blocking-code.md) section introduced
-this briefly. Here is a fuller example -- a background thread that
+The [Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md)
+section introduced this briefly. Here is a fuller example -- a background
+thread that
 sends progress updates to the event loop:
 
 ```python title="threadsafe_progress.py"

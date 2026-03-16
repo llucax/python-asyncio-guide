@@ -2,7 +2,7 @@
 title: Beyond the Basics
 description: >-
   Application-level asyncio patterns beyond the core toolkit -- stream-based
-  networking, integrating blocking code, shielding critical work from
+  networking, offloading blocking work, shielding critical work from
   cancellation, custom context managers, less-common coordination tools,
   subprocesses, and the Runner API.
 icon: lucide/workflow
@@ -26,10 +26,12 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
 
 ## Sections
 
-1. [Blocking Code](blocking-code.md) --
-   [`asyncio.to_thread()`](blocking-code.md#asyncioto_thread), [CPU-bound work
-   with `ProcessPoolExecutor`](blocking-code.md#processpoolexecutor), and [when
-   to use what](blocking-code.md#when-to-use-what).
+1. [Offloading Blocking Work](offloading-blocking-work.md) --
+   [`asyncio.to_thread()`](offloading-blocking-work.md#asyncioto_thread),
+   [CPU-bound work with
+   `ProcessPoolExecutor`](offloading-blocking-work.md#processpoolexecutor-for-cpu-bound-work),
+   and [choosing the right offloading
+   tool](offloading-blocking-work.md#when-to-use-what).
 
 2. [Shielding](shielding.md) -- [safe shielding
    patterns](shielding.md#safe-patterns), [when to use

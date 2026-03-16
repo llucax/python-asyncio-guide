@@ -70,7 +70,7 @@ nav = [
   ]},
   { "Beyond the Basics" = [
     "beyond-the-basics/index.md",
-    "beyond-the-basics/blocking-code.md",
+    "beyond-the-basics/offloading-blocking-work.md",
     "beyond-the-basics/shielding.md",
     "beyond-the-basics/custom-context-managers.md",
     "beyond-the-basics/advanced-coordination.md",

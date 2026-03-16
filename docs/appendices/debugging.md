@@ -170,8 +170,8 @@ computation, synchronous file I/O.
    ```
 
 **Fix:** Replace the blocking call with a non-blocking equivalent, or offload
-it to a thread. See [Blocking Code](../beyond-the-basics/blocking-code.md)
-for the full treatment.
+it to a thread. See [Offloading Blocking
+Work](../beyond-the-basics/offloading-blocking-work.md) for the full treatment.
 
 ```python
 await asyncio.sleep(1)                                      # not time.sleep()

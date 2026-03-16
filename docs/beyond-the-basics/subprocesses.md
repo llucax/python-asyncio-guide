@@ -126,7 +126,7 @@ itself reap the process.
 - Stream behavior, since subprocess pipes use the same high-level model:
   [Streams](streams.md)
 - Blocking-process integration and executor choices:
-  [Blocking Code](blocking-code.md)
+  [Offloading Blocking Work](offloading-blocking-work.md)
 
 [create-subprocess-exec]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_exec
 [create-subprocess-shell]: https://docs.python.org/3/library/asyncio-subprocess.html#asyncio.create_subprocess_shell

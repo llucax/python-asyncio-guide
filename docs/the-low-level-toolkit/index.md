@@ -32,7 +32,7 @@ what the tool is for, when to reach for it, the main footguns, and where to
 read the official reference next.
 
 For the application-level boundary cases that usually lead you here, see
-[Blocking Code](../beyond-the-basics/blocking-code.md) and
+[Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md) and
 [Runner](../beyond-the-basics/runner.md) first.
 
 ## Sections

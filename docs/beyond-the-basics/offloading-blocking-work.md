@@ -1,19 +1,23 @@
 ---
-title: Blocking Code
+title: Offloading Blocking Work
 description: >-
-  Safely integrate synchronous and blocking code into async programs using
-  asyncio.to_thread() and loop.run_in_executor(). Understand why blocking
-  calls freeze the event loop and how to fix them.
+  Offload synchronous and blocking work from async programs with
+  asyncio.to_thread() and loop.run_in_executor(). Learn when to use threads,
+  when to use processes, and how to keep the event loop responsive.
 ---
 
-# Blocking Code
+# Offloading Blocking Work
+
+[The Basics](../the-basics/index.md) already covered the core rule: do not
+block the event loop. This section picks up at the next question: what do you
+do when you still need to call synchronous code?
 
 Not everything in the Python ecosystem is async. You will need to call
 libraries that talk to databases, read files, or crunch numbers -- and many of
-them are synchronous. That is fine. Asyncio has good tools for bridging the
-gap. The catch is that you have to use them *deliberately*, because calling a
-blocking function directly inside a coroutine is one of the easiest ways to
-break an async program.
+them are synchronous. That is fine. Asyncio has good tools for offloading that
+work without freezing the loop. The catch is that you have to use them
+*deliberately*, because calling a blocking function directly inside a coroutine
+is one of the easiest ways to break an async program.
 
 !!! Info
 
@@ -23,7 +27,7 @@ break an async program.
     and [Developing with asyncio][official-dev] pages for full executor and
     threading details.
 
-## The Problem: Blocking the Event Loop
+## The Problem
 
 The event loop runs in a single thread. When you [`await`][await] something, control
 returns to the loop so it can service other tasks. But if you call a function
@@ -34,27 +38,32 @@ open connection just *waits*.
 Here is a concrete example. Two tasks run concurrently: one does a blocking
 sleep, the other tries to make progress alongside it:
 
-```python title="blocking_freeze.py"
+```python title="blocking_freeze.py" hl_lines="7"
 import asyncio
 import time
 
-async def blocking_task() -> str:
-    print("blocking_task: starting synchronous sleep...")
-    time.sleep(2)  # BUG: blocks the event loop for 2 seconds
-    print("blocking_task: done sleeping")
+async def blocking_task(t0: float) -> str:
+    elapsed: float = time.monotonic() - t0
+    print(f"blocking_task: starting synchronous sleep at {elapsed:.1f}s...")
+    time.sleep(2) # (1)!
+    elapsed = time.monotonic() - t0
+    print(f"blocking_task: done sleeping at {elapsed:.1f}s")
     return "blocking result"
 
-async def polite_task() -> str:
+async def polite_task(t0: float) -> str:
     for i in range(4):
-        print(f"polite_task: tick {i}")
+        elapsed: float = time.monotonic() - t0
+        print(f"polite_task: tick {i} at {elapsed:.1f}s")
         await asyncio.sleep(0.5)
+        elapsed = time.monotonic() - t0
+        print(f"polite_task: finished tick {i} at {elapsed:.1f}s")
     return "polite result"
 
 async def main() -> None:
     t0: float = time.monotonic()
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(blocking_task())
-        tg.create_task(polite_task())
+        tg.create_task(blocking_task(t0), name="blocking-task")
+        tg.create_task(polite_task(t0), name="polite-task")
     elapsed: float = time.monotonic() - t0
     print(f"Total time: {elapsed:.1f}s")
 
@@ -62,13 +71,19 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+1. **BUG:** blocks the event loop for 2 seconds.
+
 ```text title="$ python blocking_freeze.py"
-blocking_task: starting synchronous sleep...
-blocking_task: done sleeping
-polite_task: tick 0
-polite_task: tick 1
-polite_task: tick 2
-polite_task: tick 3
+blocking_task: starting synchronous sleep at 0.0s...
+blocking_task: done sleeping at 2.0s
+polite_task: tick 0 at 2.0s
+polite_task: finished tick 0 at 2.5s
+polite_task: tick 1 at 2.5s
+polite_task: finished tick 1 at 3.0s
+polite_task: tick 2 at 3.0s
+polite_task: finished tick 2 at 3.5s
+polite_task: tick 3 at 3.5s
+polite_task: finished tick 3 at 4.0s
 Total time: 4.0s
 ```
 
@@ -86,7 +101,7 @@ services.
     cannot *prevent* the freeze. The only fix is to not block the loop in the
     first place.
 
-## `asyncio.to_thread()`
+## `#!py asyncio.to_thread()`
 
 [`asyncio.to_thread()`][asyncio-to-thread]
 is the standard way to call a blocking function without freezing the event
@@ -109,24 +124,32 @@ Here is the fixed version of the freezing example:
 import asyncio
 import time
 
-def blocking_work() -> str:
+def blocking_work(t0: float) -> str:
     """A plain synchronous function -- no async keyword."""
-    print("blocking_work: starting synchronous sleep...")
+    elapsed: float = time.monotonic() - t0
+    print(f"blocking_work: starting synchronous sleep at {elapsed:.1f}s...")
     time.sleep(2)
-    print("blocking_work: done sleeping")
+    elapsed = time.monotonic() - t0
+    print(f"blocking_work: done sleeping at {elapsed:.1f}s")
     return "blocking result"
 
-async def polite_task() -> str:
+async def polite_task(t0: float) -> str:
     for i in range(4):
-        print(f"polite_task: tick {i}")
+        elapsed: float = time.monotonic() - t0
+        print(f"polite_task: tick {i} at {elapsed:.1f}s")
         await asyncio.sleep(0.5)
+        elapsed = time.monotonic() - t0
+        print(f"polite_task: finished tick {i} at {elapsed:.1f}s")
     return "polite result"
 
 async def main() -> None:
     t0: float = time.monotonic()
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(asyncio.to_thread(blocking_work))
-        tg.create_task(polite_task())
+        tg.create_task(
+            asyncio.to_thread(blocking_work, t0),
+            name="blocking-work",
+        )
+        tg.create_task(polite_task(t0), name="polite-task")
     elapsed: float = time.monotonic() - t0
     print(f"Total time: {elapsed:.1f}s")
 
@@ -135,12 +158,16 @@ if __name__ == "__main__":
 ```
 
 ```text title="$ python blocking_fixed.py"
-blocking_work: starting synchronous sleep...
-polite_task: tick 0
-polite_task: tick 1
-polite_task: tick 2
-polite_task: tick 3
-blocking_work: done sleeping
+blocking_work: starting synchronous sleep at 0.0s...
+polite_task: tick 0 at 0.0s
+polite_task: finished tick 0 at 0.5s
+polite_task: tick 1 at 0.5s
+polite_task: finished tick 1 at 1.0s
+polite_task: tick 2 at 1.0s
+polite_task: finished tick 2 at 1.5s
+polite_task: tick 3 at 1.5s
+blocking_work: done sleeping at 2.0s
+polite_task: finished tick 3 at 2.0s
 Total time: 2.0s
 ```
 
@@ -270,7 +297,13 @@ async def check_primes(numbers: list[int]) -> dict[int, bool]:
     with ProcessPoolExecutor() as pool:
         async with asyncio.TaskGroup() as tg:
             tasks: list[tuple[int, asyncio.Task[bool]]] = [
-                (n, tg.create_task(loop.run_in_executor(pool, is_prime, n)))
+                (
+                    n,
+                    tg.create_task(
+                        loop.run_in_executor(pool, is_prime, n),
+                        name=f"prime-check-{n}",
+                    ),
+                )
                 for n in numbers
             ]
     return {n: t.result() for n, t in tasks}

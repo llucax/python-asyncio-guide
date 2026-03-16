@@ -35,9 +35,9 @@ async def critical_write(data: str) -> str:
     return "ok"
 
 
-async def handler() -> None:
+async def handler(write_task: asyncio.Task[str]) -> None:
     try:
-        result: str = await asyncio.shield(critical_write("payload"))
+        result: str = await asyncio.shield(write_task)
         print(f"handler: got {result}")
     except asyncio.CancelledError:
         print("handler: cancelled, but the write continues in the background")
@@ -45,14 +45,21 @@ async def handler() -> None:
 
 
 async def main() -> None:
-    task: asyncio.Task[None] = asyncio.create_task(handler())
-    await asyncio.sleep(0.2)       # Let handler start
-    task.cancel()                   # Cancel the outer task
+    write_task: asyncio.Task[str] = asyncio.create_task(
+        critical_write("payload"),
+        name="critical-write",
+    )
+    task: asyncio.Task[None] = asyncio.create_task(
+        handler(write_task),
+        name="request-handler",
+    )
+    await asyncio.sleep(0.2)  # Let handler start
+    task.cancel()  # Cancel the outer task
     try:
         await task
     except asyncio.CancelledError:
         pass
-    await asyncio.sleep(1.5)       # Give the shielded work time to finish
+    await write_task
     print("main: done")
 
 
@@ -68,7 +75,9 @@ main: done
 ```
 
 The handler was cancelled after 0.2 seconds, but `critical_write` ran to
-completion. That is the whole point of [`shield()`][shield].
+completion. That is the whole point of [`shield()`][shield]. Here `#!py
+main()` also keeps ownership of the inner task and awaits it before exiting, so
+the write is still accounted for.
 
 !!! Note
 
@@ -162,7 +171,10 @@ async def handler(
     data: str,
     pending: list[asyncio.Task[None]],
 ) -> None:
-    task: asyncio.Task[None] = asyncio.create_task(flush_buffer(data))
+    task: asyncio.Task[None] = asyncio.create_task(
+        flush_buffer(data),
+        name=f"flush-{data}",
+    )
     pending.append(task)  # Register ownership
     try:
         await asyncio.shield(task)
@@ -173,7 +185,10 @@ async def handler(
 
 async def main() -> None:
     pending: list[asyncio.Task[None]] = []
-    task: asyncio.Task[None] = asyncio.create_task(handler("batch-1", pending))
+    task: asyncio.Task[None] = asyncio.create_task(
+        handler("batch-1", pending),
+        name="handler-batch-1",
+    )
     await asyncio.sleep(0.2)
     task.cancel()
     try:
@@ -245,14 +260,18 @@ async def handle_request(
         print(f"request: handling {conn_id}")
         await asyncio.sleep(10)  # Simulate work
     except asyncio.CancelledError:
-        cleanup.create_task(send_goodbye(conn_id))
+        cleanup.create_task(
+            send_goodbye(conn_id),
+            name=f"goodbye-{conn_id}",
+        )
         raise
 
 
 async def main() -> None:
     async with cleanup_scope() as cleanup:
         task: asyncio.Task[None] = asyncio.create_task(
-            handle_request("conn-42", cleanup)
+            handle_request("conn-42", cleanup),
+            name="request-conn-42",
         )
         await asyncio.sleep(0.2)
         task.cancel()
@@ -297,12 +316,18 @@ async def db_commit(committed: list[bool]) -> None:
 
 async def test_shield_protects_commit() -> None:
     committed: list[bool] = []
-    task: asyncio.Task[None] = asyncio.create_task(db_commit(committed))
+    task: asyncio.Task[None] = asyncio.create_task(
+        db_commit(committed),
+        name="db-commit",
+    )
 
     async def wrapper() -> None:
         await asyncio.shield(task)
 
-    outer: asyncio.Task[None] = asyncio.create_task(wrapper())
+    outer: asyncio.Task[None] = asyncio.create_task(
+        wrapper(),
+        name="shield-wrapper",
+    )
     await asyncio.sleep(0.1)
     outer.cancel()
     try:

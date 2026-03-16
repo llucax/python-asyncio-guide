@@ -400,7 +400,7 @@ code at this stage:
    files -- anything that makes the thread wait -- will freeze the entire loop.
    If you must call blocking code, use
    [`asyncio.to_thread()`][asyncio-to-thread] (covered in
-   [Blocking Code](../beyond-the-basics/blocking-code.md)).
+   [Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md)).
 
 3. **Don't make sync-only functions [`async`][async].** If a function never
    [`await`][await]-s anything, it should be a regular `#!py def`. Adding

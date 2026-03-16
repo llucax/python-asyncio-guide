@@ -31,7 +31,8 @@ is where the guide intentionally goes deep instead of linking out.
 If you want the application-level rules beside the internals, keep
 [Concurrent Tasks](../the-basics/concurrent-tasks.md),
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md), and
-[Blocking Code](../beyond-the-basics/blocking-code.md) open alongside this
+[Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md) open
+alongside this
 chapter.
 
 ## Sections
