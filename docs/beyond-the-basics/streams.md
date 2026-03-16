@@ -200,7 +200,7 @@ gracefully, but the shutdown request was still started.
 
 If the protocol absolutely requires the close handshake to finish, that is when
 to consider the owned shielding patterns from
-[Shielding](../beyond-the-basics/shielding.md).
+[Shielding](shielding.md).
 
 !!! Note
 
