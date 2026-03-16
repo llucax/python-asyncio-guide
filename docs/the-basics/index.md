@@ -16,10 +16,8 @@ coordination, practical pipelines, and debugging -- all using safe,
 high-level APIs.
 
 The goal here is to teach you how to think about asyncio. For the more
-API-heavy areas -- especially
-[coordination primitives](coordination.md#choosing-the-right-tool) -- the
-individual sections link out to the official docs for full method-by-method
-reference.
+API-heavy areas, the individual sections link out to the official docs for full
+method-by-method reference.
 
 ## Sections
 

@@ -4,6 +4,7 @@ description: >-
   An opinionated, concept-first guide to Python's asyncio library. Learn
   async/await through modern, structured concurrency patterns, then use the
   official docs as your API reference.
+icon: lucide/house
 ---
 
 # Asyncio: A Concept-First Learning Guide
