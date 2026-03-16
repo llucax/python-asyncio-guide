@@ -40,7 +40,7 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
 
 3. [Custom Context Managers](custom-context-managers.md) --
    [`@asynccontextmanager`](custom-context-managers.md#asynccontextmanager),
-   [the class-based protocol](custom-context-managers.md#the-class-based-protocol), and
+   [`AsyncExitStack`](custom-context-managers.md#asyncexitstack), and
    [composing lifetimes](custom-context-managers.md#composing-lifetimes).
 
 4. [Advanced Coordination](advanced-coordination.md) --

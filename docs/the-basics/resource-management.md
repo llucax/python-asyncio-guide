@@ -167,9 +167,9 @@ lazily with [`await`][await] between yields:
 
 ```python title="async_gen_basic.py" hl_lines="4 7"
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
-async def countdown(n: int) -> AsyncIterator[int]:
+async def countdown(n: int) -> AsyncGenerator[int, None]:
     for i in range(n, 0, -1):
         await asyncio.sleep(0.5)
         yield i
@@ -195,9 +195,9 @@ problem. Consider a generator that holds a resource:
 
 ```python title="async_gen_leak.py" hl_lines="5 11"
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
-async def read_lines() -> AsyncIterator[str]:
+async def read_lines() -> AsyncGenerator[str, None]:
     print("Opening resource")
     try:
         for i in range(100):
@@ -253,9 +253,9 @@ exits:
 ```python title="async_gen_safe.py" hl_lines="15"
 import asyncio
 from contextlib import aclosing
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
-async def read_lines() -> AsyncIterator[str]:
+async def read_lines() -> AsyncGenerator[str, None]:
     print("Opening resource")
     try:
         for i in range(100):

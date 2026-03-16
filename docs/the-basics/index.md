@@ -40,7 +40,6 @@ method-by-method reference.
 
 4. [Resource Management](resource-management.md) --
    [`async with`](resource-management.md#async-context-managers-and-async-with),
-   [`AsyncExitStack`](resource-management.md#asyncexitstack),
    [async generators](resource-management.md#async-generators),
    [async cleanup](resource-management.md#async-cleanup), and
    [`contextlib.aclosing()`](resource-management.md#contextlibaclosing).

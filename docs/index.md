@@ -118,12 +118,11 @@ linearly.
        [sibling
        cancellation](the-basics/concurrent-tasks.md#sibling-cancellation).
      * [Resource Management](the-basics/resource-management.md) -- Clean up
-        with [`async
-        with`](the-basics/resource-management.md#async-context-managers-and-async-with),
-        [`AsyncExitStack`](the-basics/resource-management.md#asyncexitstack),
-        [async generators](the-basics/resource-management.md#async-generators),
-        and
-        [`contextlib.aclosing()`](the-basics/resource-management.md#contextlibaclosing).
+       with [`async
+       with`](the-basics/resource-management.md#async-context-managers-and-async-with),
+       [async generators](the-basics/resource-management.md#async-generators),
+       and
+       [`contextlib.aclosing()`](the-basics/resource-management.md#contextlibaclosing).
       * [Coordination](the-basics/coordination.md) -- Use
         [`asyncio.Queue`](the-basics/coordination.md#asyncioqueue),
         [`asyncio.Event`](the-basics/coordination.md#asyncioevent), and
@@ -158,12 +157,11 @@ linearly.
      * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
        patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
        critical work without creating orphaned tasks.
-      * [Custom Context Managers](beyond-the-basics/custom-context-managers.md)
-        -- Build reusable async setup and teardown blocks with
-        [`@asynccontextmanager`](beyond-the-basics/custom-context-managers.md#asynccontextmanager),
-        [the class-based protocol](beyond-the-basics/custom-context-managers.md#the-class-based-protocol),
-        and
-        [composing lifetimes](beyond-the-basics/custom-context-managers.md#composing-lifetimes).
+     * [Custom Context Managers](beyond-the-basics/custom-context-managers.md)
+       -- Build reusable async setup and teardown blocks with
+       [`@asynccontextmanager`](beyond-the-basics/custom-context-managers.md#asynccontextmanager)
+       and
+       [`AsyncExitStack`](beyond-the-basics/custom-context-managers.md#asyncexitstack).
       * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
         Reach for
         [`Lock`](beyond-the-basics/advanced-coordination.md#asynciolock),
