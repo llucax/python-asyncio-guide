@@ -207,6 +207,25 @@ The [`__aenter__`][aenter] method returns whatever the `as` target should be -- 
 clean exit). If [`__aexit__`][aexit] returns `#!py True`, the exception is suppressed; if it
 returns `#!py None` or `#!py False` (the default), the exception propagates.
 
+### `__aexit__` and Cancellation
+
+That "returns `#!py True` to suppress the exception" rule includes
+[`CancelledError`][cancellederror]. If the body of the [`async with`][async-with] block is
+being cancelled by a timeout, a [`TaskGroup`][taskgroup], or shutdown logic,
+and your [`__aexit__`][aexit] returns `#!py True`, the caller sees a normal exit instead of
+the cancellation it requested.
+
+The same pitfall exists if [`__aexit__`][aexit] catches [`CancelledError`][cancellederror]
+internally and does not re-raise it. Likewise, if [`__aexit__`][aexit] raises a new
+exception while a cancellation is already unwinding the block, the new
+exception replaces the original cancellation. This is the class-based
+equivalent of letting a `#!py finally` block raise during cleanup.
+
+In most async context managers, [`__aexit__`][aexit] should do its cleanup and return
+`#!py None` or `#!py False`. If you need special logging or bookkeeping during
+cancellation, you can inspect `#!py exc_type`, but still let the original
+[`CancelledError`][cancellederror] propagate.
+
 !!! Tip
 
     For most resource wrappers, [`@asynccontextmanager`][at-asynccontextmanager] is shorter and easier
@@ -410,6 +429,7 @@ a variable number of pools (say, one per tenant), it could use an
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
+[cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
 [aenter]: https://docs.python.org/3/reference/datamodel.html#object.__aenter__
 [aexit]: https://docs.python.org/3/reference/datamodel.html#object.__aexit__
 [at-asynccontextmanager]: https://docs.python.org/3/library/contextlib.html#contextlib.asynccontextmanager

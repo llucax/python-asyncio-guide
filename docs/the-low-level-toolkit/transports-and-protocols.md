@@ -9,7 +9,7 @@ description: >-
 # Transports and Protocols
 
 For most application code, stop at
-[Streams](../the-basics/streams.md). That is the default.
+[Streams](../beyond-the-basics/streams.md). That is the default.
 
 This section exists for the moment when you need to understand what sits under
 streams, or when you are writing library code that genuinely needs the lower
@@ -86,7 +86,7 @@ to go next if you decide to work at this level.
 
 - Full reference: [Transports and Protocols][transports-and-protocols]
 - Loop APIs that construct this layer: [Event Loop][event-loop]
-- High-level alternative: [Streams](../the-basics/streams.md)
+- High-level alternative: [Streams](../beyond-the-basics/streams.md)
 
 [transports-and-protocols]: https://docs.python.org/3/library/asyncio-protocol.html
 [event-loop]: https://docs.python.org/3/library/asyncio-eventloop.html

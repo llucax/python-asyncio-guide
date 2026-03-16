@@ -281,7 +281,7 @@ async with asyncio.timeout(delay):
 
 Timeouts and [`TaskGroup`][taskgroup]s work together in two natural patterns.
 
-#### Timeout around a `TaskGroup`
+#### Timeout around a `#!py TaskGroup`
 
 The entire group must finish within the deadline. When the timeout fires, it
 cancels the current task, which triggers the [`TaskGroup`][taskgroup] to cancel
@@ -303,6 +303,8 @@ async def main() -> None:
                 tg.create_task(fetch("https://example.com/c"), name="fetch-c")
     except TimeoutError:
         print("All fetches cancelled -- group took too long")
+    else:
+        print("All fetches completed successfully")
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -315,6 +317,48 @@ All fetches cancelled -- group took too long
 The timeout fires after one second, cancelling the host task. The
 [`TaskGroup`][taskgroup] sees the cancellation and cancels all three children.
 Clean and predictable.
+
+!!! Warning
+
+    **Always put the timeout *around* the [`TaskGroup`][taskgroup], not inside
+    it.**
+
+    If you change the above code to put the timeout around the `#!py
+    tg.create_task()` calls instead the whole group, it will never time out (it
+    will finish after two seconds):
+
+    ```python title="timeout_around_group_broken.py" hl_lines="1-2"
+    async with asyncio.TaskGroup() as tg: # (1)!
+        async with asyncio.timeout(1):
+            tg.create_task(fetch("https://example.com/a"), name="fetch-a")
+            tg.create_task(fetch("https://example.com/b"), name="fetch-b")
+            tg.create_task(fetch("https://example.com/c"), name="fetch-c")
+        # (2)!
+    # (3)!
+    ```
+
+    1. Reversed order -- timeout is inside the group.
+    2. At this point the timeout scope is already gone. Until this point there
+       are even no checkpoints possible (no `#!py await`), so the timeout can't
+       fire.
+    3. Here is the first opportunity for a cancellation, when the `TaskGroup`
+       waits for the children to finish, but the timeout blcok is already gone
+       here.
+
+    ```text title="$ python timeout_around_group_broken.py"
+    All fetches completed successfully
+    ```
+
+    This is what happens:
+
+    - [`asyncio.timeout()`][asyncio-timeout] only cancels the *current task*.
+    - `#!py tg.create_task(...)` schedules a new task and returns immediately.
+    - The host task leaves the timeout block almost instantly (there are no
+      `#!py await`s inside the `#!py timeout()` block), there are no
+      checkpoints, and thus no cancellation opportunities and no timeout
+      possible.
+    - Later, [`TaskGroup`][taskgroup] waits for the child in its own
+      [`__aexit__`][aexit] -- *outside* the timeout.
 
 #### Individual timeouts inside `TaskGroup` children
 

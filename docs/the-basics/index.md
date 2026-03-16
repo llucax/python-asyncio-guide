@@ -3,7 +3,7 @@ title: The Basics
 description: >-
   Everything you need to write simple but correct and robust async programs --
   coroutines, concurrent tasks, cancellation, timeouts, resource management,
-  networking, and inter-task coordination using safe, high-level APIs.
+  inter-task coordination, practical pipelines, and debugging.
 icon: lucide/graduation-cap
 ---
 
@@ -11,12 +11,12 @@ icon: lucide/graduation-cap
 
 This chapter covers everything you need to write simple but correct and robust
 async programs. By the end, you will be comfortable with coroutines, concurrent
-tasks, cancellation, timeouts, resource management, networking, and simple
-inter-task coordination -- all using safe, high-level APIs.
+tasks, cancellation, timeouts, resource management, simple inter-task
+coordination, practical pipelines, and debugging -- all using safe,
+high-level APIs.
 
-The goal here is to teach you how to think about asyncio. For the few API-heavy
-areas -- especially
-[streams](streams.md#opening-a-client-connection) and
+The goal here is to teach you how to think about asyncio. For the more
+API-heavy areas -- especially
 [coordination primitives](coordination.md#choosing-the-right-tool) -- the
 individual sections link out to the official docs for full method-by-method
 reference.
@@ -46,26 +46,20 @@ reference.
    [async cleanup](resource-management.md#async-cleanup), and
    [`contextlib.aclosing()`](resource-management.md#contextlibaclosing).
 
-5. [Streams](streams.md) --
-   [opening a client connection](streams.md#opening-a-client-connection),
-   [stream resource management](streams.md#resource-management-for-streams),
-   [building a TCP server](streams.md#building-a-tcp-server), and stream
-   cleanup rules.
-
-6. [Coordination](coordination.md) --
+5. [Coordination](coordination.md) --
    [`asyncio.Queue`](coordination.md#asyncioqueue),
    [backpressure](coordination.md#backpressure),
    [`asyncio.Event`](coordination.md#asyncioevent), and
    [`asyncio.Semaphore`](coordination.md#asynciosemaphore).
 
-7. [Building a Pipeline](building-a-pipeline.md) -- an actor-based pipeline
+6. [Building a Pipeline](building-a-pipeline.md) -- an actor-based pipeline
    combining
    [bounded queues](building-a-pipeline.md#step-2-backpressure-with-bounded-queues),
    [error handling](building-a-pipeline.md#step-3-error-handling), and
    [clean shutdown](building-a-pipeline.md#step-4-full-pipeline-with-clean-shutdown)
    into a realistic application.
 
-8. [Debugging](debugging.md) --
+7. [Debugging](debugging.md) --
    [debug mode](debugging.md#debug-mode),
    [common mistakes](debugging.md#common-mistakes-checklist), and the
    [checkpoint contract](debugging.md#checkpoint-contract-condensed).

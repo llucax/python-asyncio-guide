@@ -83,8 +83,8 @@ reader:
   low-level APIs. Most application code can skip it on a first pass.
 - **[Appendices](appendices/index.md)** are for reference and revisiting: the
   [checkpoint contract](appendices/checkpoint-contract.md#implications),
-  consolidated [best practices](appendices/best-practices.md#best-practices),
-  and a dedicated [debugging guide](appendices/debugging.md#diagnosing-a-blocked-loop).
+  consolidated [best practices](appendices/best-practices.md), and a dedicated
+  [debugging guide](appendices/debugging.md#diagnosing-a-blocked-loop).
 
 ## Chapter Index
 
@@ -122,15 +122,11 @@ linearly.
        [async generators](the-basics/resource-management.md#async-generators),
        and
        [`contextlib.aclosing()`](the-basics/resource-management.md#contextlibaclosing).
-     * [Streams](the-basics/streams.md) -- Work with [client
-       connections](the-basics/streams.md#opening-a-client-connection), [TCP
-       servers](the-basics/streams.md#building-a-tcp-server), and [stream
-       cleanup](the-basics/streams.md#resource-management-for-streams).
-     * [Coordination](the-basics/coordination.md) -- Use
-       [`asyncio.Queue`](the-basics/coordination.md#asyncioqueue),
-       [`asyncio.Event`](the-basics/coordination.md#asyncioevent), and
-       [`asyncio.Semaphore`](the-basics/coordination.md#asynciosemaphore) for
-       inter-task coordination.
+      * [Coordination](the-basics/coordination.md) -- Use
+        [`asyncio.Queue`](the-basics/coordination.md#asyncioqueue),
+        [`asyncio.Event`](the-basics/coordination.md#asyncioevent), and
+        [`asyncio.Semaphore`](the-basics/coordination.md#asynciosemaphore) for
+        inter-task coordination.
      * [Building a Pipeline](the-basics/building-a-pipeline.md) -- Combine
        [bounded
        queues](the-basics/building-a-pipeline.md#step-2-backpressure-with-bounded-queues),
@@ -146,10 +142,11 @@ linearly.
        early.
 
 2. [Beyond the Basics](beyond-the-basics/index.md) -- Learn the advanced
-   application-level patterns that sit between [blocking-code
-   offloading](beyond-the-basics/blocking-code.md#asyncioto_thread),
+   application-level patterns for [stream-based
+   networking](beyond-the-basics/streams.md#opening-a-client-connection),
+   [blocking-code offloading](beyond-the-basics/blocking-code.md#asyncioto_thread),
    [shielding](beyond-the-basics/shielding.md#when-to-use-shielding), and
-   library internals.
+   other production-oriented asyncio work.
 
      * [Blocking Code](beyond-the-basics/blocking-code.md) -- Decide when to
        use
@@ -164,18 +161,22 @@ linearly.
        [`@asynccontextmanager`](beyond-the-basics/custom-context-managers.md#asynccontextmanager)
        and
        [`AsyncExitStack`](beyond-the-basics/custom-context-managers.md#asyncexitstack).
-     * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
-       Reach for
-       [`Lock`](beyond-the-basics/advanced-coordination.md#asynciolock),
-       [`Condition`](beyond-the-basics/advanced-coordination.md#asynciocondition),
-       [`Barrier`](beyond-the-basics/advanced-coordination.md#asynciobarrier),
-       and
-       [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#priorityqueue-and-lifoqueue)
-       when the basics are not enough.
-     * [Subprocesses](beyond-the-basics/subprocesses.md) -- Use [the
-       `communicate()`
-       pattern](beyond-the-basics/subprocesses.md#the-default-pattern-communicate)
-       and avoid [pipe
+      * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
+        Reach for
+        [`Lock`](beyond-the-basics/advanced-coordination.md#asynciolock),
+        [`Condition`](beyond-the-basics/advanced-coordination.md#asynciocondition),
+        [`Barrier`](beyond-the-basics/advanced-coordination.md#asynciobarrier),
+        and
+        [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#priorityqueue-and-lifoqueue)
+        when the basics are not enough.
+      * [Streams](beyond-the-basics/streams.md) -- Work with [client
+        connections](beyond-the-basics/streams.md#opening-a-client-connection),
+        [TCP servers](beyond-the-basics/streams.md#building-a-tcp-server), and
+        [stream cleanup](beyond-the-basics/streams.md#resource-management-for-streams).
+      * [Subprocesses](beyond-the-basics/subprocesses.md) -- Use [the
+        `communicate()`
+        pattern](beyond-the-basics/subprocesses.md#the-default-pattern-communicate)
+        and avoid [pipe
        deadlocks](beyond-the-basics/subprocesses.md#the-main-pitfall-pipe-deadlocks).
      * [Runner](beyond-the-basics/runner.md) -- Learn [when to use
        `Runner`](beyond-the-basics/runner.md#when-to-use-runner) when you need
@@ -245,8 +246,8 @@ linearly.
 
 5. [Appendices](appendices/index.md) -- Reference material for
    [checkpoint behavior](appendices/checkpoint-contract.md#always-suspends),
-   [best practices](appendices/best-practices.md#quick-reference), and
-   [debugging workflows](appendices/debugging.md#useful-diagnostic-patterns).
+   [best practices](appendices/best-practices.md), and [debugging
+   workflows](appendices/debugging.md#useful-diagnostic-patterns).
 
      * [Checkpoint Contract](appendices/checkpoint-contract.md) -- guide-level
        reference for which common operations
@@ -255,9 +256,8 @@ linearly.
        or [never suspend](appendices/checkpoint-contract.md#never-suspends).
 
      * [Best Practices, Pitfalls, and Gotchas](appendices/best-practices.md) --
-       consolidated
-       [best practices](appendices/best-practices.md#best-practices) and a
-       skimmable [quick reference](appendices/best-practices.md#quick-reference).
+       consolidated best practices, pitfalls, and gotchas you can skim before
+       a review.
 
      * [Debugging Guide](appendices/debugging.md) -- practical techniques for
        [blocked loops](appendices/debugging.md#diagnosing-a-blocked-loop),
