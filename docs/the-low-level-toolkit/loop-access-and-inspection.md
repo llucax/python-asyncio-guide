@@ -17,7 +17,7 @@ already good. Use this section to answer two questions:
 1. When do you actually need the loop object?
 2. Which inspection hooks are worth remembering?
 
-## The Normal Accessor: `get_running_loop()`
+## The Normal Accessor: `#!py get_running_loop()`
 
 Inside a running coroutine, use [`asyncio.get_running_loop()`][get-running-loop].
 

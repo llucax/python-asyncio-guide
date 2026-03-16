@@ -96,7 +96,7 @@ Consumed: 3
 Consumed: 4
 ```
 
-The producer fills the queue to `maxsize=2` and then waits. Each time the
+The producer fills the queue to `#!py maxsize=2` and then waits. Each time the
 consumer takes an item, the producer wakes up. This is *backpressure*.
 
 ## Backpressure
@@ -105,9 +105,9 @@ consumer takes an item, the producer wakes up. This is *backpressure*.
 Without a size limit, the producer never blocks and items pile up in memory
 without bound -- eventually eating all RAM and crashing the process.
 
-With `maxsize=0` (the default -- unbounded), a producer generating a million
-items dumps them all before the consumer processes even a handful. The fix is
-trivial -- set `maxsize`:
+With `#!py maxsize=0` (the default -- unbounded), a producer generating a
+million items dumps them all before the consumer processes even a handful. The
+fix is trivial -- set `#!py maxsize`:
 
 ```python
 queue: asyncio.Queue[int] = asyncio.Queue(maxsize=50)
@@ -173,10 +173,11 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. The producer sends `None` to signal shutdown.
+1. The producer sends `#!py None` to signal shutdown.
 2. The consumer now loops *forever* (until it sees the sentinel).
 3. The consumer checks for the sentinel and stops when it sees it.
-4. The queue type was updated to allow `None` as a valid item to signal shutdown.
+4. The queue type was updated to allow `#!py None` as a valid item to signal
+   shutdown.
 
 ```text title="$ python queue_with_sentinel.py"
 Produced: 0
@@ -204,7 +205,7 @@ only send one sentinel, two of them will hang forever.
     type-safe stop sentinel you can use `#!py class Stop: pass`. Then `#!py
     match` against `#!py case Stop():` instead of `#!py is None`.
 
-## `asyncio.Event`
+## `#!py asyncio.Event`
 
 An [`Event`][event] is a simple flag that tasks can wait on. It starts unset.
 [`event.set()`][event-set] raises the flag, waking all tasks blocked on
@@ -270,7 +271,7 @@ event is already set returns immediately -- no race condition.
     Coordination](../beyond-the-basics/advanced-coordination.md) is a better
     fit.
 
-## `asyncio.Semaphore`
+## `#!py asyncio.Semaphore`
 
 A [`Semaphore`][semaphore] limits how many tasks can enter a section of code
 concurrently. Create one with a count, and each `#!py async with semaphore:`

@@ -18,7 +18,7 @@ never fully iterated, drain the thread pool, and close the event loop. If you
 understand this sequence, the warnings and tracebacks that appear during
 shutdown stop being mysterious.
 
-## The `asyncio.run()` Shutdown Sequence
+## The `#!py asyncio.run()` Shutdown Sequence
 
 When your top-level coroutine finishes -- whether it returns normally or raises
 an exception -- [`asyncio.run()`][asyncio-run] does not simply close the loop. It walks
@@ -126,7 +126,7 @@ scope.
     warning is telling you that your program's concurrency structure has a
     hole.
 
-### Why `TaskGroup` Prevents This
+### Why `#!py TaskGroup` Prevents This
 
 A [`TaskGroup`][taskgroup] is the fix. Every
 task created with `#!py tg.create_task()` is awaited

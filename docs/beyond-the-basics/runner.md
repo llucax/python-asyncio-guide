@@ -16,11 +16,13 @@ need to run *multiple* top-level coroutines on the *same* event loop without
 cramming them into one giant `#!py main()`.
 
 This is a good example of a topic where the official docs are already strong.
-This section stays focused on when `Runner` is worth it.
+This section stays focused on when [`asyncio.Runner`][asyncio-runner] is worth
+it.
 
-## When to Use `Runner`
+## When to Use `#!py Runner`
 
-Reach for `Runner` when all of the following are true:
+Reach for [`asyncio.Runner`][asyncio-runner] when all of the following are
+true:
 
 - you are still at the top level of the program
 - you need more than one `#!py run(...)` call
@@ -56,25 +58,26 @@ if __name__ == "__main__":
 
 Both coroutines run on the same loop. That is the whole point.
 
-## When `asyncio.run()` Is Still Better
+## When `#!py asyncio.run()` Is Still Better
 
 If you only need one top-level async entry point, [`asyncio.run()`][asyncio-run] is simpler,
 clearer, and more idiomatic.
 
 If you need multiple pieces of async work but they naturally belong together,
-write one `#!py main()` and keep `Runner` out of it.
+write one `#!py main()` and keep [`asyncio.Runner`][asyncio-runner] out of it.
 
 ## Cleanup
 
-`Runner` cleans up the same broad categories of state as [`asyncio.run()`][asyncio-run]:
+[`asyncio.Runner`][asyncio-runner] cleans up the same broad categories of state
+as [`asyncio.run()`][asyncio-run]:
 
 - remaining tasks
 - async generators
 - the default executor
 - the loop itself
 
-Use the `#!py with` statement so that cleanup still happens if one `#!py runner.run(...)`
-call raises.
+Use `#!py with asyncio.Runner() as runner:` so cleanup still happens if one
+`#!py runner.run(...)` call raises.
 
 ## What to Read Next
 

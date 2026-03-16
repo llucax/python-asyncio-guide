@@ -52,10 +52,11 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. `#!py .write()` only buffers data -- [`.drain()`][drain] is the coroutine
+1. `#!py writer.write()` only buffers data -- `#!py writer.drain()` is the
+   coroutine
    that actually waits for the buffer to flush. This is where backpressure
    happens.
-2. Always call both [`.close()`][close] and [`.wait_closed()`][wait-closed].
+2. Always call both `#!py writer.close()` and `#!py writer.wait_closed()`.
    The first starts the shutdown, the second waits for it to complete
    (including TLS teardown and final buffer flush).
 
@@ -65,12 +66,12 @@ Content-Type: text/html; charset=UTF-8
 ...
 ```
 
-A few things to notice. `#!py open_connection()` is a coroutine -- the TCP
-handshake happens during the [`await`][await]. The writer's `#!py .write()`
-method buffers data synchronously (no [`await`][await]), but
-[`.drain()`][drain] is a coroutine that waits for the buffer to flush. And at
-the end, you must call both [`.close()`][close] and
-[`.wait_closed()`][wait-closed] -- more on that shortly. The single `#!py
+A few things to notice. `#!py asyncio.open_connection()` is a coroutine -- the
+TCP handshake happens during the `#!py await`. The writer's
+`#!py writer.write()` method buffers data synchronously (no `#!py await`), but
+`#!py writer.drain()` is a coroutine that waits for the buffer to flush. And at
+the end, you must call both `#!py writer.close()` and
+`#!py writer.wait_closed()` -- more on that shortly. The single `#!py
 reader.read(4096)` call reads up to 4096 bytes, so this example prints just the
 first chunk rather than the full HTTP response.
 
@@ -121,7 +122,7 @@ while not reader.at_eof():
     data; use `#!py at_eof()` when you need a non-blocking check outside of a
     read call.
 
-## `StreamWriter`
+## `#!py StreamWriter`
 
 [`asyncio.StreamWriter`][asyncio-streamwriter] is the write side. Writing works
 differently from reading: you buffer data synchronously, then flush
@@ -159,8 +160,8 @@ await writer.drain()  # Flush both writes to the network
 ## Resource Management for Streams
 
 Always close writers. Always call [`wait_closed()`][wait-closed] after `#!py
-close()`. The [`.close()`][close] method starts the shutdown process, but
-[`.wait_closed()`][wait-closed] is the coroutine that waits for it to complete
+writer.close()`. The [`close()`][close] method starts the shutdown process, but
+[`wait_closed()`][wait-closed] is the coroutine that waits for it to complete
 -- including flushing any remaining buffered data and tearing down the TLS
 layer if one exists.
 

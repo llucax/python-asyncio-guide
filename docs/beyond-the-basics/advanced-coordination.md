@@ -56,7 +56,7 @@ but they are easier to misuse.
 | [`PriorityQueue`][priorityqueue] | Work items must be processed by priority instead of FIFO order | Forgetting that ties still need stable, comparable payloads |
 | [`LifoQueue`][lifoqueue] | Newest work should be processed first | Accidentally starving older items |
 
-## `asyncio.Lock`
+## `#!py asyncio.Lock`
 
 Use a [`Lock`][lock] when tasks really do share mutable state directly and one
 invariant has to survive across an [`await`][await].
@@ -153,7 +153,7 @@ much less common in asyncio than they are in threaded programs.
     asyncio, those designs usually fit the cooperative model better: one task
     owns the state, and other tasks send it work.
 
-## `asyncio.Condition`
+## `#!py asyncio.Condition`
 
 [`Condition`][condition] combines the shared-state pattern of a [`Lock`][lock]
 with wait/notify coordination. Use it when tasks share mutable state and
@@ -185,7 +185,7 @@ class Buffer:
 If that looks like a hand-rolled queue, that is the point: prefer
 [`Queue`][queue] unless you genuinely need a custom predicate over shared state.
 
-## `asyncio.Barrier`
+## `#!py asyncio.Barrier`
 
 Use a [`Barrier`][barrier] for phased work. Each task calls [`await barrier.wait()`][await-barrier-wait].
 Nobody crosses until the required number of parties arrives.
@@ -284,7 +284,7 @@ exiting.
     [`get()`][get]. Too few calls make [`join()`][join] wait forever; too many
     raise `ValueError`.
 
-## `asyncio.BoundedSemaphore`
+## `#!py asyncio.BoundedSemaphore`
 
 [`BoundedSemaphore`][boundedsemaphore] is just a [`Semaphore`][semaphore] with one extra
 safety check: [`release()`][release] raises if you call it more times than you acquired.
@@ -293,7 +293,7 @@ That makes it a debugging and correctness tool, not a fundamentally different
 coordination pattern. Use it when an over-release would be a serious bug and you
 want that bug to surface immediately.
 
-## `PriorityQueue` and `LifoQueue`
+## `#!py PriorityQueue` and `#!py LifoQueue`
 
 These are queue variants, so the usual queue advice still applies:
 

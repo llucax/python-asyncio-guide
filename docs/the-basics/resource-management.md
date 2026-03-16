@@ -60,9 +60,9 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. The `lock` is acquired here (awaiting for it to be released first if it was
+1. The `#!py lock` is acquired here (awaiting for it to be released first if it was
    already taken), and then held for the whole `#!py async with` block.
-2. The `lock` is released here, even if the body raised or was cancelled.
+2. The `#!py lock` is released here, even if the body raised or was cancelled.
 
 ```text title="$ python lock_demo.py"
 Incremented to 1
@@ -243,7 +243,7 @@ long-running server, this means leaked connections and file descriptors.
     operations inside it may fail or be silently skipped. Always close async
     generators explicitly.
 
-## `contextlib.aclosing()`
+## `#!py contextlib.aclosing()`
 
 [`contextlib.aclosing()`][contextlib-aclosing] is the fix. It wraps an async
 generator (or any object with an [`aclose()`][aclose] method) in an async
@@ -386,19 +386,19 @@ finally:
 ```
 
 If you need to add a timeout to the cleanup under cancellation, you will
-need to use the `try`/`finally` explicitly.
+need to use `#!py try`/`#!py finally` explicitly.
 
 In general, libraries providing async context managers should have this in
 mind and try to do *the right thing by default*, but you should be aware of
-this when using async context managers, and get to know what their `#!py
-__aexit__()` does, and if it really makes `#!py async` calls or not (many
-don't).
+this when using async context managers, and get to know what their
+`#!py __aexit__()` does, and if it really makes `#!py async` calls or not
+(many do not).
 
 ### Async Cleanup Cancellation
 
 Note that a second cancellation request can cancel the cleanup itself!
 
-For example, a second, higher-level timout. In these cases, if interruption
+For example, a second, higher-level timeout. In these cases, if interruption
 would leave the system in a worse state -- for example, a commit, rollback, or
 protocol close frame, best-effort cleanup is not enough. In those cases
 [`asyncio.shield()`][asyncio-shield] may be appropriate, but
@@ -460,8 +460,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. Order is important here, we need to make sure the generators are only closed
-   after all taks finished, so after the `TaskGroup` block ends.
+1. Order is important here: we need to make sure the generators are only closed
+   after all tasks finished, so after the `#!py TaskGroup` block ends.
 
 ```text title="$ python resource_pipeline.py"
 [fast] Starting consumer for 2 events
@@ -480,11 +480,11 @@ fast collected: ['A/event-0', 'A/event-1']
 slow collected: ['B/event-0', 'B/event-1', 'B/event-2']
 ```
 
-Both consumers stop early (before the stream is exhausted), but `#!py
-aclosing()` ensures each stream's `#!py finally` block runs immediately. The
+Both consumers stop early (before the stream is exhausted), but
+`#!py aclosing()` ensures each stream's `#!py finally` block runs immediately. The
 [`TaskGroup`][taskgroup] guarantees both consumers finish before `#!py main()`
 continues. Every resource has a clear owner, every cleanup path is covered, and
-cancellation would not change any of that -- the [`async with`][async-with]
+cancellation would not change any of that -- the `#!py async with`
 blocks and `#!py finally` blocks would still run.
 
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with

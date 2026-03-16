@@ -19,7 +19,7 @@ Together, they are the concrete machinery that makes concurrency work. The
 event loop spins, futures hold eventual results, and tasks drive coroutines
 forward one [`await`][await] at a time.
 
-## `asyncio.Future`
+## `#!py asyncio.Future`
 
 A *future* is a container for a value that doesn't exist yet. You can think of
 it as an empty box with a label that says "result goes here." Someone will put
@@ -100,7 +100,7 @@ for it, and the code that awaits doesn't need to know who will provide it.
 This decoupling is what allows the event loop to wire together callbacks,
 I/O completions, and coroutines into a single coherent system.
 
-## `asyncio.Task`
+## `#!py asyncio.Task`
 
 A *task* is a future that wraps a coroutine and drives it on the event loop.
 Where a plain future is a passive container (someone else must call
@@ -124,7 +124,7 @@ instant you create the task. It starts on the *next iteration* of the event
 loop, when the loop processes the [`call_soon()`][call-soon] callback. This is why
 [`create_task()`][create-task] returns immediately -- it just puts work on the queue.
 
-## `asyncio.create_task()`
+## `#!py asyncio.create_task()`
 
 [`asyncio.create_task()`][asyncio-create-task]
 is the function that wraps a coroutine in a [`Task`][task] and schedules it on the
@@ -165,7 +165,7 @@ task done? True
 result: 49
 ```
 
-The `name` parameter is optional. If you omit it, asyncio assigns a default
+The `#!py name=` parameter is optional. If you omit it, asyncio assigns a default
 like `#!py "Task-1"`, `#!py "Task-2"`, etc. You can also change the name after
 creation with `#!py .set_name()`:
 
@@ -206,8 +206,8 @@ inspection methods tell you which state you're in:
 |-----------------|---------|--------|-----------|-----------|
 | `#!py .done()`       | `#!py False` | `#!py True` | `#!py True`    | `#!py True`    |
 | `#!py .cancelled()`  | `#!py False` | `#!py False`| `#!py False`   | `#!py True`    |
-| `#!py .result()`     | raises `InvalidStateError` | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
-| `#!py .exception()`  | raises `InvalidStateError` | returns `#!py None` | returns exception | raises [`CancelledError`][cancellederror] |
+| `#!py .result()`     | raises [`InvalidStateError`][invalidstateerror] | returns value | re-raises exception | raises [`CancelledError`][cancellederror] |
+| `#!py .exception()`  | raises [`InvalidStateError`][invalidstateerror] | returns `#!py None` | returns exception | raises [`CancelledError`][cancellederror] |
 
 The following example walks through all three outcomes:
 
@@ -266,7 +266,8 @@ t3 done=True, cancelled=True
 Notice the pattern: `#!py await task` either returns the result or re-raises
 whatever ended the task (the stored exception, or [`CancelledError`][cancellederror]). Calling
 `#!py .result()` on a done task does the same thing without suspending -- but if
-you call it on a task that isn't done yet, you get `InvalidStateError`.
+you call it on a task that isn't done yet, you get
+[`InvalidStateError`][invalidstateerror].
 
 !!! Tip
 
@@ -368,23 +369,24 @@ Here is what happens, step by step:
    `#!py call_soon(self.__step)` to schedule the first step on the loop's ready
    queue.
 
-2. **First step.** On the next loop iteration, `__step` runs. It calls
+2. **First step.** On the next loop iteration, `#!py __step` runs. It calls
    `#!py coro.send(None)`, which resumes the coroutine from the beginning. The
    coroutine runs until it hits an [`await`][await] on something that isn't ready yet
    -- typically a future representing an I/O completion or a timer.
 
 3. **Suspension.** The [`await`][await] causes the coroutine to yield that future back
-   to the task. The task registers `__step` as a done callback on the yielded
+   to the task. The task registers `#!py __step` as a done callback on the yielded
    future. Now the task is suspended -- nothing else happens until that
    future completes.
 
 4. **Resumption.** When the awaited future completes (because I/O finished, a
-   timer expired, etc.), its done callbacks fire. That calls `__step` again,
+   timer expired, etc.), its done callbacks fire. That calls `#!py __step`
+   again,
    which calls `#!py coro.send(None)` again, resuming the coroutine right after
    the [`await`][await] that suspended it. This cycle repeats.
 
 5. **Completion.** Eventually the coroutine either returns a value (raising
-   `StopIteration` -- that's how Python generators and coroutines signal
+   `#!py StopIteration` -- that's how Python generators and coroutines signal
    completion) or raises an exception. The task catches this, calls
    [`set_result()`][set-result] or [`set_exception()`][set-exception] on itself, and fires its own done
    callbacks.
@@ -421,3 +423,4 @@ comes back and picks up where it left off.
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [task-cancel]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel
 [cancellederror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.CancelledError
+[invalidstateerror]: https://docs.python.org/3/library/asyncio-exceptions.html#asyncio.InvalidStateError

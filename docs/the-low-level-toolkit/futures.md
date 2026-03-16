@@ -14,7 +14,7 @@ When you do need them, it is usually because you are building glue code between
 two worlds:
 
 - callback-driven code on one side
-- `await`-driven code on the other
+- [`await`][await]-driven code on the other
 
 ## The Three Operations That Matter Most
 
@@ -22,7 +22,7 @@ The practical future workflow is usually just this:
 
 1. create one with [`loop.create_future()`][create-future]
 2. resolve it later with [`set_result()`][set-result] or [`set_exception()`][set-exception]
-3. `await` it from async code
+3. [`await`][await] it from async code
 
 ## Canonical Pattern: Bridge a Callback API
 
@@ -78,6 +78,7 @@ you are working one layer too low.
   [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md)
 
 [create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[await]: https://docs.python.org/3/reference/expressions.html#await
 [wrap-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.wrap_future
 [concurrent-future]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future
 [to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread

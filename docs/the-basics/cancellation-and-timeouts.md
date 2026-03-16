@@ -29,7 +29,8 @@ The key detail: [`CancelledError`][cancellederror] inherits from
 [`BaseException`][baseexception], **not** [`Exception`][exception]. This means
 a plain `#!py except Exception:` will not catch it. That is deliberate --
 cancellation should pass through most error handlers undisturbed. If it were a
-subclass of `Exception`, every `#!py except Exception:` in your code would
+subclass of [`Exception`][exception], every `#!py except Exception:` in your
+code would
 accidentally swallow it.
 
 !!! Note
@@ -80,7 +81,7 @@ Got: default
 ```
 
 The timeout fired after one second and tried to cancel the work. But
-`fetch_with_fallback` caught the [`CancelledError`][cancellederror] and
+`#!py fetch_with_fallback` caught the [`CancelledError`][cancellederror] and
 returned `#!py "default"` -- defeating the timeout entirely. This is a real bug
 in production code: timeouts that don't actually time out.
 
@@ -131,7 +132,7 @@ the caller handles the timeout cleanly.
     BaseException:` will catch it too.
 
     The "Never Swallow" rule applies in these cases as well, and you should
-    always re-raise `CancelledError` if you catch it.
+    always re-raise [`CancelledError`][cancellederror] if you catch it.
 
 ### Cleanup with `#!py try`/`#!py finally`
 
@@ -175,7 +176,8 @@ different message).
 !!! Danger
 
     If the code in your `#!py finally` block can raise an exception, that
-    exception will propagate instead of the original `CancelledError`. This can
+    exception will propagate instead of the original
+    [`CancelledError`][cancellederror]. This can
     lead to unexpected behavior where the cancellation is effectively ignored
     because the new exception takes precedence.
 
@@ -341,8 +343,9 @@ Clean and predictable.
     2. At this point the timeout scope is already gone. Until this point there
        are even no checkpoints possible (no `#!py await`), so the timeout can't
        fire.
-    3. Here is the first opportunity for a cancellation, when the `TaskGroup`
-       waits for the children to finish, but the timeout blcok is already gone
+    3. Here is the first opportunity for a cancellation, when the
+       `#!py TaskGroup`
+       waits for the children to finish, but the timeout block is already gone
        here.
 
     ```text title="$ python timeout_around_group_broken.py"
@@ -360,7 +363,7 @@ Clean and predictable.
     - Later, [`TaskGroup`][taskgroup] waits for the child in its own
       [`__aexit__`][aexit] -- *outside* the timeout.
 
-#### Individual timeouts inside `TaskGroup` children
+#### Individual timeouts inside `#!py TaskGroup` children
 
 Each child manages its own deadline independently:
 

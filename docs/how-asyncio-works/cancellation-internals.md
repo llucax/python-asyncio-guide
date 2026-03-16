@@ -23,7 +23,7 @@ cancellation behaves in a way you don't expect -- a timeout that "doesn't fire,"
 a [`TaskGroup`][taskgroup] that seems to cancel too much or too little -- understanding the
 internals will tell you exactly what happened.
 
-## `task.cancel()`
+## `#!py task.cancel()`
 
 [`Task.cancel(msg=None)`][task-cancel-msg-none]
 is how cancellation is *requested*. When you call it, the event loop arranges
@@ -69,14 +69,14 @@ normally. Second, the task has to *cooperate*. If the task catches
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md)),
 cancellation silently fails.
 
-You can pass an optional `msg` argument to attach context to the
+You can pass an optional `#!py msg` argument to attach context to the
 [`CancelledError`][cancellederror]:
 
 ```python
 task.cancel(msg="parent timed out")
 ```
 
-The message appears in the exception's `args`, which can be helpful for
+The message appears in the exception's `#!py args`, which can be helpful for
 debugging when multiple cancellation sources exist.
 
 !!! Note
@@ -130,7 +130,7 @@ if __name__ == "__main__":
 cancelling() = 3
 ```
 
-Three calls to `#!py cancel()`, so `#!py cancelling()` returns 3. Only one
+Three calls to `#!py cancel()`, so `#!py cancelling()` returns `#!py 3`. Only one
 [`CancelledError`][cancellederror] is raised -- the counter tracks how many *sources* requested
 cancellation, not how many exceptions will appear.
 
@@ -191,7 +191,7 @@ finished with a result rather than a [`CancelledError`][cancellederror], [`task.
     exist for *framework* code like [`asyncio.timeout()`][asyncio-timeout] and [`TaskGroup`][taskgroup],
     which need to intercept one cancellation source while preserving others.
 
-## How `asyncio.timeout()` Works Internally
+## How `#!py asyncio.timeout()` Works Internally
 
 You know from
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md) that
@@ -268,7 +268,7 @@ call raised [`CancelledError`][cancellederror], and the timeout's [`__aexit__`][
 *it* did not cause the cancellation. The error passed through as a
 [`CancelledError`][cancellederror], not a [`TimeoutError`][timeouterror]. This is the counter at work.
 
-## How `TaskGroup` Works Internally
+## How `#!py TaskGroup` Works Internally
 
 [`TaskGroup`][taskgroup] uses the same cancel/uncancel protocol to implement sibling
 cancellation. Here is what happens when a child task fails:

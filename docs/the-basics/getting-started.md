@@ -42,10 +42,10 @@ if __name__ == "__main__":
     asyncio.run(main())  # (2)!
 ```
 
-1. [`await`][await] drives the coroutine to completion and gives you the return
+1. `#!py await` drives the coroutine to completion and gives you the return
    value. Without it, `#!py greet("world")` returns a coroutine object instead
    of a string.
-2. [`asyncio.run()`][asyncio-run] is the bridge between sync and async. It
+2. `#!py asyncio.run()` is the bridge between sync and async. It
    creates an event loop, runs `#!py main()` to completion, and tears the loop
    down. Call it **once**, at the top level of your program.
 
@@ -56,7 +56,7 @@ Hello, world
 Here is what happens when you run this:
 
 1. `#!py async def greet` and `#!py async def main` define coroutine functions.
-2. [`asyncio.run()`][asyncio-run] creates an event loop, drives `#!py main()`
+2. `#!py asyncio.run()` creates an event loop, drives `#!py main()`
    to completion, and tears the loop down cleanly. It is the bridge between the
    synchronous world and the async world.
 3. Inside `main`, `#!py await greet("world")` calls the coroutine function,
@@ -65,7 +65,7 @@ Here is what happens when you run this:
 
 That is the pattern you will use in nearly every asyncio program: define an
 `#!py async def main()`, put your logic there, and call `#!py
-asyncio.run(main())` at the bottom. [`asyncio.run()`][asyncio-run] is meant to
+asyncio.run(main())` at the bottom. `#!py asyncio.run()` is meant to
 be called **once**, at the top level of your program.
 
 !!! Warning
@@ -125,7 +125,7 @@ than one task can be ready or waiting at once.
 the fuller scheduler picture with ready queues, timers, callbacks, and
 cancellation.
 
-## `await`
+## `#!py await`
 
 The [`await`][await] keyword does two things:
 
@@ -168,7 +168,7 @@ section) and real I/O operations. For now, just remember: **every call to an
 async function must be [`await`][await]-ed** (or explicitly scheduled, covered
 later).
 
-## Forgetting to `await`
+## Forgetting to `#!py await`
 
 Calling an async function does **not** execute its body. It returns a
 *coroutine object* -- a little package of suspended work that must be driven by
@@ -345,7 +345,7 @@ avoid starving other tasks.
     asyncio.sleep(0)` idiom is the closest equivalent to [Trio][trio-docs]'s
     [`await trio.sleep(0)`][trio-sleep].
 
-## `asyncio.sleep()`
+## `#!py asyncio.sleep()`
 
 [`asyncio.sleep()`][asyncio-sleep] suspends the current coroutine for (at
 least) the given number of seconds. It serves two purposes: it is a timer, and

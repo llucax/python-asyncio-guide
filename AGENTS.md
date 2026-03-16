@@ -74,7 +74,8 @@ Validation is manual:
   `description`.
 - Chapter index sections also include `icon: lucide/book-open`.
 - Use ATX headings only (`#`, `##`, `###`).
-- Do not put links in headings. Keep heading text plain.
+- Do not put links in headings. If a heading includes Python code or symbols,
+  format them with `#!py ...` rather than a Markdown link.
 - Keep one blank line between blocks and subsections.
 - No trailing whitespace.
 - No trailing blank line at end of file.
@@ -99,6 +100,10 @@ Validation is manual:
 - In prose outside `index.md` overview text, link all meaningful occurrences of
   Python, Trio, and external API mentions, not just the first one in a
   section.
+- In prose that is *explaining a nearby code example*, prefer inline
+  `#!py ...` for the exact code, symbols, or syntax being discussed.
+- In other prose, prefer official-doc cross-links for Python syntax and stdlib
+  APIs that have a documentation page, rather than plain inline code.
 - Prefer split reference links for readability, for example
   ``[`asyncio.sleep()`][asyncio-sleep]`` with
   `[asyncio-sleep]: https://docs.python.org/...`.
@@ -125,8 +130,8 @@ These rules apply to runnable examples and Python-flavoured pseudocode.
   unless the section is explicitly teaching low-level internals.
 - Prefer `python` fences for real examples and `text` fences for output.
 - Use `title="filename.py"` when a filename helps.
-- For inline Python syntax in prose, prefer `#!py` where it improves
-  readability, for example `#!py async with sem:`.
+- For inline Python syntax in prose, use `#!py` when discussing code from a
+  nearby example, for example `#!py async with sem:`.
 - Preferred entry point:
 
   ```python

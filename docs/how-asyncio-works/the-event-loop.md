@@ -62,7 +62,8 @@ while self._ready or self._scheduled or self._selector.get_map():
 A few things to notice:
 
 - **Phase 1 drains the ready queue completely** before doing anything else.
-  The loop snapshots the queue length (`ntodo`) so that callbacks added *during*
+  The loop snapshots the queue length (`#!py ntodo`) so that callbacks added
+  *during*
   this phase land in the *next* iteration, not this one.
 - **Phase 2 asks the OS for I/O events.** This is a call to
   [`select()`][select] (or `epoll`,
@@ -75,7 +76,7 @@ A few things to notice:
 This is the entire scheduling algorithm. There is no thread pool, no priority
 system, no preemption. One callback runs. It finishes. The next one runs.
 
-## `call_soon()`
+## `#!py call_soon()`
 
 [`loop.call_soon()`][loop-call-soon]
 places a callback on the ready queue. It will execute during phase 1 of the
@@ -115,23 +116,24 @@ if __name__ == "__main__":
 
 The three callbacks ran in registration order, all at essentially the same
 time. That `#!py await asyncio.sleep(0)` is what gave the loop the chance to run
-them -- without it, `main` would hold the loop and the callbacks would only
-fire after `main` returned.
+them -- without it, `#!py main` would hold the loop and the callbacks would
+only fire after `#!py main` returned.
 
 This is a low-level API. You will rarely call it directly, but it matters
 because it is the foundation. When you call `#!py tg.create_task(some_coro())`,
-asyncio creates a [`Task`][task] object and then calls `call_soon` to schedule the
-first step of that task. Every task begins life as a callback on the ready
+asyncio creates a [`Task`][task] object and then calls
+[`call_soon()`][call-soon] to schedule the first step of that task. Every task
+begins life as a callback on the ready
 queue.
 
 !!! Note
 
-    `call_soon` returns a
+    [`call_soon()`][call-soon] returns a
     [`Handle`][handle]
     object. You can call `#!py handle.cancel()` to prevent the callback from
     running, as long as it hasn't been executed yet.
 
-## Timers: `call_later()` and `call_at()`
+## Timers: `#!py call_later()` and `#!py call_at()`
 
 [`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
 schedules a callback to run after *delay* seconds.
@@ -174,27 +176,28 @@ if __name__ == "__main__":
 Even though the 0.3s timer was registered first, the 0.1s timer fires first.
 The timer heap is sorted by deadline, not by registration order.
 
-### `loop.time()`
+### `#!py loop.time()`
 
 [`loop.time()`][loop-time]
-returns the current time as a `float`, according to the event loop's
+returns the current time as a [`float`][float], according to the event loop's
 *monotonic clock*. This is the same kind of clock as
 [`time.monotonic()`][time-monotonic]
 -- it never goes backwards, and it is not affected by system clock adjustments.
 All timer deadlines are expressed in terms of this clock.
 
 When you call `#!py loop.call_later(0.5, cb)`, asyncio computes
-`#!py loop.time() + 0.5` and inserts that into the timer heap. `call_later` is just
-a convenience wrapper around `call_at`.
+`#!py loop.time() + 0.5` and inserts that into the timer heap.
+[`call_later()`][call-later] is just a convenience wrapper around
+[`call_at()`][call-at].
 
 !!! Info
 
-    [`asyncio.sleep()`][asyncio-sleep] is built on [`call_later()`][call-later] under the hood. When you
-    write `#!py await asyncio.sleep(1.0)`, asyncio creates a [`Future`][future], schedules
-    a `call_later` to resolve it after one second, and suspends your
-    coroutine until that future completes. Now you know why it is a
-    checkpoint -- your coroutine genuinely gives up control and waits for a
-    timer callback to wake it.
+    [`asyncio.sleep()`][asyncio-sleep] is built on [`call_later()`][call-later]
+    under the hood. When you write `#!py await asyncio.sleep(1.0)`, asyncio
+    creates a [`Future`][future], schedules a [`call_later()`][call-later] to
+    resolve it after one second, and suspends your coroutine until that future
+    completes. Now you know why it is a checkpoint -- your coroutine genuinely
+    gives up control and waits for a timer callback to wake it.
 
 ## Cooperative Scheduling
 
@@ -216,24 +219,26 @@ the coroutine *yields* a [`Future`][future] back to the task. The task then does
 things:
 
 1. It registers a callback on that future: "when this future is done, call
-   `task.__step` to resume me."
+   `#!py task.__step` to resume me."
 2. It **returns** -- giving control back to the loop.
 
 At that point, the loop is free. It drains whatever is left in the ready queue,
 polls for I/O, checks timers, and eventually the future completes (because a
 timer fired, data arrived on a socket, etc.). The completion triggers the
-callback from step 1, which places `task.__step` back onto the ready queue.
-Next time the loop reaches phase 1, it calls `task.__step`, which calls
+callback from step 1, which places `#!py task.__step` back onto the ready
+queue.
+Next time the loop reaches phase 1, it calls `#!py task.__step`, which calls
 `#!py coro.send(result)`, and your coroutine picks up right where it left off.
 
 That is the full round trip. No magic, no thread switching, no signals -- just
 callbacks and a queue.
 
-### When an `await` is *not* a checkpoint
+### When an `#!py await` is *not* a checkpoint
 
-Not every [`await`][await] causes a suspension. If you [`await`][await] a coroutine that returns
-a value without itself suspending, the `Task.__step` method receives the result
-immediately and keeps driving the coroutine in the *same* callback, without
+Not every [`await`][await] causes a suspension. If you [`await`][await] a
+coroutine that returns a value without itself suspending, the
+`#!py Task.__step` method receives the result immediately and keeps driving the
+coroutine in the *same* callback, without
 ever returning to the loop. From the scheduler's perspective, it is as if the
 [`await`][await] never happened.
 
@@ -290,17 +295,21 @@ Total time: 2.0s
 
 Here is exactly what happened inside the loop:
 
-1. Both tasks were created, placing two `task.__step` callbacks on the ready
+1. Both tasks were created, placing two `#!py task.__step` callbacks on the
+   ready
    queue.
-2. Phase 1 pops `hog`'s step callback. `hog` starts running and never hits a
-   suspending [`await`][await], so `task.__step` never returns. The loop is stuck
+2. Phase 1 pops `#!py hog`'s step callback. `#!py hog` starts running and never
+   hits a suspending [`await`][await], so `#!py task.__step` never returns. The
+   loop is stuck
    inside phase 1 for the full second.
-3. During that second, `polite`'s step callback is sitting in the ready queue
-   doing nothing. The timer for `polite`'s first `#!py sleep(0.2)` cannot even be
+3. During that second, `#!py polite`'s step callback is sitting in the ready
+   queue doing nothing. The timer for `#!py polite`'s first `#!py sleep(0.2)`
+   cannot even be
    *checked* because the loop never reaches phase 3.
-4. When `hog` finally returns, the loop finishes phase 1, does a zero-timeout
+4. When `#!py hog` finally returns, the loop finishes phase 1, does a
+   zero-timeout
    I/O poll in phase 2, processes the now-overdue timers in phase 3, and only
-   *then* does `polite` start ticking.
+   *then* does `#!py polite` start ticking.
 
 The total wall time is ~2 seconds (1s for `hog` + 1s for `polite`'s sleeps in
 series) instead of the ~1s you would see if they overlapped.
@@ -362,8 +371,9 @@ B: step 2
 C: step 2
 ```
 
-A, B, and C take turns in perfect round-robin order. Each `await
-asyncio.sleep(0)` sends the current task to the back of the ready queue, and
+A, B, and C take turns in perfect round-robin order. Each
+`#!py await asyncio.sleep(0)` sends the current task to the back of the ready
+queue, and
 the next task gets its turn. This is the only form of "fairness" asyncio
 provides -- there is no preemption, no time budgets, no automatic yielding.
 
@@ -390,7 +400,8 @@ loop model pays off:
   waiting for its turn. The loop is not deadlocked; it is busy running someone
   else's code.
 
-- **"I added a callback but it didn't run."** Callbacks added with `call_soon`
+- **"I added a callback but it didn't run."** Callbacks added with
+  [`call_soon()`][call-soon]
   during phase 1 run on the *next* iteration, not the current one. If you
   expected immediate execution, you are off by one loop turn.
 
@@ -417,6 +428,7 @@ machinery does exactly what the pseudocode says, nothing more.
 [loop-call-at-when-callback-args]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at
 [timerhandle]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.TimerHandle
 [loop-time]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.time
+[float]: https://docs.python.org/3/library/functions.html#float
 [time-monotonic]: https://docs.python.org/3/library/time.html#time.monotonic
 [asyncio-sleep]: https://docs.python.org/3/library/asyncio-task.html#asyncio.sleep
 [future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future

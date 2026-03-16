@@ -51,7 +51,7 @@ proc = await asyncio.create_subprocess_shell(
     Never pass untrusted input to [`create_subprocess_shell()`][create-subprocess-shell]. If the command
     string contains attacker-controlled text, you have a shell-injection bug.
 
-## The Default Pattern: `communicate()`
+## The Default Pattern: `#!py communicate()`
 
 If you want to send optional stdin, collect stdout and stderr, and wait for the
 child to finish, use [`Process.communicate()`][process-communicate].
@@ -85,7 +85,8 @@ termination together.
 
 ## The Main Pitfall: Pipe Deadlocks
 
-If you open `stdout=PIPE` or `stderr=PIPE`, do not just call [`await proc.wait()`][await-proc-wait]
+If you open `#!py stdout=PIPE` or `#!py stderr=PIPE`, do not just call
+[`await proc.wait()`][await-proc-wait]
 and ignore the pipes. A child can block trying to write into a full pipe while
 you block waiting for it to exit.
 
@@ -96,7 +97,8 @@ That is why the safe default is:
 
 ## Streaming Output
 
-For long-running processes, you can treat `proc.stdout` and `proc.stderr` as
+For long-running processes, you can treat `#!py proc.stdout` and
+`#!py proc.stderr` as
 stream readers and consume them as data arrives.
 
 ```python

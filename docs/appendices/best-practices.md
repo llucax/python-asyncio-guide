@@ -27,7 +27,7 @@ a review, issue, or code comment.
 
 ## Structure the Program
 
-### ❌ Avoid `asyncio.create_task()`
+### ❌ Avoid `#!py asyncio.create_task()`
 
 A task created with [`asyncio.create_task()`][asyncio-create-task] can outlive
 its parent, silently drop exceptions, and leak if nobody awaits it. Use
@@ -53,7 +53,7 @@ See [Concurrent Tasks -- Collecting
 Results](../the-basics/concurrent-tasks.md#collecting-results) and [Tasks and
 Futures](../how-asyncio-works/tasks-and-futures.md).
 
-### ❌ Do not nest `run()` calls
+### ❌ Do not nest `#!py run()` calls
 
 [`asyncio.run()`][asyncio-run] creates an event loop, runs your top-level
 coroutine, and tears everything down when it finishes. Calling it more than
@@ -144,9 +144,10 @@ and [Cancellation and Timeouts -- Never Swallow a
 
 ### ❌ Avoid `#!py wait_for()`
 
-`#!py wait_for()` is a low-level function with subtle cancellation edge cases
-and exists primarily for backward compatibility. Prefer `#!py timeout()` in all
-new code. [`asyncio.timeout()`][asyncio-timeout] is a structured context
+[`asyncio.wait_for()`][asyncio-wait-for] is a low-level function with subtle
+cancellation edge cases and exists primarily for backward compatibility.
+Prefer [`asyncio.timeout()`][asyncio-timeout] in all new code.
+[`asyncio.timeout()`][asyncio-timeout] is a structured context
 manager -- the timeout scope is visible in the code, you can nest it cleanly,
 and you can inspect the deadline or check whether it fired after the block
 exits.
@@ -237,7 +238,8 @@ same problem for different concurrency models. Using a
 when it contends; using an [`asyncio.Lock`][asyncio-lock] from a thread has no
 effect because it is not thread-safe. Keep the two worlds separate: asyncio
 primitives in coroutines, threading primitives in threads, and
-[`asyncio.to_thread()`][asyncio-to-thread] or `#!py run_coroutine_threadsafe()`
+[`asyncio.to_thread()`][asyncio-to-thread] or
+[`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe]
 at the boundary between them.
 
 See [Offloading Blocking Work -- Thread
@@ -396,6 +398,7 @@ Picture](debugging.md#debug-mode----the-full-picture).
 [asyncio-shield]: https://docs.python.org/3/library/asyncio-task.html#asyncio.shield
 [asyncio-all-tasks]: https://docs.python.org/3/library/asyncio-task.html#asyncio.all_tasks
 [asyncio-runner]: https://docs.python.org/3/library/asyncio-runner.html#asyncio.Runner
+[asyncio-run-coroutine-threadsafe]: https://docs.python.org/3/library/asyncio-task.html#asyncio.run_coroutine_threadsafe
 [asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [threading-lock]: https://docs.python.org/3/library/threading.html#threading.Lock
 [semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore

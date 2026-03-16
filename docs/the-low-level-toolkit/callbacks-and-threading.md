@@ -23,7 +23,7 @@ non-async threads, and signal handling.
     [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
     and [Developing with asyncio][official-dev] pages for the full reference.
 
-## `add_done_callback()` and `#!py remove_done_callback()`
+## `#!py add_done_callback()` and `#!py remove_done_callback()`
 
 Every
 [`asyncio.Future`][asyncio-future]
@@ -91,7 +91,7 @@ A few things to know:
     work. The task pseudocode in
     [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md) in
     [How Asyncio Works](../how-asyncio-works/index.md) showed how a
-    task registers `__step` as a done callback on the future it is
+    task registers `#!py __step` as a done callback on the future it is
     awaiting. You rarely need done callbacks yourself -- [`await`][await] is almost
     always cleaner -- but they are indispensable in library code that must
     react to completion without suspending.
@@ -165,7 +165,8 @@ background work complete
     `#!py call_soon_threadsafe()` only schedules *plain callbacks* -- regular
     functions with positional arguments. You cannot pass a coroutine to it.
     If you need to schedule a coroutine from another thread, use
-    `#!py run_coroutine_threadsafe()` (next subsection).
+    [`asyncio.run_coroutine_threadsafe()`][asyncio-run-coroutine-threadsafe]
+    (next subsection).
 
 ## `#!py run_coroutine_threadsafe()`
 

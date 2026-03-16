@@ -593,7 +593,7 @@ sends a single `Stop` to the output queue for the aggregator.
 The aggregator still sees results in completion order, not input order. The
 final log sorts them purely to make the summary easier to scan.
 
-### Nested `TaskGroup` for the supervisor
+### Nested `#!py TaskGroup` for the supervisor
 
 The `processor_supervisor` function uses its own
 [`TaskGroup`][taskgroup]

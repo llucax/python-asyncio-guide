@@ -461,7 +461,7 @@ async def main() -> None:
             tg.create_task(worker(item), name=f"worker-{i}")
 ```
 
-### `Task.print_stack()` for On-Demand Inspection
+### `#!py Task.print_stack()` for On-Demand Inspection
 
 [`Task.print_stack()`][task-print-stack]
 prints the stack trace of a specific task -- where it is currently suspended.

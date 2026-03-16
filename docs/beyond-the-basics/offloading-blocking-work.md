@@ -21,19 +21,19 @@ is one of the easiest ways to break an async program.
 
 !!! Info
 
-    This section focuses on the decision-making: what blocks the loop, when to use
-    `#!py to_thread()`, and when to escalate to a process pool. Use the official
-    [Coroutines and Tasks][official-tasks], [Event Loop][official-event-loop],
-    and [Developing with asyncio][official-dev] pages for full executor and
-    threading details.
+    This section focuses on the decision-making: what blocks the loop, when to
+    use `#!py to_thread()`, and when to escalate to a process pool. Use the
+    official [Coroutines and Tasks][official-tasks], [Event
+    Loop][official-event-loop], and [Developing with asyncio][official-dev]
+    pages for full executor and threading details.
 
 ## The Problem
 
-The event loop runs in a single thread. When you [`await`][await] something, control
-returns to the loop so it can service other tasks. But if you call a function
-that blocks -- `#!py time.sleep()`, a synchronous HTTP request, a heavy computation
--- the loop cannot switch away. Every other task, every pending callback, every
-open connection just *waits*.
+The event loop runs in a single thread. When you [`await`][await] something,
+control returns to the loop so it can service other tasks. But if you call a
+function that blocks -- `#!py time.sleep()`, a synchronous HTTP request, a
+heavy computation -- the loop cannot switch away. Every other task, every
+pending callback, every open connection just *waits*.
 
 Here is a concrete example. Two tasks run concurrently: one does a blocking
 sleep, the other tries to make progress alongside it:
@@ -87,12 +87,12 @@ polite_task: finished tick 3 at 4.0s
 Total time: 4.0s
 ```
 
-`polite_task` did not start printing until the blocking sleep finished. The two
+`#!py polite_task` did not start printing until the blocking sleep finished. The two
 tasks ran *sequentially*, not concurrently, even though they were in the same
-[`TaskGroup`][taskgroup]. Worse, total wall time was 4 seconds instead of the 2 seconds you
-would expect from concurrent execution. In a real application, those 2 frozen
-seconds mean dropped connections, missed heartbeats, and unresponsive
-services.
+[`TaskGroup`][taskgroup]. Worse, total wall time was 4 seconds instead of the 2
+seconds you would expect from concurrent execution. In a real application,
+those 2 frozen seconds mean dropped connections, missed heartbeats, and
+unresponsive services.
 
 !!! Warning
 
@@ -103,11 +103,10 @@ services.
 
 ## `#!py asyncio.to_thread()`
 
-[`asyncio.to_thread()`][asyncio-to-thread]
-is the standard way to call a blocking function without freezing the event
-loop. It runs the function in a separate thread and returns an awaitable that
-completes when the function finishes. The event loop stays responsive in the
-meantime.
+[`asyncio.to_thread()`][asyncio-to-thread] is the standard way to call a
+blocking function without freezing the event loop. It runs the function in a
+separate thread and returns an awaitable that completes when the function
+finishes. The event loop stays responsive in the meantime.
 
 The signature is simple:
 
@@ -115,8 +114,9 @@ The signature is simple:
 result = await asyncio.to_thread(sync_function, arg1, arg2, ...)
 ```
 
-You pass the callable and its arguments -- *not* a call expression. `to_thread`
-handles running it in a thread and shuttling the result back.
+You pass the callable and its arguments -- *not* a call expression.
+[`asyncio.to_thread()`][asyncio-to-thread] handles running it in a thread and
+shuttling the result back.
 
 Here is the fixed version of the freezing example:
 
@@ -171,26 +171,29 @@ polite_task: finished tick 3 at 2.0s
 Total time: 2.0s
 ```
 
-Now both tasks run concurrently. `polite_task` prints its ticks while
-`blocking_work` sleeps in a background thread. Total time is 2 seconds --
-the duration of the slowest task, as you would expect.
+Now both tasks run concurrently. `#!py polite_task` prints its ticks while
+`#!py blocking_work` sleeps in a background thread. Total time is 2 seconds -- the
+duration of the slowest task, as you would expect.
 
-Notice that `blocking_work` is a plain `#!py def` function, not `#!py async def`. That
-is the whole point: you already have synchronous code and you need to call it
-from an async context. `to_thread` bridges the gap.
+Notice that `#!py blocking_work` is a plain `#!py def` function, not
+`#!py async def`. That is the whole point: you already have synchronous code and you need
+to call it from an async context. [`asyncio.to_thread()`][asyncio-to-thread]
+bridges the gap.
 
 !!! Tip "Trio"
 
     [`asyncio.to_thread()`][asyncio-to-thread] is equivalent to
-    [`trio.to_thread.run_sync()`][trio-to-thread-run-sync]. Same idea, same purpose.
+    [`trio.to_thread.run_sync()`][trio-to-thread-run-sync]. Same idea, same
+    purpose.
 
 !!! Note
 
-    `to_thread` uses Python's default
-    [`ThreadPoolExecutor`][threadpoolexecutor].
-    The default pool size was changed to `#!py min(32, os.cpu_count() + 4)` in Python
-    3.8. For most I/O-bound workloads this is plenty. If you need a larger pool,
-    pass a custom executor to [`loop.run_in_executor()`][loop-run-in-executor] instead.
+    [`asyncio.to_thread()`][asyncio-to-thread] uses Python's default
+    [`ThreadPoolExecutor`][threadpoolexecutor]. The default pool size was
+    changed to `#!py min(32, os.cpu_count() + 4)` in Python 3.8. For most
+    I/O-bound workloads this is plenty. If you need a larger pool, pass a
+    custom executor to [`loop.run_in_executor()`][loop-run-in-executor]
+    instead.
 
 ## Thread Safety
 
@@ -249,24 +252,27 @@ Results: ['item-0', 'item-1', 'item-2']
     a background thread back to the event loop -- there is no high-level
     alternative for this pattern.
 
-`call_soon_threadsafe` schedules a callback on the event loop from any thread.
+[`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] schedules a callback
+on the event loop from any thread.
 It is the *only* safe way to touch event loop internals from outside the loop
 thread. For more complex patterns -- like feeding items into an
 [`asyncio.Queue`][asyncio-queue] from a thread -- wrap the `#!py queue.put_nowait()` call inside
-`call_soon_threadsafe`.
+[`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe].
 
 !!! Warning
 
     Do not pass asyncio primitives (locks, events, queues) directly to a thread
     and call their methods there. It will appear to work in simple cases and
-    break under load. Always go through `call_soon_threadsafe` or use
-    `threading`-based synchronization primitives instead.
+    break under load. Always go through
+    [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] or use
+    [`threading`][threading]-based synchronization primitives instead.
 
-## `ProcessPoolExecutor` for CPU-Bound Work
+## `#!py ProcessPoolExecutor` for CPU-Bound Work
 
-`to_thread` solves the problem for I/O-bound blocking work -- file reads,
-network calls, database queries. But for CPU-bound work -- number crunching,
-image processing, compression -- threads do not help. Python's Global
+[`asyncio.to_thread()`][asyncio-to-thread] solves the problem for I/O-bound
+blocking work -- file reads, network calls, database queries. But for
+CPU-bound work -- number crunching, image processing, compression -- threads do
+not help. Python's Global
 Interpreter Lock (GIL) means only one thread executes Python bytecode at a
 time. A CPU-heavy function in a thread still starves the event loop because
 both the thread and the loop are competing for the same GIL.
@@ -334,25 +340,28 @@ Checked 5 numbers in 0.43s
 
 !!! Note
 
-    Like the `call_soon_threadsafe` example above, this recipe uses the low-level
+    Like the `#!py call_soon_threadsafe` example above, this recipe uses the low-level
     APIs [`asyncio.get_running_loop()`][asyncio-get-running-loop] and [`loop.run_in_executor()`][loop-run-in-executor], which are
     covered in
     [Loop Access and Inspection](../the-low-level-toolkit/loop-access-and-inspection.md)
     in [The Low-Level Toolkit](../the-low-level-toolkit/index.md).
-    `run_in_executor` is the only built-in way to dispatch work to a
+    [`loop.run_in_executor()`][loop-run-in-executor] is the only built-in way
+    to dispatch work to a
     [`ProcessPoolExecutor`][processpoolexecutor] from async code, so you will see it whenever CPU-bound
     offloading comes up.
 
 A few things to note:
 
-- `run_in_executor` requires the running loop, which you get with
+- [`loop.run_in_executor()`][loop-run-in-executor] requires the running loop,
+  which you get with
   [`asyncio.get_running_loop()`][asyncio-get-running-loop].
 - The executor is a [`ProcessPoolExecutor`][processpoolexecutor], not the default [`ThreadPoolExecutor`][threadpoolexecutor].
-  That is the key difference from `to_thread`.
+  That is the key difference from [`asyncio.to_thread()`][asyncio-to-thread].
 - Each function call and its arguments must be
   [picklable][picklable], because they are
   serialized and sent to a child process. Lambda functions, closures, and
-  objects with unpicklable state will raise a `PicklingError`.
+  objects with unpicklable state will raise
+  [`pickle.PicklingError`][picklingerror].
 - The `#!py with ProcessPoolExecutor()` block shuts down the pool cleanly when the
   work is done. In a long-running service, you would typically create the pool
   once at startup and reuse it.
@@ -361,8 +370,8 @@ A few things to note:
 
     Only reach for [`ProcessPoolExecutor`][processpoolexecutor] when the work is genuinely CPU-bound.
     Process creation and inter-process communication have significant overhead
-    compared to threads. For I/O-bound blocking calls, `to_thread` is simpler
-    and faster.
+    compared to threads. For I/O-bound blocking calls,
+    [`asyncio.to_thread()`][asyncio-to-thread] is simpler and faster.
 
 ## When to Use What
 
@@ -376,16 +385,20 @@ Here is the short decision guide:
 
 Two rules of thumb:
 
-1. **Default to `#!py to_thread()`.** Most blocking code you encounter is I/O-bound.
+1. **Default to [`asyncio.to_thread()`][asyncio-to-thread].** Most blocking
+   code you encounter is I/O-bound.
    Thread overhead is low, there is no pickling requirement, and the API is a
    single function call.
 2. **Reach for processes only when threads are not enough.** If you profile and
-   find a CPU-bound function that still blocks the loop even with `to_thread`,
+   find a CPU-bound function that still blocks the loop even with
+   [`asyncio.to_thread()`][asyncio-to-thread],
    that is when you switch to [`ProcessPoolExecutor`][processpoolexecutor].
 
-If you find yourself wrapping *every* call in `to_thread`, that is a signal
+If you find yourself wrapping *every* call in
+[`asyncio.to_thread()`][asyncio-to-thread], that is a signal
 that you might be better off with a natively async library instead. Wrapping
-synchronous `requests` in `to_thread` works, but switching to
+synchronous `requests` in [`asyncio.to_thread()`][asyncio-to-thread] works,
+but switching to
 [aiohttp](https://docs.aiohttp.org/) or
 [httpx](https://www.python-httpx.org/) (with its async API) will give you
 better performance and cleaner code.
@@ -404,6 +417,8 @@ better performance and cleaner code.
 [asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 [picklable]: https://docs.python.org/3/library/pickle.html
+[picklingerror]: https://docs.python.org/3/library/pickle.html#pickle.PicklingError
+[threading]: https://docs.python.org/3/library/threading.html
 [trio-to-thread-run-sync]: https://trio.readthedocs.io/en/stable/reference-core.html#trio.to_thread.run_sync
 [official-tasks]: https://docs.python.org/3/library/asyncio-task.html
 [official-event-loop]: https://docs.python.org/3/library/asyncio-eventloop.html

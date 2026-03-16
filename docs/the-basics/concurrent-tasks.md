@@ -86,7 +86,7 @@ errors.
     [`nursery.start_soon(async_fn, *args)`][trio-start-soon], except it takes a
     coroutine object rather than a callable plus arguments.
 
-## `asyncio.TaskGroup`
+## `#!py asyncio.TaskGroup`
 
 Here is the basic pattern. Create a [`TaskGroup`][taskgroup] with [`async
 with`][async-with], spawn tasks with [`tg.create_task()`][tg-create-task], and
@@ -221,7 +221,7 @@ if __name__ == "__main__":
 1. Tasks can be cancelled at [`await`][await]s.
 2. This point is never reached because the task is cancelled before 10 seconds
    elapse.
-3. Exceptions raised by `TaskGroup` are special, this is why we use `#!py
+3. Exceptions raised by `#!py TaskGroup` are special, this is why we use `#!py
    except Exception:` here instead of `#!py except RuntimeError:`. We'll get
    into how exceptions are handled in task groups in the [next
    topic](#exceptiongroup-and-except).
@@ -235,9 +235,10 @@ fast_failure: about to fail...
 Error: unhandled errors in a TaskGroup (1 sub-exception)
 ```
 
-The `fast_failure` task raised after 0.1 seconds. The [`TaskGroup`][taskgroup]
-cancelled `slow_worker` (so `!#py "slow_worker: finished!"` is never printed).
-Then the `#!py RuntimeError` from `fast_failure` was re-raised in a special way
+The `#!py fast_failure` task raised after 0.1 seconds. The
+[`TaskGroup`][taskgroup] cancelled `#!py slow_worker` (so
+`#!py "slow_worker: finished!"` is never printed). Then the
+`#!py RuntimeError` from `#!py fast_failure` was re-raised in a special way
 by the task group.
 
 The deep mechanics of cancellation -- [`CancelledError`][cancellederror]
@@ -245,7 +246,7 @@ propagation, shielding, timeouts -- belong in the [next
 section](cancellation-and-timeouts.md). For now, remember: **if one child
 fails, the others don't keep running in the dark.**
 
-## `ExceptionGroup` and `except*`
+## `#!py ExceptionGroup` and `#!py except*`
 
 You might have noticed the `unhandled errors in a TaskGroup (1 sub-exception)`
 above. When a [`TaskGroup`][taskgroup] has failures, it raises an
@@ -372,7 +373,7 @@ the [`async with`][async-with] block, every task is guaranteed complete, so
 [`ExceptionGroup`][exceptiongroup] before you ever reach the `#!py .result()`
 calls.
 
-### Nested `TaskGroup`s
+### Nested `#!py TaskGroup`s
 
 [`TaskGroup`][taskgroup]s can be nested, and each group is an independent
 scope. This is useful when a piece of work is itself composed of concurrent
@@ -485,7 +486,7 @@ earlier.
     backpressure, shutdown signalling, and bounded queues -- see
     [Coordination](coordination.md#asyncioqueue).
 
-## The Problem with `asyncio.create_task()`
+## The Problem with `#!py asyncio.create_task()`
 
 Before [`TaskGroup`][taskgroup] existed, the way to launch concurrent work was
 [`asyncio.create_task()`][asyncio-create-task]. It still exists, and you will
@@ -543,7 +544,7 @@ tasks in a global list, add a `try/except` inside the task to log exceptions,
 and await them at the end of `#!py main()`. But that is a lot of boilerplate,
 and it is easy to forget one of those steps -- leading to obscure bugs.
 
-`TaskGroup` solves all three problems by making ownership explicit in the
+`#!py TaskGroup` solves all three problems by making ownership explicit in the
 source code, making those bugs impossible.
 
 !!! Tip
