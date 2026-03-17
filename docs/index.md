@@ -143,9 +143,9 @@ linearly.
        early.
 
 2. [Beyond the Basics](beyond-the-basics/index.md) -- Learn the advanced
-   application-level patterns for [stream-based
+   application-level patterns for [offloading blocking
+   work](beyond-the-basics/offloading-blocking-work.md), [stream-based
    networking](beyond-the-basics/streams.md#opening-a-client-connection),
-   [offloading blocking work](beyond-the-basics/offloading-blocking-work.md),
    [shielding](beyond-the-basics/shielding.md#when-to-use-shielding), and
    other production-oriented asyncio work.
 
@@ -154,22 +154,11 @@ linearly.
         [`asyncio.to_thread()`](beyond-the-basics/offloading-blocking-work.md#asyncioto_thread),
         [process pools](beyond-the-basics/offloading-blocking-work.md#processpoolexecutor-for-cpu-bound-work),
         and which offloading strategy fits.
-     * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
-       patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
-       critical work without creating orphaned tasks.
      * [Custom Context Managers](beyond-the-basics/custom-context-managers.md)
        -- Build reusable async setup and teardown blocks with
        [`@asynccontextmanager`](beyond-the-basics/custom-context-managers.md#asynccontextmanager)
        and
        [`AsyncExitStack`](beyond-the-basics/custom-context-managers.md#asyncexitstack).
-      * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
-        Reach for
-        [`Lock`](beyond-the-basics/advanced-coordination.md#asynciolock),
-        [`Condition`](beyond-the-basics/advanced-coordination.md#asynciocondition),
-        [`Barrier`](beyond-the-basics/advanced-coordination.md#asynciobarrier),
-        and
-        [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#priorityqueue-and-lifoqueue)
-        when the basics are not enough.
       * [Streams](beyond-the-basics/streams.md) -- Work with [client
         connections](beyond-the-basics/streams.md#opening-a-client-connection),
         [TCP servers](beyond-the-basics/streams.md#building-a-tcp-server), and
@@ -179,6 +168,17 @@ linearly.
         pattern](beyond-the-basics/subprocesses.md#the-default-pattern-communicate)
         and avoid [pipe
        deadlocks](beyond-the-basics/subprocesses.md#the-main-pitfall-pipe-deadlocks).
+      * [Advanced Coordination](beyond-the-basics/advanced-coordination.md) --
+        Reach for
+        [`Lock`](beyond-the-basics/advanced-coordination.md#asynciolock),
+        [`Condition`](beyond-the-basics/advanced-coordination.md#asynciocondition),
+        [`Barrier`](beyond-the-basics/advanced-coordination.md#asynciobarrier),
+        and
+        [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#priorityqueue-and-lifoqueue)
+        when the basics are not enough.
+     * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
+       patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
+       critical work without creating orphaned tasks.
      * [Runner](beyond-the-basics/runner.md) -- Learn [when to use
        `Runner`](beyond-the-basics/runner.md#when-to-use-runner) when you need
        multiple top-level coroutines in one process.

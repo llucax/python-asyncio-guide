@@ -184,13 +184,13 @@ Groups](../the-basics/cancellation-and-timeouts.md#timeouts-and-task-groups).
 
 [`asyncio.shield()`][asyncio-shield] lets an inner task survive the
 cancellation of its outer task, but the outer task still unwinds immediately.
-If the shielded work takes a long time, it runs unmonitored in the background
-with no parent to collect its result or handle its errors. Shield only small,
-critical operations like flushing a buffer or committing a transaction, and
-always document *why* the work needs to survive cancellation.
+If the shielded work takes a long time, it can keep running in the background
+after its caller has exited. Shield only small, critical operations like
+flushing a buffer or committing a transaction, and make sure some longer-lived
+owner will await the inner task and observe its errors.
 
 See [Shielding -- When to Use
-It](../beyond-the-basics/shielding.md#when-to-use-it).
+Shielding](../beyond-the-basics/shielding.md#when-to-use-shielding).
 
 ## Keep the Event Loop Responsive
 

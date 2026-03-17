@@ -1,10 +1,10 @@
 ---
 title: Beyond the Basics
 description: >-
-  Application-level asyncio patterns beyond the core toolkit -- stream-based
-  networking, offloading blocking work, shielding critical work from
-  cancellation, custom context managers, less-common coordination tools,
-  subprocesses, and the Runner API.
+  Application-level asyncio patterns beyond the core toolkit -- offloading
+  blocking work, custom context managers, stream-based networking,
+  subprocesses, less-common coordination tools, shielding critical work from
+  cancellation, and the Runner API.
 icon: lucide/workflow
 ---
 
@@ -33,17 +33,25 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    and [choosing the right offloading
    tool](offloading-blocking-work.md#when-to-use-what).
 
-2. [Shielding](shielding.md) -- [safe shielding
-   patterns](shielding.md#safe-patterns), [when to use
-   shielding](shielding.md#when-to-use-shielding), and how to use it without
-   creating orphaned tasks.
-
-3. [Custom Context Managers](custom-context-managers.md) --
+2. [Custom Context Managers](custom-context-managers.md) --
    [`@asynccontextmanager`](custom-context-managers.md#asynccontextmanager),
    [`AsyncExitStack`](custom-context-managers.md#asyncexitstack), and
    [composing lifetimes](custom-context-managers.md#composing-lifetimes).
 
-4. [Advanced Coordination](advanced-coordination.md) --
+3. [Streams](streams.md) --
+   [opening a client connection](streams.md#opening-a-client-connection),
+   [stream resource management](streams.md#resource-management-for-streams),
+   [building a TCP server](streams.md#building-a-tcp-server), and [timeouts on
+   stream operations](streams.md#timeouts-on-stream-operations). This is a
+   reference companion section.
+
+4. [Subprocesses](subprocesses.md) -- [exec vs
+   shell](subprocesses.md#exec-vs-shell), [the `communicate()`
+   pattern](subprocesses.md#the-default-pattern-communicate), and [pipe
+   deadlocks](subprocesses.md#the-main-pitfall-pipe-deadlocks). This is a
+   reference companion section.
+
+5. [Advanced Coordination](advanced-coordination.md) --
    [`Lock`](advanced-coordination.md#asynciolock),
    [`Condition`](advanced-coordination.md#asynciocondition),
    [`Barrier`](advanced-coordination.md#asynciobarrier),
@@ -51,18 +59,10 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    [`PriorityQueue`/`LifoQueue`](advanced-coordination.md#priorityqueue-and-lifoqueue).
    This is a reference companion section.
 
-5. [Streams](streams.md) --
-   [opening a client connection](streams.md#opening-a-client-connection),
-   [stream resource management](streams.md#resource-management-for-streams),
-   [building a TCP server](streams.md#building-a-tcp-server), and [timeouts on
-   stream operations](streams.md#timeouts-on-stream-operations). This is a
-   reference companion section.
-
-6. [Subprocesses](subprocesses.md) -- [exec vs
-   shell](subprocesses.md#exec-vs-shell), [the `communicate()`
-   pattern](subprocesses.md#the-default-pattern-communicate), and [pipe
-   deadlocks](subprocesses.md#the-main-pitfall-pipe-deadlocks). This is a
-   reference companion section.
+6. [Shielding](shielding.md) -- [safe shielding
+   patterns](shielding.md#safe-patterns), [when to use
+   shielding](shielding.md#when-to-use-shielding), and how to use it without
+   creating orphaned tasks.
 
 7. [Runner](runner.md) -- [when to use `Runner`](runner.md#when-to-use-runner),
    [the shape of the API](runner.md#the-shape-of-the-api), and
