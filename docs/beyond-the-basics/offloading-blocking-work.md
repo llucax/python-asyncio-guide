@@ -272,7 +272,7 @@ the `#!py queue.put_nowait()` call inside
     [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] or use
     [`threading`][threading]-based synchronization primitives instead.
 
-## `#!py ProcessPoolExecutor` for CPU-Bound Work
+## `#!py ProcessPoolExecutor`
 
 [`asyncio.to_thread()`][asyncio-to-thread] solves the problem for I/O-bound
 blocking work -- file reads, network calls, database queries. But for
@@ -283,9 +283,8 @@ time. A CPU-heavy function in a thread still starves the event loop because
 both the thread and the loop are competing for the same GIL.
 
 The solution is to use a separate *process*. A
-[`ProcessPoolExecutor`][processpoolexecutor]
-runs work in a pool of child processes, each with its own GIL. You call it
-through
+[`ProcessPoolExecutor`][processpoolexecutor] runs work in a pool of child
+processes, each with its own GIL. You call it through
 [`loop.run_in_executor()`][loop-run-in-executor]:
 
 ```python title="cpu_bound.py" hl_lines="6 25 27-28 30"
@@ -361,8 +360,9 @@ Checked 5 numbers in 1.31s
 
 !!! Note
 
-    Like the `#!py call_soon_threadsafe` example above, this recipe uses the
-    low-level APIs [`asyncio.get_running_loop()`][asyncio-get-running-loop] and
+    Like the [`loop.call_soon_threadsafe()`][loop-call-soon-threadsafe] example
+    above, this recipe uses the low-level APIs
+    [`asyncio.get_running_loop()`][asyncio-get-running-loop] and
     [`loop.run_in_executor()`][loop-run-in-executor], which are covered in
     [Loop Access and
     Inspection](../the-low-level-toolkit/loop-access-and-inspection.md) in [The
@@ -371,44 +371,27 @@ Checked 5 numbers in 1.31s
     to dispatch work to a [`ProcessPoolExecutor`][processpoolexecutor] from
     async code, so you will see it whenever CPU-bound offloading comes up.
 
-A few things to note:
+The offload happens at `#!py loop.run_in_executor(...)`: instead of running the
+function in the event-loop thread, the coroutine submits it to the process pool
+and awaits the result while child processes do the CPU work. The wrapper is
+needed because `#!py tg.create_task()` only accepts coroutines, but `#!py
+loop.run_in_executor()` returns an `#!py asyncio.Future`. We'll get into what a
+`Future` is in [The Low-Level Toolkit --
+Futures](../the-low-level-toolkit/futures.md).
 
-- [`loop.run_in_executor()`][loop-run-in-executor] requires the running loop,
-  which you get with
-  [`asyncio.get_running_loop()`][asyncio-get-running-loop].
-- The executor is a [`ProcessPoolExecutor`][processpoolexecutor], not the
-  default [`ThreadPoolExecutor`][threadpoolexecutor]. That is the key
-  difference from [`asyncio.to_thread()`][asyncio-to-thread].
-- Each function call and its arguments must be
-  [picklable][picklable], because they are
-  serialized and sent to a child process. Lambda functions, closures, and
-  objects with unpicklable state will raise
-  [`pickle.PicklingError`][picklingerror].
-- The `#!py with ProcessPoolExecutor()` block shuts down the pool cleanly when
-  the work is done. In a long-running service, you would typically create the
-  pool once at startup and reuse it.
-
-!!! Info
-
-    Only reach for [`ProcessPoolExecutor`][processpoolexecutor] when the work
-    is genuinely CPU-bound. Process creation and inter-process communication
-    have significant overhead compared to threads. For I/O-bound blocking
-    calls, [`asyncio.to_thread()`][asyncio-to-thread] is simpler and faster.
+Only reach for [`ProcessPoolExecutor`][processpoolexecutor] when the work is
+genuinely CPU-bound. Process creation and inter-process communication have
+significant overhead compared to threads. For I/O-bound blocking calls,
+[`asyncio.to_thread()`][asyncio-to-thread] is simpler and faster.
 
 !!! Warning
 
-    Python 3.14 adds [`InterpreterPoolExecutor`][interpreterpoolexecutor], but
-    you should probably avoid it for now. Like
-    [`ProcessPoolExecutor`][processpoolexecutor], it still serializes submitted
-    callables, arguments, and return values, and have the same limitations as
-    [`to_thread()`][asyncio-to-thread]. It also relies on your dependencies
-    supporting multiple interpreters, and some third-party extension modules do
-    not yet support that model. For now, prefer
-    [`ProcessPoolExecutor`][processpoolexecutor] for CPU-bound work.
+    Each function call and its arguments must be [picklable][picklable],
+    because they are serialized and sent to a child process. Lambda functions,
+    closures, and objects with unpicklable state will raise
+    [`pickle.PicklingError`][picklingerror].
 
 ## When to Use What
-
-Three rules of thumb:
 
 1. **Prefer async libraries.** If you have a choice, use an async library that
    fits your needs.
@@ -422,6 +405,17 @@ Three rules of thumb:
    [`asyncio.to_thread()`][asyncio-to-thread], that is when you switch to
    [`ProcessPoolExecutor`][processpoolexecutor].
 
+!!! Warning
+
+    Python 3.14 adds [`InterpreterPoolExecutor`][interpreterpoolexecutor], but
+    you should probably avoid it for now. Like
+    [`ProcessPoolExecutor`][processpoolexecutor], it still serializes submitted
+    callables, arguments, and return values, and have the same limitations as
+    [`to_thread()`][asyncio-to-thread]. It also relies on your dependencies
+    supporting multiple interpreters, and some third-party extension modules do
+    not yet support that model. For now, prefer
+    [`ProcessPoolExecutor`][processpoolexecutor] for CPU-bound work.
+
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [asyncio-to-thread]: https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread
@@ -431,6 +425,7 @@ Three rules of thumb:
 [asyncio-lock]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Lock
 [loop-call-soon-threadsafe]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe
 [asyncio-get-running-loop]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_running_loop
+[asyncio-future]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future
 [asyncio-queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [processpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 [interpreterpoolexecutor]: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.InterpreterPoolExecutor
