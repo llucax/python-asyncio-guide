@@ -39,26 +39,26 @@ async def main() -> None:
 
     try:
         writer.write(request)
-        await writer.drain()  # (1)!
+        await writer.drain() # (1)!
 
         response: bytes = await reader.read(4096)
         print(response[:200].decode())
 
     finally:
         writer.close()
-        await writer.wait_closed()  # (2)!
+        await writer.wait_closed() # (2)!
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-1. `#!py writer.write()` only buffers data -- `#!py writer.drain()` is the
-   coroutine
-   that actually waits for the buffer to flush. This is where backpressure
-   happens.
-2. Always call both `#!py writer.close()` and `#!py writer.wait_closed()`.
-   The first starts the shutdown, the second waits for it to complete
-   (including TLS teardown and final buffer flush).
+1. [`writer.write()`][write-data] only buffers data --
+   [`writer.drain()`][drain] is the coroutine that actually waits for the
+   buffer to flush. This is where backpressure happens.
+2. Always call both [`writer.close()`][close] and
+   [`writer.wait_closed()`][wait-closed]. The first starts the shutdown, the
+   second waits for it to complete (including TLS teardown and final buffer
+   flush).
 
 ```text title="$ python http_client.py"
 HTTP/1.0 200 OK
@@ -147,7 +147,7 @@ gone).
 ```python
 writer.write(b"Hello, ")
 writer.write(b"world!\n")
-await writer.drain()  # Flush both writes to the network
+await writer.drain() # Flush both writes to the network
 ```
 
 !!! Warning
@@ -221,7 +221,7 @@ automatically.
 
 Here is a simple echo server:
 
-```python title="echo_server.py"
+```python title="echo_server.py" hl_lines="3-6 24-26 30-31"
 import asyncio
 
 async def handle_client(

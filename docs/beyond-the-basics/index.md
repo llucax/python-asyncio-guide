@@ -2,7 +2,7 @@
 title: Beyond the Basics
 description: >-
   Application-level asyncio patterns beyond the core toolkit -- offloading
-  blocking work, custom context managers, stream-based networking,
+  blocking work, context managers and lifetimes, stream-based networking,
   subprocesses, less-common coordination tools, shielding critical work from
   cancellation, and the Runner API.
 icon: lucide/workflow
@@ -33,10 +33,12 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    and [choosing the right offloading
    tool](offloading-blocking-work.md#when-to-use-what).
 
-2. [Custom Context Managers](custom-context-managers.md) --
-   [`@asynccontextmanager`](custom-context-managers.md#asynccontextmanager),
-   [`AsyncExitStack`](custom-context-managers.md#asyncexitstack), and
-   [composing lifetimes](custom-context-managers.md#composing-lifetimes).
+2. [Context Managers and Lifetimes](context-managers-and-lifetimes.md) --
+   the [class-based
+   protocol](context-managers-and-lifetimes.md#the-class-based-protocol),
+   [`@asynccontextmanager`](context-managers-and-lifetimes.md#asynccontextmanager)
+   helpers, [`AsyncExitStack`](context-managers-and-lifetimes.md#asyncexitstack),
+   and [composing lifetimes](context-managers-and-lifetimes.md#composing-lifetimes).
 
 3. [Streams](streams.md) --
    [opening a client connection](streams.md#opening-a-client-connection),
@@ -59,10 +61,10 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    [`PriorityQueue`/`LifoQueue`](advanced-coordination.md#priorityqueue-and-lifoqueue).
    This is a reference companion section.
 
-6. [Shielding](shielding.md) -- [safe shielding
-   patterns](shielding.md#safe-patterns), [when to use
-   shielding](shielding.md#when-to-use-shielding), and how to use it without
-   creating orphaned tasks.
+6. [Shielding](shielding.md) -- [the recommended shielding
+   pattern](shielding.md#the-recommended-pattern), [structured cleanup
+   without shielding](shielding.md#structured-cleanup-without-shielding),
+   and [when to use shielding](shielding.md#when-to-use-shielding).
 
 7. [Runner](runner.md) -- [when to use `Runner`](runner.md#when-to-use-runner),
    [the shape of the API](runner.md#the-shape-of-the-api), and

@@ -154,11 +154,13 @@ linearly.
         [`asyncio.to_thread()`](beyond-the-basics/offloading-blocking-work.md#asyncioto_thread),
         [process pools](beyond-the-basics/offloading-blocking-work.md#processpoolexecutor-for-cpu-bound-work),
         and which offloading strategy fits.
-     * [Custom Context Managers](beyond-the-basics/custom-context-managers.md)
-       -- Build reusable async setup and teardown blocks with
-       [`@asynccontextmanager`](beyond-the-basics/custom-context-managers.md#asynccontextmanager)
-       and
-       [`AsyncExitStack`](beyond-the-basics/custom-context-managers.md#asyncexitstack).
+      * [Context Managers and
+        Lifetimes](beyond-the-basics/context-managers-and-lifetimes.md) --
+        Design managed lifetimes with the [class-based
+        protocol](beyond-the-basics/context-managers-and-lifetimes.md#the-class-based-protocol),
+        [`@asynccontextmanager`](beyond-the-basics/context-managers-and-lifetimes.md#asynccontextmanager),
+        and
+        [`AsyncExitStack`](beyond-the-basics/context-managers-and-lifetimes.md#asyncexitstack).
       * [Streams](beyond-the-basics/streams.md) -- Work with [client
         connections](beyond-the-basics/streams.md#opening-a-client-connection),
         [TCP servers](beyond-the-basics/streams.md#building-a-tcp-server), and

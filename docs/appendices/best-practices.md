@@ -137,8 +137,8 @@ normally. In almost every async context manager, [`__aexit__()`][aexit] should
 return `#!py None` or `#!py False` after cleanup so cancellation can keep
 propagating.
 
-See [Custom Context Managers -- `__aexit__` and
-Cancellation](../beyond-the-basics/custom-context-managers.md#__aexit__-and-cancellation)
+See [Context Managers and Lifetimes -- `__aexit__` and
+Cancellation](../beyond-the-basics/context-managers-and-lifetimes.md#__aexit__-and-cancellation)
 and [Cancellation and Timeouts -- Never Swallow a
 `CancelledError`](../the-basics/cancellation-and-timeouts.md#never-swallow-a-cancellederror).
 

@@ -100,8 +100,6 @@ Validation is manual:
 - In prose outside `index.md` overview text, link all meaningful occurrences of
   Python, Trio, and external API mentions, not just the first one in a
   section.
-- In prose that is *explaining a nearby code example*, prefer inline
-  `#!py ...` for the exact code, symbols, or syntax being discussed.
 - In other prose, prefer official-doc cross-links for Python syntax and stdlib
   APIs that have a documentation page, rather than plain inline code.
 - Prefer split reference links for readability, for example
@@ -130,8 +128,8 @@ These rules apply to runnable examples and Python-flavoured pseudocode.
   unless the section is explicitly teaching low-level internals.
 - Prefer `python` fences for real examples and `text` fences for output.
 - Use `title="filename.py"` when a filename helps.
-- For inline Python syntax in prose, use `#!py` when discussing code from a
-  nearby example, for example `#!py async with sem:`.
+- For inline Python code snippets use `#!py`, for example `#!py async with
+  sem:`.
 - Preferred entry point:
 
   ```python
