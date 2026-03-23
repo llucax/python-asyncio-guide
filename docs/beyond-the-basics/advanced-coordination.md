@@ -49,11 +49,11 @@ but they are easier to misuse.
 | Tool | Reach for it when... | Main pitfall |
 |---|---|---|
 | [`Lock`][lock] | Several tasks must preserve one shared-state invariant across an [`await`][await] | Holding it across unrelated slow work, or reaching for it when a queue would be simpler |
-| [`Condition`][condition] | Several tasks wait for *different predicates* on the same shared state | Forgetting to re-check the predicate after wakeup |
+| [`Condition`][condition] | Several tasks wait for *different predicates* on the same shared state | Forgetting that waiters sleep and wake around a predicate, not a one-shot signal |
 | [`Barrier`][barrier] | A fixed number of tasks must all finish phase N before any start phase N+1 | One missing party stalls everyone |
 | [`Queue.task_done()`][task-done] and [`Queue.join()`][join] | You need to wait for queued work to drain without tearing down the worker tasks | Mistaking it for a shutdown signal or a true barrier |
 | [`BoundedSemaphore`][boundedsemaphore] | You want semaphore behavior plus protection against over-release bugs | Treating it like a different concurrency primitive instead of a safety wrapper |
-| [`PriorityQueue`][priorityqueue] | Work items must be processed by priority instead of FIFO order | Forgetting that ties still need stable, comparable payloads |
+| [`PriorityQueue`][priorityqueue] | Work items must be processed by priority instead of FIFO order | Forgetting that equal priorities need an explicit comparable tiebreaker |
 | [`LifoQueue`][lifoqueue] | Newest work should be processed first | Accidentally starving older items |
 
 ## `#!py asyncio.Lock`
@@ -79,6 +79,9 @@ If one task can own the state and other tasks can talk to it through a
 ```python title="lock_example.py"
 import asyncio
 
+async def record_pending_transfer() -> None:
+    # Simulate writing a pending-transfer audit record
+    await asyncio.sleep(0.01)
 
 async def transfer(
     lock: asyncio.Lock,
@@ -91,12 +94,10 @@ async def transfer(
         if ledger[src] < amount:
             print(f"Insufficient funds in {src}")
             return
-
-        await asyncio.sleep(0.01)  # Simulate writing a pending-transfer audit record
+        await record_pending_transfer()
         ledger[src] -= amount
         ledger[dst] += amount
         print(f"Transferred {amount} from {src} to {dst}")
-
 
 async def main() -> None:
     lock = asyncio.Lock()
@@ -159,42 +160,125 @@ much less common in asyncio than they are in threaded programs.
 with wait/notify coordination. Use it when tasks share mutable state and
 different waiters care about different states of that data.
 
-You almost always want [`wait_for(predicate)`][wait-for-predicate] instead of raw [`wait()`][wait], because
-it keeps the "check predicate, sleep, check again" loop in one place.
+That usually means one shared object has more than one meaningful predicate.
+For example, consumers wait for "buffer not empty" while producers wait for
+"buffer below maxsize."
 
-```python
+You almost always want [`wait_for(predicate)`][wait-for-predicate] instead of
+raw [`wait()`][wait], because it keeps the "check predicate, sleep, check
+again" loop in one place. While it waits, the condition releases its lock and
+re-acquires it before returning.
+
+```python title="condition_buffer.py"
 import asyncio
 
 
 class Buffer:
-    def __init__(self) -> None:
-        self.items: list[int] = []
+    def __init__(self, maxsize: int) -> None:
+        self.items: list[int | None] = []
+        self.maxsize = maxsize
         self.cond = asyncio.Condition()
 
-    async def put(self, value: int) -> None:
+    async def put(self, value: int | None) -> None:
         async with self.cond:
+            await self.cond.wait_for(lambda: len(self.items) < self.maxsize)
             self.items.append(value)
             self.cond.notify_all()
 
-    async def get(self) -> int:
+    async def get(self) -> int | None:
         async with self.cond:
             await self.cond.wait_for(lambda: bool(self.items))
-            return self.items.pop(0)
+            value: int | None = self.items.pop(0)
+            self.cond.notify_all()
+            return value
+
+
+async def producer(name: str, buffer: Buffer, values: list[int]) -> None:
+    for value in values:
+        await buffer.put(value)
+        print(f"{name}: produced {value}")
+
+
+async def consumer(buffer: Buffer) -> None:
+    while True:
+        value = await buffer.get()
+        if value is None:
+            print("consumer: stopping")
+            return
+
+        print(f"consumer: got {value}")
+        await asyncio.sleep(0.2)
+
+
+async def main() -> None:
+    buffer = Buffer(maxsize=2)
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(consumer(buffer), name="consumer")
+        producer_1 = tg.create_task(
+            producer("P1", buffer, [1, 3, 5]),
+            name="producer-1",
+        )
+        producer_2 = tg.create_task(
+            producer("P2", buffer, [2, 4, 6]),
+            name="producer-2",
+        )
+
+        await producer_1
+        await producer_2
+        await buffer.put(None)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-If that looks like a hand-rolled queue, that is the point: prefer
-[`Queue`][queue] unless you genuinely need a custom predicate over shared state.
+The exact interleaving can vary, but one run looks like this:
+
+```text title="$ python condition_buffer.py"
+P1: produced 1
+P1: produced 3
+consumer: got 1
+P2: produced 2
+consumer: got 3
+P1: produced 5
+consumer: got 2
+P2: produced 4
+consumer: got 5
+P2: produced 6
+consumer: got 4
+consumer: got 6
+consumer: stopping
+```
+
+This is the kind of case that makes [`Condition`][condition] reasonable: two
+different predicates over one shared object. It is also exactly why
+[`Queue`][queue] exists. If you are just moving items between tasks, prefer
+[`Queue`][queue] instead of building this yourself.
+
+The example is careful about lifetime management too: the producers and the
+consumer all live inside one [`TaskGroup`][taskgroup], the buffer stays bounded,
+and the producer side sends one sentinel for the one consumer so shutdown stays
+cooperative.
+
+Because both producers and consumers may be waiting on different predicates,
+[`notify_all()`][notify-all] is usually the simpler choice. A single
+[`notify()`][notify] can wake the wrong side, which just re-checks its
+predicate and goes back to sleep.
 
 ## `#!py asyncio.Barrier`
 
-Use a [`Barrier`][barrier] for phased work. Each task calls [`await barrier.wait()`][await-barrier-wait].
-Nobody crosses until the required number of parties arrives.
+Use a [`Barrier`][barrier] for phased work. Each task calls
+[`await barrier.wait()`][await-barrier-wait]. Nobody crosses until the
+required number of parties arrives. Then they all continue, and the barrier is
+ready for the next phase.
 
 This is useful for simulations, staged pipelines, or test harnesses where all
 workers must finish one round before the next begins.
 
 The main failure mode is simple: if one task exits early, blocks forever, or is
-never started, every other waiter can hang behind the barrier.
+never started, every other waiter can wait indefinitely unless you arrange
+cancellation or some other recovery path.
 
 If the party count is not truly fixed, a barrier is probably the wrong tool.
 
@@ -212,14 +296,19 @@ feel a little like a barrier, but the mental model is different: a
 
 Each [`put(item)`][put-item] increments the unfinished-work counter. After a
 consumer fully processes an item, it calls [`task_done()`][task-done] to
-decrement it. [`join()`][join] blocks until the counter reaches zero.
+decrement it. [`join()`][join] waits until the counter reaches zero.
+
+That means "all items submitted so far were marked done," not "the queue can
+never receive more work again." If producers keep running, the queue can become
+non-empty again immediately after [`join()`][join] returns.
 
 In structured-concurrency code, you often do not need this. If the producer,
 consumers, and coordinator all live inside the same [`TaskGroup`][taskgroup],
-the group already answers "when is the whole pipeline done?" Reach for
-[`join()`][join] only when you need an earlier checkpoint inside that scope:
-drain the current batch, flush outstanding work before shutdown, or let workers
-catch up while keeping them alive.
+and the workers already have a defined stop path, the group already answers
+"when is the whole pipeline done?" Reach for [`join()`][join] only when you
+need an earlier checkpoint inside that scope: drain the current batch, flush
+outstanding work before shutdown, or let workers catch up while keeping them
+alive.
 
 ```python title="queue_join_batches.py"
 import asyncio
@@ -267,16 +356,34 @@ async def main() -> None:
         for _ in range(n_workers):
             await queue.put(STOP)
 
+        await queue.join()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+The exact worker assignment can vary, but one run looks like this:
+
+```text title="$ python queue_join_batches.py"
+W0: processed 1
+W1: processed 2
+W0: processed 3
+W1: processed 4
+First batch drained
+W0: processed 5
+W1: processed 6
+Second batch drained
+W0: stopping
+W1: stopping
 ```
 
 The workers stay alive across both batches. [`join()`][join] gives `#!py
 main()` an intermediate "all work so far is done" checkpoint without tearing
 down the worker tasks. The sentinels still handle shutdown, and because they
 are queue items too, each worker calls [`task_done()`][task-done] before
-exiting.
+exiting. The final [`join()`][join] only waits for those sentinel items to be
+acknowledged before `#!py main()` leaves the [`TaskGroup`][taskgroup].
 
 !!! Warning
 
@@ -286,14 +393,18 @@ exiting.
 
 ## `#!py asyncio.BoundedSemaphore`
 
-[`BoundedSemaphore`][boundedsemaphore] is just a [`Semaphore`][semaphore] with one extra
-safety check: [`release()`][release] raises if you call it more times than you acquired.
+[`BoundedSemaphore`][boundedsemaphore] is just a [`Semaphore`][semaphore] with
+one extra safety check: [`release()`][release] raises if you call it more times
+than you acquired.
 
 That makes it a debugging and correctness tool, not a fundamentally different
-coordination pattern. Use it when an over-release would be a serious bug and you
-want that bug to surface immediately.
+coordination pattern. Use it when an over-release would be a serious bug and
+you want that bug to surface immediately.
 
-## `#!py PriorityQueue` and `#!py LifoQueue`
+It is especially useful when you have manual acquire/release paths or layered
+cleanup where a double release is a realistic mistake.
+
+## `#!py asyncio.PriorityQueue` and `#!py asyncio.LifoQueue`
 
 These are queue variants, so the usual queue advice still applies:
 
@@ -304,9 +415,13 @@ These are queue variants, so the usual queue advice still applies:
 Use [`PriorityQueue`][priorityqueue] when ordering matters more than arrival time:
 
 ```python
-await queue.put((0, "urgent"))
-await queue.put((10, "later"))
+await queue.put((0, 0, "urgent"))
+await queue.put((10, 1, "later"))
 ```
+
+If equal priorities are possible, use a tuple such as `#!py (priority,
+sequence, payload)` instead of relying on `#!py payload` to break ties. That
+keeps items comparable and preserves FIFO order among equal-priority work.
 
 Use [`LifoQueue`][lifoqueue] when the newest item is the one you most want to
 process next, for example when you care more about freshness than fairness.
@@ -340,5 +455,7 @@ Be aware that LIFO ordering can starve old items if new work keeps arriving.
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [await-barrier-wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Barrier.wait
 [wait-for-predicate]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait_for
+[notify]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.notify
+[notify-all]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.notify_all
 [release]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore.release
 [wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait

@@ -122,11 +122,18 @@ These rules apply to runnable examples and Python-flavoured pseudocode.
   `deadline`; avoid clever abbreviations.
 - Prefer explicit control flow over compact tricks.
 - Keep examples cancellation-safe and resource-safe.
+- Make runnable examples follow the guide's best practices appendix, including
+  clear ownership, structured cleanup, and no abandoned tasks, streams, or
+  subprocesses.
 - Do not swallow `CancelledError`; if you catch it for cleanup, re-raise it.
 - Prefer `async with` for owned resources and structured concurrency.
 - Prefer `TaskGroup` over bare `create_task()` in application-level examples
   unless the section is explicitly teaching low-level internals.
 - Prefer `python` fences for real examples and `text` fences for output.
+- When a section includes a full runnable example, include its expected output
+  in a following `text` fence using the same style as nearby guide sections,
+  for example `title="$ python example.py"`. Short illustrative snippets do
+  not need full boilerplate or output blocks.
 - Use `title="filename.py"` when a filename helps.
 - For inline Python code snippets use `#!py`, for example `#!py async with
   sem:`.

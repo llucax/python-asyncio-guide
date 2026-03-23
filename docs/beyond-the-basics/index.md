@@ -58,7 +58,7 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    [`Condition`](advanced-coordination.md#asynciocondition),
    [`Barrier`](advanced-coordination.md#asynciobarrier),
    [`BoundedSemaphore`](advanced-coordination.md#asyncioboundedsemaphore), and
-   [`PriorityQueue`/`LifoQueue`](advanced-coordination.md#priorityqueue-and-lifoqueue).
+   [`PriorityQueue`/`LifoQueue`](advanced-coordination.md#asynciopriorityqueue-and-asynciolifoqueue).
    This is a reference companion section.
 
 6. [Shielding](shielding.md) -- [the recommended shielding

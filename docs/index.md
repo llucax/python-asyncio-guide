@@ -176,7 +176,7 @@ linearly.
         [`Condition`](beyond-the-basics/advanced-coordination.md#asynciocondition),
         [`Barrier`](beyond-the-basics/advanced-coordination.md#asynciobarrier),
         and
-        [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#priorityqueue-and-lifoqueue)
+        [`PriorityQueue`/`LifoQueue`](beyond-the-basics/advanced-coordination.md#asynciopriorityqueue-and-asynciolifoqueue)
         when the basics are not enough.
      * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
        patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
