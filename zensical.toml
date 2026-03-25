@@ -76,7 +76,6 @@ nav = [
     "beyond-the-basics/subprocesses.md",
     "beyond-the-basics/advanced-coordination.md",
     "beyond-the-basics/shielding.md",
-    "beyond-the-basics/runner.md",
   ]},
   { "How Asyncio Works" = [
     "how-asyncio-works/index.md",
@@ -92,6 +91,7 @@ nav = [
     "the-low-level-toolkit/futures.md",
     "the-low-level-toolkit/callbacks-and-threading.md",
     "the-low-level-toolkit/transports-and-protocols.md",
+    "the-low-level-toolkit/runner.md",
   ]},
   { "Appendices" = [
     "appendices/index.md",

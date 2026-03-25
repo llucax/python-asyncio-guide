@@ -52,7 +52,7 @@ but they are easier to misuse.
 | [`Condition`][condition] | Several tasks wait for *different predicates* on the same shared state | Forgetting that waiters sleep and wake around a predicate, not a one-shot signal |
 | [`Barrier`][barrier] | A fixed number of tasks must all finish phase N before any start phase N+1 | One missing party stalls everyone |
 | [`Queue.task_done()`][task-done] and [`Queue.join()`][join] | You need to wait for queued work to drain without tearing down the worker tasks | Mistaking it for a shutdown signal or a true barrier |
-| [`BoundedSemaphore`][boundedsemaphore] | You want semaphore behavior plus protection against over-release bugs | Treating it like a different concurrency primitive instead of a safety wrapper |
+| [`BoundedSemaphore`][boundedsemaphore] | You want semaphore behavior with fail-fast checks for over-release bugs | Treating it like the new default instead of a safety wrapper |
 | [`PriorityQueue`][priorityqueue] | Work items must be processed by priority instead of FIFO order | Forgetting that equal priorities need an explicit comparable tiebreaker |
 | [`LifoQueue`][lifoqueue] | Newest work should be processed first | Accidentally starving older items |
 
@@ -76,7 +76,7 @@ If one task can own the state and other tasks can talk to it through a
 [`Queue`][queue], prefer that design. When you do need a lock, use
 [`async with`][async-with] so release is guaranteed:
 
-```python title="lock_example.py"
+```python title="lock_example.py" hl_lines="14-21"
 import asyncio
 
 async def record_pending_transfer() -> None:
@@ -115,7 +115,6 @@ async def main() -> None:
 
     print(f"Final balances: {ledger}")
 
-
 if __name__ == "__main__":
     asyncio.run(main())
 ```
@@ -145,8 +144,8 @@ much less common in asyncio than they are in threaded programs.
 
 !!! Danger
 
-    asyncio locks are **not reentrant**. If a task that already holds the lock
-    tries to acquire it again, it will deadlock.
+    [`asyncio.Lock`][lock] is **not reentrant**. If a task that already holds
+    the lock tries to acquire it again, it will deadlock.
 
 !!! Tip
 
@@ -169,9 +168,8 @@ raw [`wait()`][wait], because it keeps the "check predicate, sleep, check
 again" loop in one place. While it waits, the condition releases its lock and
 re-acquires it before returning.
 
-```python title="condition_buffer.py"
+```python title="condition_buffer.py" hl_lines="7 10-13 16-20"
 import asyncio
-
 
 class Buffer:
     def __init__(self, maxsize: int) -> None:
@@ -192,12 +190,10 @@ class Buffer:
             self.cond.notify_all()
             return value
 
-
 async def producer(name: str, buffer: Buffer, values: list[int]) -> None:
     for value in values:
         await buffer.put(value)
         print(f"{name}: produced {value}")
-
 
 async def consumer(buffer: Buffer) -> None:
     while True:
@@ -208,7 +204,6 @@ async def consumer(buffer: Buffer) -> None:
 
         print(f"consumer: got {value}")
         await asyncio.sleep(0.2)
-
 
 async def main() -> None:
     buffer = Buffer(maxsize=2)
@@ -227,7 +222,6 @@ async def main() -> None:
         await producer_1
         await producer_2
         await buffer.put(None)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -261,10 +255,12 @@ consumer all live inside one [`TaskGroup`][taskgroup], the buffer stays bounded,
 and the producer side sends one sentinel for the one consumer so shutdown stays
 cooperative.
 
-Because both producers and consumers may be waiting on different predicates,
-[`notify_all()`][notify-all] is usually the simpler choice. A single
-[`notify()`][notify] can wake the wrong side, which just re-checks its
-predicate and goes back to sleep.
+!!! Warning
+
+    Because both producers and consumers may be waiting on different
+    predicates, [`notify_all()`][notify-all] is usually the simpler choice. A
+    single [`notify()`][notify] can wake the wrong side, which just re-checks
+    its predicate and goes back to sleep.
 
 ## `#!py asyncio.Barrier`
 
@@ -275,6 +271,66 @@ ready for the next phase.
 
 This is useful for simulations, staged pipelines, or test harnesses where all
 workers must finish one round before the next begins.
+
+```python title="barrier_phases.py" hl_lines="12 17"
+import asyncio
+
+async def worker(
+    name: str,
+    barrier: asyncio.Barrier,
+    delays: list[float],
+) -> None:
+    for phase, delay in enumerate(delays, start=1):
+        print(f"{name}: phase {phase} working")
+        await asyncio.sleep(delay)
+        print(f"{name}: phase {phase} ready")
+        await barrier.wait()
+
+    print(f"{name}: done")
+
+async def main() -> None:
+    barrier = asyncio.Barrier(3)
+    worker_delays: dict[str, list[float]] = {
+        "A": [0.3, 0.15],
+        "B": [0.1, 0.05],
+        "C": [0.2, 0.1],
+    }
+
+    async with asyncio.TaskGroup() as tg:
+        for name, delays in worker_delays.items():
+            tg.create_task(
+                worker(name, barrier, delays),
+                name=f"worker-{name}",
+            )
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The exact order after each barrier opens can vary, but one run looks like this:
+
+```text title="$ python barrier_phases.py"
+A: phase 1 working
+B: phase 1 working
+C: phase 1 working
+B: phase 1 ready
+C: phase 1 ready
+A: phase 1 ready
+A: phase 2 working
+B: phase 2 working
+C: phase 2 working
+B: phase 2 ready
+C: phase 2 ready
+A: phase 2 ready
+A: done
+B: done
+C: done
+```
+
+The same barrier is reused for both phases. Notice the shape of the output: no
+task starts phase 2 until all three tasks have printed `#!py "phase 1 ready"`,
+and no task prints `#!py "done"` until all three have printed `#!py "phase 2
+ready"`.
 
 The main failure mode is simple: if one task exits early, blocks forever, or is
 never started, every other waiter can wait indefinitely unless you arrange
@@ -302,6 +358,12 @@ That means "all items submitted so far were marked done," not "the queue can
 never receive more work again." If producers keep running, the queue can become
 non-empty again immediately after [`join()`][join] returns.
 
+This is also why [`join()`][join] is useful during graceful interruption or
+shutdown. Once a worker has done [`get()`][get], the item is no longer sitting
+in the queue, but it still counts as unfinished until the worker later calls
+[`task_done()`][task-done]. So [`join()`][join] waits for both queued items and
+in-flight items that workers already pulled off the queue.
+
 In structured-concurrency code, you often do not need this. If the producer,
 consumers, and coordinator all live inside the same [`TaskGroup`][taskgroup],
 and the workers already have a defined stop path, the group already answers
@@ -310,11 +372,13 @@ need an earlier checkpoint inside that scope: drain the current batch, flush
 outstanding work before shutdown, or let workers catch up while keeping them
 alive.
 
-```python title="queue_join_batches.py"
+That leads to a common graceful-shutdown pattern: stop producers, wait for
+[`join()`][join], then send sentinels or otherwise stop the workers.
+
+```python title="queue_join_batches.py" hl_lines="7 9 15 22 25 33 37 40-41 43"
 import asyncio
 
 STOP: None = None
-
 
 async def worker(name: str, queue: asyncio.Queue[int | None]) -> None:
     while True:
@@ -328,14 +392,12 @@ async def worker(name: str, queue: asyncio.Queue[int | None]) -> None:
         print(f"{name}: processed {item}")
         queue.task_done()
 
-
 async def submit(
     queue: asyncio.Queue[int | None],
     items: list[int],
 ) -> None:
     for item in items:
         await queue.put(item)
-
 
 async def main() -> None:
     queue: asyncio.Queue[int | None] = asyncio.Queue(maxsize=3)
@@ -357,7 +419,6 @@ async def main() -> None:
             await queue.put(STOP)
 
         await queue.join()
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -391,18 +452,39 @@ acknowledged before `#!py main()` leaves the [`TaskGroup`][taskgroup].
     [`get()`][get]. Too few calls make [`join()`][join] wait forever; too many
     raise `ValueError`.
 
+    This is especially important under cancellation. If a worker is cancelled
+    after [`get()`][get] but before the work is really finished, the item is
+    already out of the queue. If the worker never reaches
+    [`task_done()`][task-done], [`join()`][join] hangs forever. If it calls
+    [`task_done()`][task-done] just to unblock shutdown, [`join()`][join]
+    reports success even though the work was interrupted.
+
+    During graceful shutdown, prefer to stop producers first and let workers
+    finish naturally before you cancel them. If mid-item cancellation is
+    unavoidable, you need an explicit recovery policy: re-queue the item, hand
+    the must-finish step to a longer-lived owner, or make the work retryable.
+
 ## `#!py asyncio.BoundedSemaphore`
 
 [`BoundedSemaphore`][boundedsemaphore] is just a [`Semaphore`][semaphore] with
 one extra safety check: [`release()`][release] raises if you call it more times
 than you acquired.
 
-That makes it a debugging and correctness tool, not a fundamentally different
-coordination pattern. Use it when an over-release would be a serious bug and
-you want that bug to surface immediately.
+If you are using the ordinary `#!py async with sem:` pattern from
+[Coordination](../the-basics/coordination.md#asynciosemaphore), plain
+[`Semaphore`][semaphore] is usually the right choice. That form pairs
+[`acquire()`][acquire] and [`release()`][release] for you, so there is less
+manual bookkeeping to protect.
 
-It is especially useful when you have manual acquire/release paths or layered
-cleanup where a double release is a realistic mistake.
+Reach for [`BoundedSemaphore`][boundedsemaphore] when you still want semaphore
+semantics, but you are managing permits manually with
+[`await sem.acquire()`][acquire] and [`sem.release()`][release], or your
+cleanup paths are layered enough that a double release is a realistic bug.
+
+That makes it a debugging and correctness tool, not a fundamentally different
+coordination pattern or a new default concurrency limiter. Use it when an
+over-release would be a serious bug and you want that bug to surface
+immediately.
 
 ## `#!py asyncio.PriorityQueue` and `#!py asyncio.LifoQueue`
 
@@ -428,13 +510,6 @@ process next, for example when you care more about freshness than fairness.
 
 Be aware that LIFO ordering can starve old items if new work keeps arriving.
 
-## What to Read Next
-
-- Full primitive behavior: [Synchronization Primitives][sync-primitives]
-- Queue variants: [Queues][queues]
-- The guide's first-line coordination advice:
-  [Coordination](../the-basics/coordination.md)
-
 [queue]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue
 [event]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Event
 [semaphore]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore
@@ -449,7 +524,6 @@ Be aware that LIFO ordering can starve old items if new work keeps arriving.
 [put-item]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.put
 [task-done]: https://docs.python.org/3/library/asyncio-queue.html#asyncio.Queue.task_done
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
-[sync-primitives]: https://docs.python.org/3/library/asyncio-sync.html
 [queues]: https://docs.python.org/3/library/asyncio-queue.html
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [await]: https://docs.python.org/3/reference/expressions.html#await
@@ -457,5 +531,6 @@ Be aware that LIFO ordering can starve old items if new work keeps arriving.
 [wait-for-predicate]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait_for
 [notify]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.notify
 [notify-all]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.notify_all
+[acquire]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore.acquire
 [release]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Semaphore.release
 [wait]: https://docs.python.org/3/library/asyncio-sync.html#asyncio.Condition.wait

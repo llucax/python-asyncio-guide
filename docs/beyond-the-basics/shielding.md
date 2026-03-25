@@ -30,22 +30,19 @@ Consider a file writer that flushes its buffers during teardown. The
 write layer applies its own timeout, and `#!py main()` applies a
 separate shutdown timeout above it:
 
-```python title="file_write_double_cancel.py"
+```python title="file_write_double_cancel.py" hl_lines="19-20 23 34"
 import asyncio
 import time
 
 T0 = time.monotonic()
 
-
 def stamp() -> str:
     return f"{time.monotonic() - T0:.1f}s"
-
 
 async def flush_file_buffers(path: str) -> None:
     print(f"flush: starting {path} at {stamp()}")
     await asyncio.sleep(2)
     print(f"flush: finished {path} at {stamp()}")
-
 
 async def write_output_file(path: str) -> None:
     print(f"writer: starting {path} at {stamp()}")
@@ -55,11 +52,9 @@ async def write_output_file(path: str) -> None:
     finally:
         await flush_file_buffers(path)
 
-
 async def run_write_with_timeout(path: str) -> None:
     async with asyncio.timeout(1):
         await write_output_file(path)
-
 
 async def run_batch_job(path: str) -> None:
     async with asyncio.TaskGroup() as tg:
@@ -67,14 +62,12 @@ async def run_batch_job(path: str) -> None:
         print(f"batch: waiting for 5s at {stamp()}")
         await asyncio.sleep(5)
 
-
 async def main() -> None:
     try:
         async with asyncio.timeout(1.5):
             await run_batch_job("report.txt")
     except TimeoutError:
         print(f"main: shutdown timeout at {stamp()}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -135,11 +128,13 @@ future, it wraps that directly. In either case, cancelling the outer
 wrapper severs the link between the two, and the inner work continues
 independently.
 
-If some other code cancels the inner task directly, shielding does not
-stop that. [`asyncio.shield()`][asyncio-shield] only blocks
-cancellation flowing *through* the `#!py await`.
+!!! Warning
 
-## Why `#!py asyncio.shield(flush())` Alone Is Not Enough
+    If some other code cancels the inner task directly, shielding does not stop
+    that. [`asyncio.shield()`][asyncio-shield] only blocks cancellation flowing
+    *through* the `#!py await`.
+
+## Why `#!py asyncio.shield()` Alone Is Not Enough
 
 A tempting first attempt is to wrap the cleanup call with
 [`asyncio.shield()`][asyncio-shield]:
@@ -172,22 +167,19 @@ to try to wait for it in place. If a second cancellation interrupts the
 shielded `#!py await`, the [`TaskGroup`][taskgroup] still owns the task
 and will wait for it before exiting.
 
-```python title="file_write_shield.py"
+```python title="file_write_shield.py" hl_lines="16 22-34 40 56 58-59"
 import asyncio
 import time
 
 T0 = time.monotonic()
 
-
 def stamp() -> str:
     return f"{time.monotonic() - T0:.1f}s"
-
 
 async def flush_file_buffers(path: str) -> None:
     print(f"flush: starting {path} at {stamp()}")
     await asyncio.sleep(2)
     print(f"flush: finished {path} at {stamp()}")
-
 
 async def write_output_file(
     path: str,
@@ -211,14 +203,12 @@ async def write_output_file(
             )
             raise
 
-
 async def run_write_with_timeout(
     path: str,
     cleanup_tg: asyncio.TaskGroup,
 ) -> None:
     async with asyncio.timeout(1):
         await write_output_file(path, cleanup_tg)
-
 
 async def run_batch_job(
     path: str,
@@ -232,7 +222,6 @@ async def run_batch_job(
         print(f"batch: waiting for 5s at {stamp()}")
         await asyncio.sleep(5)
 
-
 async def main() -> None:
     async with asyncio.TaskGroup() as cleanup_tg:
         try:
@@ -241,7 +230,6 @@ async def main() -> None:
         except TimeoutError:
             print(f"main: shutdown timeout at {stamp()}")
     print(f"main: all cleanup done at {stamp()}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -294,15 +282,13 @@ In file-processing code, the cancelled task does not need to wait for
 cleanup at all. It can hand the work off to a longer-lived
 [`TaskGroup`][taskgroup] and exit immediately. No shielding is needed.
 
-```python title="file_cleanup_taskgroup.py"
+```python title="file_cleanup_taskgroup.py" hl_lines="10 15-20 23 27"
 import asyncio
-
 
 async def flush_file_buffers(path: str) -> None:
     print(f"flush: syncing {path}")
     await asyncio.sleep(0.5)
     print(f"flush: finished {path}")
-
 
 async def write_output_file(
     path: str,
@@ -318,22 +304,23 @@ async def write_output_file(
         )
         raise
 
-
 async def main() -> None:
     async with asyncio.TaskGroup() as cleanup_tg:
-        async with asyncio.TaskGroup() as writers:
-            task: asyncio.Task[None] = writers.create_task(
-                write_output_file("report.txt", cleanup_tg),
-                name="write-report",
-            )
+        try:
+            async with asyncio.TaskGroup() as writers:
+                task: asyncio.Task[None] = writers.create_task(
+                    write_output_file("report.txt", cleanup_tg),
+                    name="write-report",
+                )
 
-            await asyncio.sleep(0.2)
-            task.cancel()
+                await asyncio.sleep(0.2)
+                raise RuntimeError("main: something went wrong")
+        except Exception as exc:
+            print(f"main: caught {exc.exceptions!r}")
 
         print("main: writer done, cleanup_tg still running")
 
     print("main: all cleanup complete")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -342,6 +329,7 @@ if __name__ == "__main__":
 ```text title="$ python file_cleanup_taskgroup.py"
 writer: writing report.txt
 flush: syncing report.txt
+main: caught (RuntimeError('main: something went wrong'),)
 main: writer done, cleanup_tg still running
 flush: finished report.txt
 main: all cleanup complete

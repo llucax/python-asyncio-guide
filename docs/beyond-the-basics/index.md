@@ -3,8 +3,8 @@ title: Beyond the Basics
 description: >-
   Application-level asyncio patterns beyond the core toolkit -- offloading
   blocking work, context managers and lifetimes, stream-based networking,
-  subprocesses, less-common coordination tools, shielding critical work from
-  cancellation, and the Runner API.
+  subprocesses, less-common coordination tools, and shielding critical work
+  from cancellation.
 icon: lucide/workflow
 ---
 
@@ -65,7 +65,3 @@ especially [Tasks and Futures](../how-asyncio-works/tasks-and-futures.md).
    pattern](shielding.md#the-recommended-pattern), [structured cleanup
    without shielding](shielding.md#structured-cleanup-without-shielding),
    and [when to use shielding](shielding.md#when-to-use-shielding).
-
-7. [Runner](runner.md) -- [when to use `Runner`](runner.md#when-to-use-runner),
-   [the shape of the API](runner.md#the-shape-of-the-api), and
-   [cleanup](runner.md#cleanup). This is a reference companion section.

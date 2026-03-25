@@ -181,9 +181,6 @@ linearly.
      * [Shielding](beyond-the-basics/shielding.md) -- Use [safe shielding
        patterns](beyond-the-basics/shielding.md#safe-patterns) for truly
        critical work without creating orphaned tasks.
-     * [Runner](beyond-the-basics/runner.md) -- Learn [when to use
-       `Runner`](beyond-the-basics/runner.md#when-to-use-runner) when you need
-       multiple top-level coroutines in one process.
 
 3. [How Asyncio Works](how-asyncio-works/index.md) -- Learn the runtime
    machinery underneath [the event
@@ -246,6 +243,9 @@ linearly.
        Understand [the callback-based networking
        model](the-low-level-toolkit/transports-and-protocols.md#the-model-in-one-sentence)
        underneath streams.
+     * [Runner](the-low-level-toolkit/runner.md) -- Learn [when to use
+       `Runner`](the-low-level-toolkit/runner.md#when-to-use-runner) when you
+       need multiple top-level coroutines in one process.
 
 5. [Appendices](appendices/index.md) -- Reference material for
    [checkpoint behavior](appendices/checkpoint-contract.md#always-suspends),

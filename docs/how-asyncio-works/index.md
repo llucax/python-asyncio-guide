@@ -25,9 +25,6 @@ This is also where the guide introduces the "unsafe" APIs --
 but as the building blocks that the safe abstractions from Chapters 1 and 2
 are built on.
 
-This chapter is the guide's clearest differentiator from the official docs. It
-is where the guide intentionally goes deep instead of linking out.
-
 If you want the application-level rules beside the internals, keep
 [Concurrent Tasks](../the-basics/concurrent-tasks.md),
 [Cancellation and Timeouts](../the-basics/cancellation-and-timeouts.md), and

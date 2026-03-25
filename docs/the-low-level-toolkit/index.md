@@ -3,7 +3,7 @@ title: The Low-Level Toolkit
 description: >-
   Low-level asyncio APIs for library and framework authors. Covers loop
   access, manual task coordination, bare futures, callbacks, threading
-  integration, and the transports-and-protocols layer.
+  integration, the transports-and-protocols layer, and the Runner API.
 icon: lucide/wrench
 ---
 
@@ -32,8 +32,8 @@ what the tool is for, when to reach for it, the main footguns, and where to
 read the official reference next.
 
 For the application-level boundary cases that usually lead you here, see
-[Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md) and
-[Runner](../beyond-the-basics/runner.md) first.
+[Offloading Blocking Work](../beyond-the-basics/offloading-blocking-work.md)
+first.
 
 ## Sections
 
@@ -66,3 +66,7 @@ For the application-level boundary cases that usually lead you here, see
    [the model in one sentence](transports-and-protocols.md#the-model-in-one-sentence),
    [main differences from streams](transports-and-protocols.md#main-differences-from-streams),
    and when to use it. This is a reference companion section.
+
+6. [Runner](runner.md) -- [when to use `Runner`](runner.md#when-to-use-runner),
+   [the shape of the API](runner.md#the-shape-of-the-api), and
+   [cleanup](runner.md#cleanup). This is a reference companion section.
