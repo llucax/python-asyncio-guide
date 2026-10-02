@@ -1,0 +1,92 @@
+* Rename "Building a Pipeline" to "Example: Building a Pipeline""
+* Add example on how to abort a TaskGroup without using cancel() (custom exception)
+
+* Add a best practices rule for:
+  * "Do not us to_thread() for CPU-bound work" (use run_in_executor() instead) (offload-blocking-work.md)
+
+  Also clarify in to_thread() and this rule, that offloading work is difficult, so prefer looking for alternatives (like othe asyncio-friendly libraries) when possible instead of offloading work manually.
+
+---
+
+* Improve section titles and make them more consistent and professional, keeping the informal tone in Trio.
+    * Don't use clarifications on section titles (like "Fairness (What Is And Isn't Guaranteed)", use just "Fairness" or find a better title; Trio actually uses just "Fairness" for that section), but this tone feels weird. Trio does it sometimes, but it is more to emphasize the point (for example "Threads (if you must)", feel free to do the same but only in very exceptional cases like this one. It doesn't have to be in parenthesis only, also things like "Checkpoint Contract: Which Operations Suspend", should probably be just "Checkpoint Contract", "Checkpoint guarantees" or something similar.
+    * Avoid titles like "What The Event Loop Is Responsible For", use "Event Loop Responsibilities" or something similar.
+    * "Tutorial (narrative learning)" -> just "Tutorial", "Core concepts (semantics and mental models)" -> "Core Concepts", I guess by now you get the idea.
+    * Review all section titles, most of them suck.
+
+* I want you to "fix" the dry tone, what of the things I enjoyed the most about reading Trio's docs was the very pleasant conversational style. This includes the excessive use of bullet points, I noticed some sections have most paragraphs only consisting of bullet points. Bullet points are good for when thethere is an actual list of items, like rules, but not for everything. Example in tutorial/cancellation-and-lifetimes "Shielding (And Why It Is Sharp)": What it does: one bullet point, What it does not do: one bullet point, etc. I find that very excessive use of bullet points.
+
+* cancelling() and uncancel() are way to advanced for the tutorial, keep it just in the core concepts section.
+
+* I also want all examples to use type-hints strictly. Assume the code must pass `mypy --strict` without any errors or warnings.
+
+* I also found confusing that many examples don't include the expected output, making it hard to verify if I'm understanding the code correctly. Can you add expected output to all examples? If the expected output is too long, just trucate to the most relevant part and add "..." at the end.
+
+* Guidance for Pyton < 3.11 is not necessary. Just say this guide assumes Python 3.11 at the beginning and remove all mentions to older versions.
+
+* Is the asyncio sandwitch mentioned in Trio docs? I feel this analogy makes things more confusing than helping.
+
+* I noticed there is a lot of repetition. For example mentions of asyncio being cooperative are almost every other paragraph/section. I understand some repetition is good, specially for core/very important concepts, to help them stick, but we should be careful not to overdo it. I want you to review the guide and remove any unnecessary repetition, while keeping the important ones.
+
+* About checkpointing, the tutorial (first async program) says: "If you need a clear checkpoint (rare, but sometimes useful), write it explicitly and comment why.". I have the feeling this doesn't match well what Trio's guide says (but I read it a while ago, so maybe I'm wrong). I think Trio's guide emphasizes more that async functions should have at least one checkpoint to make sure they are cooperative and not just a sync function in disguise. Please check specifically how Trio's guide manages this topic and make sure we are consistent with it thoughout the whole guide.
+
+* About `to_thread()`, I'm not sure the tutorial is a good place. About using it for CPU-intensive stuff, as it is mentioned in the section, the GIL get into the way to get real concurrency in those cases using threads, so it seems very niche for that (I guess only if you know an external library written in other language is used then you can get some parallelism? I can understand for I/O bound stuff, but CPU-intensive stuff sounds like it might give a false impression of parallelism. Feel free to include to_thread() in the core concepts, but making sure we have precise information and make readers aware of the gotchas and common pitfalls, I find the current mention to to_thread() in the tutorial a bit misleading.
+
+* I find the building-real-applications example a bit overkill. What about building an application using the actor model, where actors communicate between each other using async queues? I think that would be a more approachable example, while still being complex enough to show the benefits of using asyncio and the concepts we have covered in the guide. We could even build a simple chat application or something similar. This also doesn't introduce I/O, that was not covered before in the tutorial.
+
+* I found it very confusing to include `asyncio.Runner` and Ctrl-C in an appendix in building-real-applications. Also I don't undertand the example code and why you need a Runner there. Maybe you can move that and expand it to make it more approachable and easier to understand, in the core concepts?
+
+----
+
+
+* I want the guide to emphasize the correct way to use asyncio. I noticed many examples are not correct. For example they use `asyncio.create_task()` without proper error handling. We should show users you always should use structured concurrency and use `asyncio.TaskGroup` instead of `asyncio.create_task()`even if it might look overkill. Same with async generators. Some examples don't use async with aclosing(...): appropriately. These are very common mistakes and we should not make readers think they can write naive code. It is OK to show `asyncio.create_task()` exists as a low-level construct, but only when explaining its existence, not in any other unrelated examples. In the tutorial asyncio.create_task should not be mentioned at all, so if you need to restructure the tutorial to achieve this, please go ahead. Again, you can look again at Trio's docs for inspiration. Another approach would be to keep the current structure but add a big disclaimer when introducing `asyncio.create_task()` for the first time, saying this should not be used, but it is just to introduce the basic concept of a task.
+
+* I want to double check no concept or utility in Trio misses a corresponding section and solution in this guide. For example Trio's nurseries, cancellation, etc. I also wonder if Trio provides any solutions to the need to call aclose() on async generators. I also want you to suggest a set of potential tools we can implement in our https://github.com/frequenz-floss/frequenz-core-python/ project to support more clean asyncio usage. I was thinking for example, maybe we can have a helper function called something like `cleannig_up()` that internally has a async with aclosing(...), so users can do `async for item in cleannig_up(my_async_generator())` and avoid the extra indentation of a with block. Please propose small tools like this that could improve ergonomics and safety while using the standard asyncio library. Another example is Trio eliminates the need to work with coroutines, and takes "callbacks" instead. Would something like that be a good adition? Like providing a `TaskGroup` subclass where create_task() takes a callback instead of a coroutine? But I'm not sure about this, because we want to target standard asyncio users too, and it might be confusing to them to have a different API. Maybe we can provide both, but recommend the callback version in the documentation and examples. Please think about this and propose some ideas.
+
+* I feel there is still a lot of overlap between the tutorial and the core concepts mental model file. Maybe try to build better on top of the tutorial? Like introducing the different classes Awaitable, Coroutine, Future, Task, etc. looks good, but it repeats all the basic concepts in the tutorial too. I'm starting to wonder if the guide would be better splitted in "introductory usage" and "advanced usage". Also how to handle core concepts as a way to tell readers how things work under the hood (which is very important to build a mental model), like create_task, the event loop "call_soon" and similar methods. Knowing they exist and what they do, and how asyncio is built on top of them is very important to understand how things work, but they should NOT be used in regular user code. So maybe a better split would be explaining the basics, and explaining how things work under the hood. In a way like explaining how git stores commits and branches under the hood is very important to understand how to use git, but you don't need to care about blobs and trees for using git daily, and it would be very strange (and probably wrong) if you do.
+
+Please use one subagent per point (or more if you see fit) to avoid polluting the context window.
+
+
+----
+New structure proposal:
+
+Tio's docs are great, but I think the structure didn't map as well for this guide. I feel we ended up with a lot of duplication and overlap. I want to restructure this guide with the goal of having more orthogonal sections, introducing concepts one by one in layers instead of mentioning many concepts with one focus to then mentioned them again with a different focus.
+
+I propose the following chapters instead of the current tutoria + core appoach:
+
+* Everyday asyncio: how to write realiable and effective asyncio programs, only introduces the safe APIs, it doesn't mention low level APIs, like create_task() or wait_for() at all. Not sure if this chapter should include an advanced usage section that includes more advanced topics like shielding. I'm not sure if there are valid use cases for shielding when writing simple asyncio programs if the used libraries are well designed and robust. Please make a judgement call on this one. This section must include the basic constructs, like TaskGroup, run(), timeout(), sleep(). There could be a section on other high-level tools, like synchronization primitives, queues, etc. But more like an appendix/index, mainly pointing to the official docs and giving some examples where the official docs fall short. A section on debugging should also be included here, but again only covering the safe APIs. Cancellation should be definitely covered here, in particular in the context of task groups and timeouts.
+* Understanding how asyncio works: Introduces more low level concepts, the building blocks to build the abstractions explained in the first part, ideally explaining how those abstraction are built from these basic building blocks when possible, but doesn't get into more advanced topics that don't serve this purpose (for example, no need to mention shielding). It should not include other tools that are not used as building blocks for the main abstractions. cancelling(), uncancel() and the counter should be mentioned in this section only if it serves to explain how taskgroup cancellation or timeouts are implemented.
+* Advanced asyncio tools: Mention more dangerous and niche asyncio APIs that can be used when building frameworks or asyncio utility libraries, here for sure should be a mention of shielding if it was not mentioned or explained in detail before. If there are debugging tools specifically for APIs only explained here, we should also include a debugging section here with the specifics for those APIs. Don't mention deprecated APIs even here, if there is known Python version where something got deprecated, and the new recommended replacement for that API is present in Python 3.11+, then just completely skip the deprecated API and explain/mention only the new one. Same for overlapping APIs, for example I'm not sure if there is a place for gather(), it feels like advace usages should just go for "wait()", but I might be wrong. Please use your judgement to asses if some API should not be mentioned at all. We don't need to cover absolutely all the available APIs, there are the official docs for that.
+* Apendix: Stuff that is good to have as reference should go here, for now I can only think about the checkpoint contract table, but maybe there is already more stuff we can put in here. Another appendix might be a comprehensive list of common recommendations, best practices, pitfalls and gotchas, like awaits inside finally blocks, using aclosing() for async generators, etc. Another appendix could be a comprehensive list of debugging tools and techniques (if there are spread accross different chapters).
+
+Here is an analogy with git to better express what I expect to go on each chapter:
+* Everyday git: tells about git init, add, commit, push, pull, branch, merge, rebase, etc. It doesn't mention low level concepts like DAGs, blobs, trees, refs, etc. It doesn't mention plumbing commands at all.
+* Understanding how git works: explains how git stores commits, branches, etc. under the hood, but doesn't mention plumbing commands at all.
+* Advanced git tools: explains plumbing commands and how to use them to build custom tools. It also explains how to use plumbing commands to do advanced stuff that is not possible with porcelain commands, like rewriting history,
+
+Ideally an user should be done after reading the first chapter, they should have all the knowledge needed to write any Python async program in a robust and safe way (in this sense I guess an advanced section that covers shielding, to_thread() and maybe others, makes sense, as I guess there are valid use cases in programs that are designed in a way to work well with structured concurrency; maybe the advanced section should be recipe based, like "if you need to call blocking code that doesn't take the GIL, use to_thread()" and explain, "if you need to run blocking code that takes the GIL, use run_in_executor()" and explain, "if you need to make sure a block of code is not cancelled, use shield" and explain, etc.). But this chapter should not expose them AT ALL to unsafe APIs that have a safe alternative. For example, a reduced checkpoint contract table should also be in this section, because they are necessary to write robust and cooperative async code, but it should only include the safe APIs explained in this chapter and link to the full table for reference. When it comes to cleanup, mention async context managers and aclosing() as the main tools, mention try/finally should be only used when a async context manager is not available. We probably should include an explanation and example on how to build an async context manager in the advanced topics/recipes section in this chapter.
+
+Only if the user wants to have a deeper understanding of how things work under the hood, they should need to read the second chapter. This chapter can (and should) introduce unsafe APIs, but only when they are necessary to explain how things work under the hood and how safe APIs are implemented. For example, the loop should be introduced here (the first section can mention the loop as a concept, but not mention the APIs), with the basic functions to explain the execution model. But there is probably no need to mention get_running_loop() here.
+
+Only if the user wants to implement advanced asyncio tools or frameworks, they should need to read the third chapter, where we can mention more dangerous APIs that are not necessary to understand how things work under the hood, but are necessary to build advanced tools and frameworks. For example wait_for(), wait(), all_tasks(), current_task(), get_running_loop(), etc.
+
+In the current structure, it feel some topics are covered many times, like cancellation (what happens if a CancelledError is swallowed), checkpoints, asyncio being cooperative. In the new structure I would like topics to be explained only once (of course a few exceptions when a concept can be casually mentioned but not explained in detail will be necessary, specially in the everyday chapter). I want you to think on a good reading flow that minimizes the need to repeat concept explanations.
+
+My feeling is the everyday asyncio chapter will be the longest one by far, as it probably needs to include also sections about streams (async iterators), async generators, proper cleaup, etc. But this is fine, although please consider the option of having the everyday asyncio chapter actually split in 2, everyday basics and everyday advanced (so basically make the advanced usage section a separate chapter, and maybe name the "Advanced asyncio tools" differently to emphasize the difference, maybe something more like "Building asyncio tools" or something like that, please think about chapter names and make proposals for different options that could play together well).
+
+Please go through all the available asyncio APIs and decide in which section each should be introduced.
+
+Even when I want to probably diverge considerably from Trio's docs structure, I would like to keep the same tone and style.
+
+
+----
+
+My feeling is cancellation is only for error paths, but one should not use cancel() for normal shutdown, as there are many pitfalls, for example, if a clean shutdown needs to call aclose(), that needs to be put in a finally: but awaiting on finally is error prone because a second cancellation will cancel the aclosing(). The only issue is timeouts work using cancellation, so we still need to make sure to cleanup properly in cancellation paths, but still to me it feels normal shutdown should have a more explicit path than just calling cancel. I would like opinions on that.
+
+Replied, you need to handle error and degradation locally, not at the top level.
+
+---- v2
+
+* compiler -> interpreter
+* chapter 1 - Getting started: starts talking about the event loop without even mentioning what it is. I think it might be hard to follow this section for someone that doesn't know what an event loop is. Maybe we should start with a very simple example of an event loop in pseudocode, and very simply how await maps to that.

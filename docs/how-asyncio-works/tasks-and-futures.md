@@ -1,7 +1,7 @@
 ---
 title: Tasks and Futures
 description: >-
-  Understand asyncio.Future and asyncio.Task — the concrete objects that
+  Understand asyncio.Future and asyncio.Task -- the concrete objects that
   make concurrency work. Learn how create_task() schedules coroutines,
   the task lifecycle, and how tasks drive coroutines forward one await
   at a time.
@@ -9,9 +9,9 @@ description: >-
 
 # Tasks and Futures
 
-The event loop is the scheduler, but it doesn't do much by itself. It needs
+The event loop is the scheduler, but it does not do much by itself. It needs
 *objects* it can schedule -- things that represent "work in progress" and can
-report back when they're done. Those objects are
+report back when they are done. Those objects are
 [`asyncio.Future`][asyncio-future]
 and its subclass
 [`asyncio.Task`][asyncio-task].
@@ -21,7 +21,7 @@ forward one [`await`][await] at a time.
 
 ## `#!py asyncio.Future`
 
-A *future* is a container for a value that doesn't exist yet. You can think of
+A *future* is a container for a value that does not exist yet. You can think of
 it as an empty box with a label that says "result goes here." Someone will put
 a value in later -- or an exception, if things go wrong. Until then, the
 future is *pending*.
@@ -29,9 +29,9 @@ future is *pending*.
 The API is small:
 
 - **`#!py .done()`** -- returns `#!py True` if the future has a result, an exception, or
-  was cancelled. Returns `#!py False` while it's still pending.
+  was cancelled. Returns `#!py False` while it is still pending.
 - **`#!py .result()`** -- returns the value. Raises `InvalidStateError` if the
-  future isn't done yet, or re-raises the stored exception if one was set.
+  future is not done yet, or re-raises the stored exception if one was set.
 - **`#!py .exception()`** -- returns the stored exception (or `#!py None` if the future
   completed successfully). Raises `InvalidStateError` if not done.
 - **`#!py .set_result(value)`** -- fills the box with a value and marks the future
@@ -63,30 +63,36 @@ result (or raises its exception).
 Here is a minimal example that shows the lifecycle. You would not write this in
 a real program, but it makes the mechanics clear:
 
-```python title="future_lifecycle.py"
+```python title="future_lifecycle.py" hl_lines="5 9 14-15"
 import asyncio
-
 
 async def fill_future(fut: asyncio.Future[str]) -> None:
     await asyncio.sleep(1)
-    fut.set_result("hello from the future")
-
+    fut.set_result("hello from the future") # (1)!
 
 async def main() -> None:
     loop = asyncio.get_running_loop()
     fut: asyncio.Future[str] = loop.create_future()
 
-    print(f"done? {fut.done()}")           # False -- still pending
+    print(f"done? {fut.done()}") # (2)!
 
-    asyncio.create_task(fill_future(fut))  # schedule someone to fill it
-    result: str = await fut                # suspend until filled
-    print(f"done? {fut.done()}")           # True
-    print(f"result: {fut.result()}")       # "hello from the future"
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(fill_future(fut)) # (3)!
+        result: str = await fut # (4)!
 
+    print(f"done? {fut.done()}") # (5)!
+    print(f"result: {fut.result()}") # (6)!
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+1. Set the result, marking the future done.
+2. `#!py False` -- the future is still pending.
+3. Schedule a task inside the group to fill the future after a delay.
+4. Suspends until the future is done, then returns the result.
+5. `#!py True` -- the future is now done.
+6. Prints the result: `#!py "hello from the future"`.
 
 ```text title="$ python future_lifecycle.py"
 done? False
@@ -95,8 +101,8 @@ result: hello from the future
 ```
 
 The key insight: a future *decouples* the production of a value from its
-consumption. The code that sets the result doesn't need to know who is waiting
-for it, and the code that awaits doesn't need to know who will provide it.
+consumption. The code that sets the result does not need to know who is waiting
+for it, and the code that awaits does not need to know who will provide it.
 This decoupling is what allows the event loop to wire together callbacks,
 I/O completions, and coroutines into a single coherent system.
 
@@ -130,19 +136,19 @@ loop, when the loop processes the [`call_soon()`][call-soon] callback. This is w
 is the function that wraps a coroutine in a [`Task`][task] and schedules it on the
 running loop. In [Concurrent Tasks](../the-basics/concurrent-tasks.md) you saw
 `#!py tg.create_task()` -- the [`TaskGroup`][taskgroup] method that gives tasks an owner.
-Under the hood, `#!py TaskGroup.create_task()`
-calls [`asyncio.create_task()`][asyncio-create-task] and then tracks the resulting task so it can
-enforce structured concurrency. This section is about the raw function
+Under the hood, both `#!py TaskGroup.create_task()` and
+[`asyncio.create_task()`][asyncio-create-task] call the loop's
+[`create_task()`][loop-create-task] method. The difference is that the
+[`TaskGroup`][taskgroup] also tracks the resulting task so it can enforce
+structured concurrency. This section is about the raw function
 underneath.
 
 ```python title="create_task_demo.py"
 import asyncio
 
-
 async def compute(n: int) -> int:
     await asyncio.sleep(0.5)
     return n * n
-
 
 async def main() -> None:
     task: asyncio.Task[int] = asyncio.create_task(compute(7), name="square-7")
@@ -152,7 +158,6 @@ async def main() -> None:
     result: int = await task
     print(f"task done? {task.done()}")
     print(f"result: {result}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -200,7 +205,7 @@ are exactly three ways a task can become done:
    not suppressed. The task is marked cancelled.
 
 Once a task is done, it stays done -- there is no going back to pending. The
-inspection methods tell you which state you're in:
+inspection methods tell you which state you are in:
 
 | Method          | Pending | Result | Exception | Cancelled |
 |-----------------|---------|--------|-----------|-----------|
@@ -214,19 +219,15 @@ The following example walks through all three outcomes:
 ```python title="task_lifecycle.py"
 import asyncio
 
-
 async def succeed() -> str:
     return "ok"
-
 
 async def fail() -> str:
     raise ValueError("something broke")
 
-
 async def hang_forever() -> str:
     await asyncio.sleep(3600)
     return "unreachable"
-
 
 async def main() -> None:
     # Outcome 1: result
@@ -252,7 +253,6 @@ async def main() -> None:
         pass
     print(f"t3 done={t3.done()}, cancelled={t3.cancelled()}")
 
-
 if __name__ == "__main__":
     asyncio.run(main())
 ```
@@ -266,38 +266,35 @@ t3 done=True, cancelled=True
 Notice the pattern: `#!py await task` either returns the result or re-raises
 whatever ended the task (the stored exception, or [`CancelledError`][cancellederror]). Calling
 `#!py .result()` on a done task does the same thing without suspending -- but if
-you call it on a task that isn't done yet, you get
+you call it on a task that is not done yet, you get
 [`InvalidStateError`][invalidstateerror].
 
 !!! Tip
 
     After a [`TaskGroup`][taskgroup] block exits normally, every task in the group is
     guaranteed done. That is why the
-    [Collecting Results](../the-basics/concurrent-tasks.md) pattern
+    [Collecting Results](../the-basics/concurrent-tasks.md#collecting-results) pattern
     calls `#!py .result()` *after* the [`async with`][async-with] block -- it is always safe
     there.
 
 ## Task References
 
 Tasks are Python objects, and Python garbage-collects objects that nobody
-references. This leads to a subtle footgun: if you create a task and don't
-store it anywhere, the garbage collector may destroy it while it's still
+references. This leads to a subtle footgun: if you create a task and do not
+store it anywhere, the garbage collector may destroy it while it is still
 running.
 
 ```python
-# lost_reference.py — DON'T DO THIS
+# lost_reference.py -- DO NOT DO THIS
 import asyncio
-
 
 async def background_work() -> None:
     await asyncio.sleep(1)
     print("work finished!")
 
-
 async def main() -> None:
     asyncio.create_task(background_work())  # no reference stored!
     await asyncio.sleep(2)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -358,7 +355,7 @@ class Task(Future):
             # Coroutine raised -- set the task's exception
             self.set_exception(exc)
         else:
-            # Coroutine yielded a future it's waiting on.
+            # Coroutine yielded a future it is waiting on.
             # When that future completes, run __step again.
             result.add_done_callback(self.__step)
 ```
@@ -371,7 +368,7 @@ Here is what happens, step by step:
 
 2. **First step.** On the next loop iteration, `#!py __step` runs. It calls
    `#!py coro.send(None)`, which resumes the coroutine from the beginning. The
-   coroutine runs until it hits an [`await`][await] on something that isn't ready yet
+   coroutine runs until it hits an [`await`][await] on something that is not ready yet
    -- typically a future representing an I/O completion or a timer.
 
 3. **Suspension.** The [`await`][await] causes the coroutine to yield that future back
@@ -386,7 +383,7 @@ Here is what happens, step by step:
    the [`await`][await] that suspended it. This cycle repeats.
 
 5. **Completion.** Eventually the coroutine either returns a value (raising
-   `#!py StopIteration` -- that's how Python generators and coroutines signal
+   `#!py StopIteration` -- that is how Python generators and coroutines signal
    completion) or raises an exception. The task catches this, calls
    [`set_result()`][set-result] or [`set_exception()`][set-exception] on itself, and fires its own done
    callbacks.
@@ -407,8 +404,6 @@ comes back and picks up where it left off.
     pseudocode above is the mental model you need; read the source when you
     want the full picture.
 
----
-
 [set-result]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_result
 [async-with]: https://docs.python.org/3/reference/compound_stmts.html#async-with
 [set-exception]: https://docs.python.org/3/library/asyncio-future.html#asyncio.Future.set_exception
@@ -417,6 +412,7 @@ comes back and picks up where it left off.
 [await]: https://docs.python.org/3/reference/expressions.html#await
 [call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
 [loop-create-future]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_future
+[loop-create-task]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.create_task
 [create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
 [asyncio-create-task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
 [task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task

@@ -37,7 +37,7 @@ flowchart TB
 
 Here is rough pseudocode for what the loop does on every turn:
 
-```python hl_lines="4 5 6 9 10 11 12 15 16 17 18"
+```python
 # Pseudocode -- not real asyncio source, but faithful to the logic.
 while self._ready or self._scheduled or self._selector.get_map():
     # Phase 1: drain the ready queue
@@ -61,10 +61,10 @@ while self._ready or self._scheduled or self._selector.get_map():
 
 A few things to notice:
 
-- **Phase 1 drains the ready queue completely** before doing anything else.
-  The loop snapshots the queue length (`#!py ntodo`) so that callbacks added
-  *during*
-  this phase land in the *next* iteration, not this one.
+- **Phase 1 drains the ready queue completely** before doing anything
+  else. The loop snapshots the queue length (`#!py ntodo`) so that
+  callbacks added *during* this phase land in the *next* iteration,
+  not this one.
 - **Phase 2 asks the OS for I/O events.** This is a call to
   [`select()`][select] (or `epoll`,
   `kqueue`, etc., depending on your platform). If the ready queue is empty, the
@@ -78,10 +78,10 @@ system, no preemption. One callback runs. It finishes. The next one runs.
 
 ## `#!py call_soon()`
 
-[`loop.call_soon()`][loop-call-soon]
+[`loop.call_soon()`][call-soon]
 places a callback on the ready queue. It will execute during phase 1 of the
-next loop iteration (or the current one, if the queue hasn't been fully drained
-yet -- but conceptually, think "next iteration").
+next loop iteration (or the current one, if the queue has not been fully
+drained yet -- but conceptually, think "next iteration").
 
 ```python title="call_soon_demo.py"
 import asyncio
@@ -122,22 +122,21 @@ only fire after `#!py main` returned.
 This is a low-level API. You will rarely call it directly, but it matters
 because it is the foundation. When you call `#!py tg.create_task(some_coro())`,
 asyncio creates a [`Task`][task] object and then calls
-[`call_soon()`][call-soon] to schedule the first step of that task. Every task
-begins life as a callback on the ready
-queue.
+[`call_soon()`][call-soon] to schedule the first step of that task.
+Every task begins life as a callback on the ready queue.
 
 !!! Note
 
     [`call_soon()`][call-soon] returns a
     [`Handle`][handle]
     object. You can call `#!py handle.cancel()` to prevent the callback from
-    running, as long as it hasn't been executed yet.
+    running, as long as it has not been executed yet.
 
 ## Timers: `#!py call_later()` and `#!py call_at()`
 
-[`loop.call_later(delay, callback, *args)`][loop-call-later-delay-callback-args]
+[`loop.call_later(delay, callback, *args)`][call-later]
 schedules a callback to run after *delay* seconds.
-[`loop.call_at(when, callback, *args)`][loop-call-at-when-callback-args]
+[`loop.call_at(when, callback, *args)`][call-at]
 schedules a callback at an absolute time on the loop's internal clock. Both
 return a
 [`TimerHandle`][timerhandle]
@@ -295,24 +294,24 @@ Total time: 2.0s
 
 Here is exactly what happened inside the loop:
 
-1. Both tasks were created, placing two `#!py task.__step` callbacks on the
-   ready
-   queue.
-2. Phase 1 pops `#!py hog`'s step callback. `#!py hog` starts running and never
-   hits a suspending [`await`][await], so `#!py task.__step` never returns. The
-   loop is stuck
-   inside phase 1 for the full second.
-3. During that second, `#!py polite`'s step callback is sitting in the ready
-   queue doing nothing. The timer for `#!py polite`'s first `#!py sleep(0.2)`
-   cannot even be
-   *checked* because the loop never reaches phase 3.
-4. When `#!py hog` finally returns, the loop finishes phase 1, does a
-   zero-timeout
-   I/O poll in phase 2, processes the now-overdue timers in phase 3, and only
-   *then* does `#!py polite` start ticking.
+1. Both tasks were created, placing two `#!py task.__step` callbacks
+   on the ready queue.
+2. Phase 1 pops `#!py hog`'s step callback. `#!py hog` starts running
+   and never hits a suspending [`await`][await], so
+   `#!py task.__step` never returns. The loop is stuck inside
+   phase 1 for the full second.
+3. During that second, `#!py polite`'s step callback is sitting in
+   the ready queue doing nothing. The timer for `#!py polite`'s
+   first `#!py sleep(0.2)` cannot even be *checked* because the
+   loop never reaches phase 3.
+4. When `#!py hog` finally returns, the loop finishes phase 1, does
+   a zero-timeout I/O poll in phase 2, processes the now-overdue
+   timers in phase 3, and only *then* does `#!py polite` start
+   ticking.
 
-The total wall time is ~2 seconds (1s for `hog` + 1s for `polite`'s sleeps in
-series) instead of the ~1s you would see if they overlapped.
+The total wall time is ~2 seconds (1s for `#!py hog` + 1s for
+`#!py polite`'s sleeps in series) instead of the ~1s you would see if
+they overlapped.
 
 !!! Tip
 
@@ -393,7 +392,7 @@ loop model pays off:
 - **"My timeout fired late."** Timeouts are timers, and timers are checked in
   phase 3 of the loop iteration. If a long-running callback is hogging
   phase 1, the loop cannot even *check* whether your timer has expired. The
-  timer is not broken -- the loop just hasn't gotten to phase 3 yet.
+  timer is not broken -- the loop just has not gotten to phase 3 yet.
 
 - **"My task seems stuck."** If another task is running a blocking call or a
   long computation without yielding, your task is sitting in the ready queue
@@ -406,26 +405,21 @@ loop model pays off:
   expected immediate execution, you are off by one loop turn.
 
 - **"My `#!py sleep(0)` didn't help."** `#!py sleep(0)` yields to the loop, but if
-  the ready queue has 200 other callbacks ahead of you, you won't resume
-  until they have all run. It is a yield, not a priority boost.
+  the ready queue has 200 other callbacks ahead of you, you will not
+  resume until they have all run. It is a yield, not a priority boost.
 
 The event loop is simple. That simplicity is what makes asyncio fast and
 predictable -- but it also means the loop cannot save you from yourself. If
-you block it, everything stops. If you don't yield, nobody else runs. The
+you block it, everything stops. If you do not yield, nobody else runs. The
 machinery does exactly what the pseudocode says, nothing more.
-
----
 
 [call-later]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_later
 [call-at]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at
 [taskgroup]: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup
 [select]: https://docs.python.org/3/library/select.html#select.select
 [call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
-[loop-call-soon]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon
 [task]: https://docs.python.org/3/library/asyncio-task.html#asyncio.Task
 [handle]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.Handle
-[loop-call-later-delay-callback-args]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_later
-[loop-call-at-when-callback-args]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_at
 [timerhandle]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.TimerHandle
 [loop-time]: https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.time
 [float]: https://docs.python.org/3/library/functions.html#float
